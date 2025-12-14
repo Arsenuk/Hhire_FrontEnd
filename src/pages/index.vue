@@ -31,6 +31,104 @@
         />
       </v-col>
     </v-row>
+    
+     <!-- How it works -->
+    <v-row justify="center" class="mt-16 text-center">
+      <v-col cols="12" md="8">
+        <h2 class="main-title">
+          How it works
+        </h2>
+        <p class="subtitle">
+          Get started in three simple steps and join our growing community
+        </p>
+      </v-col>
+    </v-row>
+
+    <!-- Три блоки -->
+    <v-row justify="center" class="mt-8">
+      <v-col cols="12" md="10">
+        <v-row dense>
+          <v-col cols="12" md="4" class="mb-6 text-center">
+            <v-card class="step-card pa-6" outlined>
+              <v-icon size="48" color="#97e5ee">mdi-account-check</v-icon>
+              <h3 class="step-title mt-4">Sign Up</h3>
+              <p class="step-text mt-2">
+                Create your account quickly and easily to start connecting with trusted companies.
+              </p>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12" md="4" class="mb-6 text-center">
+            <v-card class="step-card pa-6" outlined>
+              <v-icon size="48" color="#97e5ee">mdi-clipboard-list</v-icon>
+              <h3 class="step-title mt-4">Browse & Review</h3>
+              <p class="step-text mt-2">
+                Explore verified businesses, read real reviews, and share your own experiences.
+              </p>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12" md="4" class="mb-6 text-center">
+            <v-card class="step-card pa-6" outlined>
+              <v-icon size="48" color="#97e5ee">mdi-handshake</v-icon>
+              <h3 class="step-title mt-4">Connect</h3>
+              <p class="step-text mt-2">
+                Build meaningful connections with businesses and make informed decisions confidently.
+              </p>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+
+    <!-- Останні блоки (Features / Benefits) -->
+    <v-row justify="center" class="mt-12">
+      <v-col cols="12" md="10">
+        <v-row dense>
+          <v-col cols="12" md="4" class="mb-6 text-center">
+            <v-card class="feature-card pa-6" outlined>
+              <v-icon size="48" color="#D3FFAD">mdi-shield-check</v-icon>
+              <h3 class="feature-title mt-4">Verified Businesses</h3>
+              <p class="feature-text mt-2">
+                All companies are verified to ensure authenticity and trust.
+              </p>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12" md="4" class="mb-6 text-center">
+            <v-card class="feature-card pa-6" outlined>
+              <v-icon size="48" color="#D3FFAD">mdi-star-circle</v-icon>
+              <h3 class="feature-title mt-4">Real Reviews</h3>
+              <p class="feature-text mt-2">
+                Read honest feedback from real users before making decisions.
+              </p>
+            </v-card>
+          </v-col>
+
+          <v-col cols="12" md="4" class="mb-6 text-center">
+            <v-card class="feature-card pa-6" outlined>
+              <v-icon size="48" color="#D3FFAD">mdi-account-group</v-icon>
+              <h3 class="feature-title mt-4">Community Driven</h3>
+              <p class="feature-text mt-2">
+                Join a growing community of informed users and share your experience.
+              </p>
+            </v-card>
+          </v-col>
+        </v-row>
+      </v-col>
+    </v-row>
+
+    <!-- Кнопка Sign Up після останніх блоків -->
+    <v-row justify="center" class="mt-8 mb-16">
+      <v-col cols="12" md="6" class="text-center">
+        <RouterLink to="/signup">
+          <v-btn class="get-started-btn" large>
+            Sign Up Now →
+          </v-btn>
+        </RouterLink>
+      </v-col>
+    </v-row>
+
   </v-container>
 </template>
 
@@ -54,13 +152,14 @@
 
 /* Підзаголовок */
 .subtitle {
+  font-family: 'Junge', serif;
   font-size: 18px;
   color: #333333;
   margin-bottom: 32px;
   line-height: 1.5;
 }
 
-/* Кнопка Get Started (як Header Sign Up) */
+/* Кнопка Get Started / Sign Up */
 .get-started-btn {
   background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
   color: #000;
@@ -73,5 +172,43 @@
 .rounded-image {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Блоки "How it works" */
+.step-card {
+  border-radius: 12px;
+  transition: transform 0.3s;
+}
+.step-card:hover {
+  transform: translateY(-6px);
+}
+.step-title {
+  font-family: 'Junge', serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+.step-text {
+  font-family: 'Junge', serif;
+  font-size: 16px;
+  color: #555555;
+}
+
+/* Останні блоки (Features) */
+.feature-card {
+  border-radius: 12px;
+  transition: transform 0.3s;
+}
+.feature-card:hover {
+  transform: translateY(-6px);
+}
+.feature-title {
+  font-family: 'Junge', serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+.feature-text {
+  font-family: 'Junge', serif;
+  font-size: 16px;
+  color: #555555;
 }
 </style>
