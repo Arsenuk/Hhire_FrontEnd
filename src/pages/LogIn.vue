@@ -10,7 +10,11 @@
           </p>
 
           <!-- Email Field -->
+           <p class="login-subtitle  mb-2", style="padding-left: 10px;">
+            Email Address
+          </p>
           <div class="custom-input mb-4">
+            
             <v-icon size="20" color="#97e5ee" class="input-icon">mdi-email-outline</v-icon>
             <input
               v-model="email"
@@ -21,6 +25,9 @@
           </div>
 
           <!-- Password Field -->
+           <p class="login-subtitle  mb-2", style="padding-left: 10px;">
+            Password
+          </p>
           <div class="custom-input mb-2">
             <v-icon size="20" color="#97e5ee" class="input-icon">mdi-lock-outline</v-icon>
             <input
