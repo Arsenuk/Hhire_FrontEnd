@@ -65,6 +65,7 @@ const isActive = (path) => route.path === path
 
 /* LEFT */
 .header-left {
+  padding-left: 40px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -107,6 +108,7 @@ const isActive = (path) => route.path === path
 
 /* RIGHT */
 .header-right {
+    padding-right: 40px;
   margin-left: auto;
   display: flex;
   align-items: center;
