@@ -1,4 +1,7 @@
 {
+  "vueCompilerOptions": {
+    "globalTypesPath": "./node_modules/@vue/tsconfig/global.d.ts"
+  },
   "compilerOptions": {
     "allowJs": true,
     "target": "es5",
