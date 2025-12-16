@@ -76,10 +76,14 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { login } from '@/services/authService.js';
 
-const email = ref("");
-const password = ref("");
+const router = useRouter();
+
+const email = ref('');
+const password = ref('');
 const rememberMe = ref(false);
 const showPassword = ref(false);
 
@@ -87,10 +91,26 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value;
 };
 
-const onLogin = () => {
-  console.log("Login clicked", email.value, password.value, rememberMe.value);
+const onLogin = async () => {
+  try {
+    const data = await login(email.value, password.value);
+    console.log('Login successful:', data);
+
+    // Зберігаємо токен у localStorage
+    localStorage.setItem('accessToken', data.accessToken);
+
+    // Можна також зберегти користувача
+    localStorage.setItem('user', JSON.stringify(data.user));
+
+    router.push('/feed'); // або куди треба після логіну
+  } catch (err) {
+    console.error('Login failed:', err.response?.data || err.message);
+    console.log('LOGIN HIT', req.body);
+    alert(err.response?.data?.error || 'Login failed');
+  }
 };
 </script>
+
 
 <style scoped>
 .login-page {

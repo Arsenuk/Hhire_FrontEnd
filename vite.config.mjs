@@ -36,6 +36,21 @@ export default defineConfig({
       },
     }),
   ],
+
+  css: {
+    preprocessorOptions: {
+      sass: {
+        quietDeps: true,
+        logger: {
+          warn: () => {},
+        },
+      },
+      scss: {
+        quietDeps: true,
+      },
+    },
+  },
+
   optimizeDeps: {
     exclude: [
       'vuetify',
@@ -61,6 +76,6 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 3000,
+    port: 5173,
   },
 })

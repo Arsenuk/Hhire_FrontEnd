@@ -37,12 +37,7 @@
 
               <div class="custom-input mb-4">
                 <v-icon size="20" color="#97e5ee" class="input-icon">mdi-account-outline</v-icon>
-                <input v-model="firstName" type="text" placeholder="First Name" class="input-field" />
-              </div>
-
-              <div class="custom-input mb-4">
-                <v-icon size="20" color="#97e5ee" class="input-icon">mdi-account-outline</v-icon>
-                <input v-model="lastName" type="text" placeholder="Last Name" class="input-field" />
+                <input v-model="firstName" type="text" placeholder="User Name" class="input-field" />
               </div>
 
               <div class="custom-input mb-4">
@@ -105,51 +100,101 @@
 
 
 <script setup>
-import { ref } from "vue";
+import { ref } from 'vue';
+import axios from 'axios';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
+
+// Кроки прогресу
+const steps = ref([
+  { id: 1 },
+  { id: 2 }
+]);
 const currentStep = ref(1);
-const steps = [{ id: 1 }, { id: 2 }];
 
-const firstName = ref("");
-const lastName = ref("");
-const email = ref("");
-const password = ref("");
+// Поля форми
+const firstName = ref('');
+const email = ref('');
+const password = ref('');
 const showPassword = ref(false);
-
-const description = ref("");
-const usefulLinks = ref("");
+const description = ref('');
+const usefulLinks = ref('');
 const profileImage = ref(null);
-const profileImageName = ref("");
+const profileImageName = ref('');
 
-const togglePassword = () => showPassword.value = !showPassword.value;
-const nextStep = () => currentStep.value = 2;
-const prevStep = () => currentStep.value = 1;
-
-const triggerFileInput = () => {
-  const fileInput = document.querySelector('input[type="file"]');
-  fileInput.click();
+// Методи кроків
+const nextStep = () => {
+  if (currentStep.value < steps.value.length) currentStep.value++;
+};
+const prevStep = () => {
+  if (currentStep.value > 1) currentStep.value--;
 };
 
+// Показ/приховання пароля
+const togglePassword = () => {
+  showPassword.value = !showPassword.value;
+};
+
+// Завантаження аватара
+const triggerFileInput = () => {
+  document.querySelector('input[type="file"]').click();
+};
 const handleFileUpload = (e) => {
-  const file = e.target.files[0];
-  if (file && file.type === "image/png") {
-    profileImage.value = file;
-    profileImageName.value = file.name;
+  if (e.target.files.length) {
+    profileImage.value = e.target.files[0];
+    profileImageName.value = e.target.files[0].name;
   }
 };
 
-const submitForm = () => {
-  console.log({
-    firstName: firstName.value,
-    lastName: lastName.value,
-    email: email.value,
-    password: password.value,
-    description: description.value,
-    usefulLinks: usefulLinks.value,
-    profileImage: profileImage.value
-  });
+// Submit з автоматичним логіном
+const submitForm = async () => {
+  try {
+    // 1️⃣ Реєстрація
+    const res = await axios.post('http://localhost:3000/api/auth/register', {
+      email: email.value,
+      password: password.value,
+      name: firstName.value
+    });
+
+    // 2️⃣ Автоматичний логін
+    const loginRes = await axios.post('http://localhost:3000/api/auth/login', {
+      email: email.value,
+      password: password.value
+    });
+
+    const { accessToken, user } = loginRes.data;
+
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('user', JSON.stringify(user));
+
+    // 3️⃣ Завантаження аватара
+    if (profileImage.value) {
+      const formData = new FormData();
+      formData.append('avatar', profileImage.value);
+      await axios.post('http://localhost:3000/api/users/me/avatar', formData, {
+        headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'multipart/form-data' }
+      });
+    }
+
+    // 4️⃣ Оновлення профілю
+    await axios.put('http://localhost:3000/api/users/profile', {
+      description: description.value,
+      usefulLinks: usefulLinks.value
+    }, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    alert('Registration and login successful!');
+    router.push('/feed');
+
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || 'Registration failed');
+  }
 };
 </script>
+
 
 <style scoped>
 .signup-page {
