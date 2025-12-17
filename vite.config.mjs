@@ -38,17 +38,24 @@ export default defineConfig({
   ],
 
   css: {
+    devSourcemap: false,
     preprocessorOptions: {
       sass: {
         quietDeps: true,
+        sourceMap: false,
         logger: {
           warn: () => {},
         },
       },
       scss: {
         quietDeps: true,
+        sourceMap: false,
       },
     },
+  },
+
+  build: {
+    sourcemap: false, //  на всякий
   },
 
   optimizeDeps: {
