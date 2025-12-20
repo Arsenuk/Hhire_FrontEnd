@@ -44,7 +44,7 @@
         </v-menu>
 
         <!-- Create Post -->
-        <RouterLink to="/create-post">
+        <RouterLink to="/createpost">
           <v-btn rounded="xl" class="create-post-btn">
             Create Post
           </v-btn>
