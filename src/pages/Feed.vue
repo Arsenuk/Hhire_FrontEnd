@@ -3,7 +3,7 @@
         <v-row>
             <!-- Ліва колонка: Фільтри -->
             <v-col cols="12" md="2">
-                <v-card>
+                <v-card class="filter-card">
                     <v-card-title>Filters</v-card-title>
                     <v-card-text>
                         <v-list>
@@ -18,7 +18,7 @@
 
             <!-- Центральна колонка: Пости -->
             <v-col cols="12" md="6">
-                <v-card v-for="post in posts" :key="post.id" class="mb-4">
+                <v-card v-for="post in posts" :key="post.id" class="post-card mb-4">
                     <!-- Верхній рядок: аватар, заголовок, тип -->
                     <v-card-title class="d-flex justify-space-between align-center">
                         <div class="d-flex align-center gap-3">
@@ -71,14 +71,14 @@
                     </v-expand-transition>
                 </v-card>
                 <!-- Кнопка "Load More" -->
-                <v-btn color="primary" class="mt-4" @click="loadMorePosts">
+                <v-btn color="primary" class="load-more-btn mt-4" @click="loadMorePosts">
                     Load More Posts
                 </v-btn>
             </v-col>
 
             <!-- Права колонка: Запропоновані користувачі -->
             <v-col cols="12" md="4">
-                <v-card>
+                <v-card class="suggested-card">
                     <v-card-title>Suggested Users</v-card-title>
                     <v-card-text>
                         <v-list>
@@ -202,30 +202,126 @@ onMounted(() => {
 
 <style scoped>
 .feed-page {
-    margin-top: 60px;
+  margin-top: 60px;
+  background-color: #f7f9fc;
+  min-height: 100vh;
+  padding-top: 40px;
+  font-family: 'Junge', serif;
+}
+
+/* ===== LEFT: Filters ===== */
+.filter-card {
+  border-radius: 16px;
+  padding: 8px;
+}
+
+.filter-card .v-card-title {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.filter-card .v-list-item {
+  border-radius: 10px;
+  margin-bottom: 4px;
+  transition: background 0.2s;
+}
+
+.filter-card .v-list-item:hover {
+  background: rgba(151, 229, 238, 0.2);
+}
+
+/* ===== CENTER: Post card ===== */
+.post-card {
+  border-radius: 18px;
+  padding-bottom: 4px;
+}
+
+.post-card .v-card-title {
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .post-title {
-    font-weight: 600;
-    font-size: 16px;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .post-type {
-    font-size: 12px;
-    color: #666;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  color: #000;
 }
 
+/* subtitle */
+.post-card .v-card-subtitle {
+  font-size: 13px;
+  color: #666;
+}
+
+/* content */
+.post-card .v-card-text {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* actions */
+.post-card .v-btn {
+  color: #555;
+}
+
+.post-card .v-btn:hover {
+  color: #000;
+}
+
+/* ===== COMMENTS ===== */
 .comments-section {
-    padding: 10px 16px;
-    background-color: #f9f9f9;
+  padding: 12px 16px;
+  background-color: #f9f9f9;
+  border-top: 1px solid #eee;
 }
 
 .comment-name {
-    font-weight: 500;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .comment-content {
-    font-size: 14px;
-    color: #333;
+  font-size: 14px;
+  color: #333;
 }
+
+/* ===== RIGHT: Suggested users ===== */
+.suggested-card {
+  border-radius: 16px;
+}
+
+.suggested-card .v-card-title {
+  font-weight: 700;
+}
+
+.suggested-card .v-list-item {
+  border-radius: 12px;
+  margin-bottom: 6px;
+}
+
+.suggested-card .v-btn {
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  color: #000;
+  text-transform: none;
+  font-weight: 600;
+}
+
+/* ===== LOAD MORE ===== */
+.load-more-btn {
+  width: 100%;
+  border-radius: 14px;
+  height: 48px;
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  color: #000;
+  font-weight: 600;
+  text-transform: none;
+}
+
 </style>
