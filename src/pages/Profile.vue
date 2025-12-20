@@ -5,8 +5,9 @@
       <v-row class="mb-6" align="center" justify="space-between">
         <v-col cols="12" md="2" class="text-center">
           <v-avatar size="120">
-            <v-img :src="user.avatar || defaultAvatar" />
+            <v-img :src="getAvatarUrl(user.avatar)" />
           </v-avatar>
+
         </v-col>
         <v-col cols="12" md="8">
           <h1>{{ user.name || "User didn't provide information" }}</h1>
@@ -90,16 +91,23 @@ const links = ref([])
 const posts = ref([])
 const defaultAvatar = '/default-avatar.png'
 
+const getAvatarUrl = (avatar) => {
+  if (!avatar) return defaultAvatar;
+  return `http://localhost:3000/${avatar}`;
+};
+
+
 async function loadProfile() {
   try {
     const [profileRes, linksRes, postsRes] = await Promise.all([
       api.get('/users/profile'),
       api.get('/user-links'),
-      api.get(`/posts/${authStore.user?.id || ''}`)
+      api.get('/posts') // 
     ])
+
     authStore.user = profileRes.data
     links.value = linksRes.data
-    posts.value = postsRes.data
+    posts.value = postsRes.data.posts
   } catch (err) {
     console.error(err)
     alert(err.response?.data?.error || err.message || 'Failed to load profile')
@@ -130,6 +138,7 @@ onMounted(() => {
 .profile-page {
   margin-top: 60px;
 }
+
 h1 {
   font-weight: 700;
 }

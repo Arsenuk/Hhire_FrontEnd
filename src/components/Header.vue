@@ -8,13 +8,8 @@
 
     <!-- Центр: навігація -->
     <div class="header-center">
-      <RouterLink
-        v-for="link in navLinks"
-        :key="link.to"
-        :to="link.to"
-        class="nav-link brand-name"
-        :class="{ active: isActive(link.to) }"
-      >
+      <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to" class="nav-link brand-name"
+        :class="{ active: isActive(link.to) }">
         {{ link.label }}
       </RouterLink>
     </div>
@@ -23,16 +18,8 @@
     <div class="header-right">
       <template v-if="isLoggedIn">
         <!-- Глобальний пошук -->
-        <v-text-field
-          v-model="searchQuery"
-          placeholder="Search..."
-          dense
-          hide-details
-          outlined
-          rounded
-          prepend-inner-icon="mdi-magnify"
-          class="search-field"
-        />
+        <v-text-field v-model="searchQuery" placeholder="Search..." dense hide-details outlined rounded
+          prepend-inner-icon="mdi-magnify" class="search-field" />
 
         <!-- Повідомлення -->
         <v-menu offset-y>
@@ -68,8 +55,9 @@
           <template #activator="{ props }">
             <v-btn v-bind="props" icon>
               <v-avatar size="36">
-                <v-img :src="user?.avatar || defaultAvatar" />
+                <v-img :src="getAvatarUrl(user?.avatar)" />
               </v-avatar>
+
             </v-btn>
           </template>
           <v-list>
@@ -109,6 +97,11 @@ const authStore = useAuthStore()
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const user = computed(() => authStore.user)
 
+const getAvatarUrl = (avatar) => {
+  if (!avatar) return defaultAvatar;
+  return `http://localhost:3000/${avatar}`;
+};
+
 const searchQuery = ref('')
 const notifications = ref([
   { id: 1, text: 'New message from Alice' },
@@ -119,15 +112,15 @@ const defaultAvatar = '/default-avatar.png'
 const navLinks = computed(() =>
   isLoggedIn.value
     ? [
-        { label: 'Feed', to: '/feed' },
-        { label: 'Contacts', to: '/contacts' },
-        { label: 'Last News', to: '/last-news' }
-      ]
+      { label: 'Feed', to: '/feed' },
+      { label: 'Contacts', to: '/contacts' },
+      { label: 'Last News', to: '/last-news' }
+    ]
     : [
-        { label: 'Get Started', to: '/' },
-        { label: 'Feed', to: '/feed' },
-        { label: 'Last News', to: '/last-news' }
-      ]
+      { label: 'Get Started', to: '/' },
+      { label: 'Feed', to: '/feed' },
+      { label: 'Last News', to: '/last-news' }
+    ]
 )
 
 const isActive = path => route.path === path
