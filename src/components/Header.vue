@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar height="70" flat class="hhire-header">
+  <v-app-bar height="auto" flat class="hhire-header">
     <!-- Ліва частина: логотип + назва -->
     <div class="header-left">
       <img src="@/assets/hhire-logo.png" alt="Hhire logo" class="logo" />
@@ -8,7 +8,7 @@
 
     <!-- Центр: навігація -->
     <div class="header-center">
-      <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to" class="nav-link brand-name"
+      <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to" class="nav-link"
         :class="{ active: isActive(link.to) }">
         {{ link.label }}
       </RouterLink>
@@ -17,11 +17,9 @@
     <!-- Права частина -->
     <div class="header-right">
       <template v-if="isLoggedIn">
-        <!-- Глобальний пошук -->
         <v-text-field v-model="searchQuery" placeholder="Search..." dense hide-details outlined rounded
           prepend-inner-icon="mdi-magnify" class="search-field" />
 
-        <!-- Повідомлення -->
         <v-menu offset-y>
           <template #activator="{ props }">
             <v-btn icon v-bind="props">
@@ -43,19 +41,18 @@
           </v-card>
         </v-menu>
 
-        <!-- Create Post -->
         <RouterLink to="/createpost">
-          <v-btn rounded="xl" class="create-post-btn">
+          <v-btn rounded class="create-post-btn">
             Create Post
           </v-btn>
         </RouterLink>
 
-        <!-- Аватар + меню -->
         <v-menu offset-y>
           <template #activator="{ props }">
-            <v-btn v-bind="props" icon>
+            <v-btn icon v-bind="props">
               <v-avatar size="36">
-                <v-img :src="getAvatarUrl(user?.avatar)" />
+                <v-img :src="getAvatarUrl(user?.avatar)" lazy-src="./assets/default-avatar.png"
+                  :alt="user?.name || 'Avatar'" />
               </v-avatar>
 
             </v-btn>
@@ -73,11 +70,10 @@
         </v-menu>
       </template>
 
-      <!-- Якщо не авторизований -->
       <template v-else>
         <RouterLink to="/login" class="login-link">Log In</RouterLink>
         <RouterLink to="/signup">
-          <v-btn class="signup-btn" rounded="xl" elevation="0">Sign Up</v-btn>
+          <v-btn class="signup-btn" rounded elevation="0">Sign Up</v-btn>
         </RouterLink>
       </template>
     </div>
@@ -97,17 +93,13 @@ const authStore = useAuthStore()
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const user = computed(() => authStore.user)
 
-const getAvatarUrl = (avatar) => {
-  if (!avatar) return defaultAvatar;
-  return `http://localhost:3000/${avatar}`;
-};
+const getAvatarUrl = (avatar) => avatar ? `http://localhost:3000/${avatar}` : '/default-avatar.png'
 
 const searchQuery = ref('')
 const notifications = ref([
   { id: 1, text: 'New message from Alice' },
   { id: 2, text: 'Bob liked your post' }
 ])
-const defaultAvatar = '/default-avatar.png'
 
 const navLinks = computed(() =>
   isLoggedIn.value
@@ -127,9 +119,7 @@ const isActive = path => route.path === path
 
 async function logout() {
   try {
-    await api.post('/auth/logout')  // ✅
-  } catch (err) {
-    console.warn('Logout request failed, clearing local state anyway')
+    await api.post('/auth/logout')
   } finally {
     authStore.user = null
     authStore.accessToken = null
@@ -144,38 +134,46 @@ async function logout() {
 .hhire-header {
   border-bottom: 1px solid #cfcfcf;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
-  padding: 0 32px;
+  padding: 10px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 /* LEFT */
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 120px;
 }
 
 .logo {
-  height: 36px;
+  height: 40px;
 }
 
 .brand-name {
   font-family: 'Junge', serif;
-  font-size: 22px;
+  font-size: clamp(16px, 2vw, 22px);
+  /* динамічний розмір */
   font-weight: 400;
 }
 
 /* CENTER */
 .header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
-  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 150px;
 }
 
 .nav-link {
   text-decoration: none;
-  font-size: 16px;
+  font-size: clamp(14px, 1.5vw, 16px);
   color: #000;
   transition: color 0.2s ease;
 }
@@ -191,33 +189,50 @@ async function logout() {
 
 /* RIGHT */
 .header-right {
-  margin-left: auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 20px;
+  gap: 10px;
+  min-width: 120px;
 }
 
 .login-link {
+  font-size: clamp(14px, 1.5vw, 16px);
+  color: #000;
   text-decoration: none;
-  color: #000;
-  font-size: 16px;
 }
 
-.signup-btn {
-  background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
-  color: #000;
-  text-transform: none;
-  font-weight: 500;
-}
-
+.signup-btn,
 .create-post-btn {
   background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
   color: #000;
-  text-transform: none;
   font-weight: 500;
+  text-transform: none;
+  min-width: 120px;
 }
 
+/* Search field адаптивний */
 .search-field {
-  width: 200px;
+  width: clamp(100px, 20vw, 200px);
+}
+
+/* Media queries для мобільних */
+@media (max-width: 768px) {
+
+  .header-left,
+  .header-center,
+  .header-right {
+    justify-content: center;
+  }
+
+  .header-center {
+    order: 3;
+    margin-top: 5px;
+  }
+
+  .header-right {
+    order: 2;
+    margin-top: 5px;
+  }
 }
 </style>
