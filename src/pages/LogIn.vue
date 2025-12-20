@@ -76,40 +76,35 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { login } from '@/services/authService.js';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.js'
 
-const router = useRouter();
+// 🔹 викликаємо всередині setup
+const authStore = useAuthStore()
+const router = useRouter()
 
-const email = ref('');
-const password = ref('');
-const rememberMe = ref(false);
-const showPassword = ref(false);
+const email = ref('')
+const password = ref('')
+const showPassword = ref(false)
+const rememberMe = ref(false)
 
 const togglePassword = () => {
-  showPassword.value = !showPassword.value;
-};
+  showPassword.value = !showPassword.value
+}
 
 const onLogin = async () => {
   try {
-    const data = await login(email.value, password.value);
-    console.log('Login successful:', data);
-
-    // Зберігаємо токен у localStorage
-    localStorage.setItem('accessToken', data.accessToken);
-
-    // Можна також зберегти користувача
-    localStorage.setItem('user', JSON.stringify(data.user));
-
-    router.push('/feed'); // або куди треба після логіну
+    await authStore.login(email.value, password.value)
+    router.push('/feed')
   } catch (err) {
-    console.error('Login failed:', err.response?.data || err.message);
-    console.log('LOGIN HIT', req.body);
-    alert(err.response?.data?.error || 'Login failed');
+    console.error('Login failed:', err.response?.data || err.message)
+    alert(err.response?.data?.error || 'Login failed')
   }
-};
+}
 </script>
+
+
 
 
 <style scoped>
