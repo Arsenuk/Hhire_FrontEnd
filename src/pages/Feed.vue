@@ -34,7 +34,9 @@
                             </v-avatar>
                             <span class="post-title">{{ post.title }}</span>
                         </div>
-                        <span class="post-type">{{ post.owner.role }}</span>
+                        <span class="post-type" :class="{ 'company-role': post.owner.role === 'company' }">
+                            {{ post.owner.role }}
+                        </span>
                     </v-card-title>
 
                     <!-- SUBTITLE -->
@@ -205,208 +207,208 @@ const confirmText = ref('')
 let confirmAction = null
 
 function showConfirm(title, text, action) {
-  confirmTitle.value = title
-  confirmText.value = text
-  confirmAction = action
-  confirmDialog.value = true
+    confirmTitle.value = title
+    confirmText.value = text
+    confirmAction = action
+    confirmDialog.value = true
 }
 
 function executeConfirmAction() {
-  if (confirmAction) confirmAction()
-  confirmDialog.value = false
+    if (confirmAction) confirmAction()
+    confirmDialog.value = false
 }
 
 // ================== LOAD POSTS ==================
 async function loadPosts() {
-  try {
-    const res = await api.get('/posts/feed')
-    const rawPosts = res.data.posts || res.data || []
+    try {
+        const res = await api.get('/posts/feed')
+        const rawPosts = res.data.posts || res.data || []
 
-    allPosts.value = rawPosts.map(post => {
-      const owner = post.owner || {}
-      return {
-        ...post,
-        comments: Array.isArray(post.comments)
-          ? post.comments.filter(c => c.status !== 'deleted')
-          : [],
-        owner: {
-          id: owner.id || (post.company_id || post.user_id),
-          name: owner.name || post.username || 'Unknown',
-          role: owner.role || (post.company_id ? 'company' : 'user'),
-          avatar: owner.avatar || null
-        }
-      }
-    })
+        allPosts.value = rawPosts.map(post => {
+            const owner = post.owner || {}
+            return {
+                ...post,
+                comments: Array.isArray(post.comments)
+                    ? post.comments.filter(c => c.status !== 'deleted')
+                    : [],
+                owner: {
+                    id: owner.id || (post.company_id || post.user_id),
+                    name: owner.name || post.username || 'Unknown',
+                    role: owner.role || (post.company_id ? 'company' : 'user'),
+                    avatar: owner.avatar || null
+                }
+            }
+        })
 
-    const tagsSet = new Set()
-    allPosts.value.forEach(p => p.tags?.forEach(t => tagsSet.add(t)))
-    allTags.value = Array.from(tagsSet)
+        const tagsSet = new Set()
+        allPosts.value.forEach(p => p.tags?.forEach(t => tagsSet.add(t)))
+        allTags.value = Array.from(tagsSet)
 
-    currentPage.value = 1
-    posts.value = allPosts.value.slice(0, pageSize)
-  } catch (err) {
-    console.error('Failed to load feed', err)
-  }
+        currentPage.value = 1
+        posts.value = allPosts.value.slice(0, pageSize)
+    } catch (err) {
+        console.error('Failed to load feed', err)
+    }
 }
 
 // --- LOAD MORE POSTS ---
 function loadMorePosts() {
-  const nextPage = currentPage.value + 1
-  posts.value = allPosts.value.slice(0, nextPage * pageSize)
-  currentPage.value = nextPage
+    const nextPage = currentPage.value + 1
+    posts.value = allPosts.value.slice(0, nextPage * pageSize)
+    currentPage.value = nextPage
 }
 
 // --- LOAD COMMENTS ---
 async function loadComments(post) {
-  try {
-    const res = await api.get(`/posts/${post.id}/comments`)
-    const comments = res.data.comments || []
-    post.comments = comments.filter(c => c.status !== 'deleted')
-  } catch (err) {
-    console.error('Failed to load comments', err)
-    post.comments = []
-  }
+    try {
+        const res = await api.get(`/posts/${post.id}/comments`)
+        const comments = res.data.comments || []
+        post.comments = comments.filter(c => c.status !== 'deleted')
+    } catch (err) {
+        console.error('Failed to load comments', err)
+        post.comments = []
+    }
 }
 
 // --- TOGGLE COMMENTS ---
 async function toggleComments(postId) {
-  const post = posts.value.find(p => p.id === postId)
-  if (!post) return
+    const post = posts.value.find(p => p.id === postId)
+    if (!post) return
 
-  if (expandedPosts.value.includes(postId)) {
-    expandedPosts.value = expandedPosts.value.filter(id => id !== postId)
-  } else {
-    expandedPosts.value.push(postId)
-    if (!post.comments || post.comments.length === 0) {
-      await loadComments(post)
+    if (expandedPosts.value.includes(postId)) {
+        expandedPosts.value = expandedPosts.value.filter(id => id !== postId)
+    } else {
+        expandedPosts.value.push(postId)
+        if (!post.comments || post.comments.length === 0) {
+            await loadComments(post)
+        }
     }
-  }
 }
 
 // --- FILTERS ---
 const filteredPosts = computed(() => {
-  if (selectedTags.value.length === 0) return posts.value
-  return posts.value.filter(post => post.tags?.some(tag => selectedTags.value.includes(tag)))
+    if (selectedTags.value.length === 0) return posts.value
+    return posts.value.filter(post => post.tags?.some(tag => selectedTags.value.includes(tag)))
 })
 
 function toggleTag(tag) {
-  if (selectedTags.value.includes(tag)) {
-    selectedTags.value = selectedTags.value.filter(t => t !== tag)
-  } else {
-    selectedTags.value.push(tag)
-  }
+    if (selectedTags.value.includes(tag)) {
+        selectedTags.value = selectedTags.value.filter(t => t !== tag)
+    } else {
+        selectedTags.value.push(tag)
+    }
 }
 
 function clearFilters() {
-  selectedTags.value = []
+    selectedTags.value = []
 }
 
 // --- SUGGESTED USERS ---
 async function loadSuggestedUsers() {
-  suggestedUsers.value = [
-    { id: 1, name: 'Alice', avatar: null },
-    { id: 2, name: 'Bob', avatar: null }
-  ]
+    suggestedUsers.value = [
+        { id: 1, name: 'Alice', avatar: null },
+        { id: 2, name: 'Bob', avatar: null }
+    ]
 }
 
 function sendContactRequest(userId) {
-  console.log('Send request to', userId)
+    console.log('Send request to', userId)
 }
 
 // ================= COMMENTS =================
 function isOwnComment(comment) {
-  return comment.user_id === currentUser.value?.id
+    return comment.user_id === currentUser.value?.id
 }
 
 function isEditingComment(commentId) {
-  return editingCommentId.value === commentId
+    return editingCommentId.value === commentId
 }
 
 // --- EDIT COMMENT ---
 function startEdit(comment) {
-  editingCommentId.value = comment.id
-  editContent.value[comment.id] = comment.content
+    editingCommentId.value = comment.id
+    editContent.value[comment.id] = comment.content
 }
 
 function confirmStartEdit(comment) {
-  showConfirm(
-    'Редагувати коментар?',
-    'Ви дійсно хочете редагувати цей коментар?',
-    () => startEdit(comment)
-  )
+    showConfirm(
+        'Редагувати коментар?',
+        'Ви дійсно хочете редагувати цей коментар?',
+        () => startEdit(comment)
+    )
 }
 
 function cancelEdit(commentId) {
-  editingCommentId.value = null
-  editContent.value[commentId] = ''
+    editingCommentId.value = null
+    editContent.value[commentId] = ''
 }
 
 async function saveEdit(comment, post) {
-  try {
-    const content = editContent.value[comment.id]
-    if (!content || !content.trim()) return
+    try {
+        const content = editContent.value[comment.id]
+        if (!content || !content.trim()) return
 
-    await api.put(`/posts/comments/${comment.id}`, { content })
-    comment.content = content
-    editingCommentId.value = null
-    editContent.value[comment.id] = ''
-  } catch (err) {
-    console.error('Failed to edit comment', err)
-  }
+        await api.put(`/posts/comments/${comment.id}`, { content })
+        comment.content = content
+        editingCommentId.value = null
+        editContent.value[comment.id] = ''
+    } catch (err) {
+        console.error('Failed to edit comment', err)
+    }
 }
 
 function confirmSaveEdit(comment, post) {
-  showConfirm(
-    'Зберегти зміни?',
-    'Ви дійсно хочете зберегти зміни в коментарі?',
-    () => saveEdit(comment, post)
-  )
+    showConfirm(
+        'Зберегти зміни?',
+        'Ви дійсно хочете зберегти зміни в коментарі?',
+        () => saveEdit(comment, post)
+    )
 }
 
 // --- DELETE COMMENT ---
 async function deleteComment(comment, post) {
-  try {
-    await api.delete(`/posts/comments/${comment.id}`)
-    post.comments = post.comments.filter(c => c.id !== comment.id)
-  } catch (err) {
-    console.error('Failed to delete comment', err)
-  }
+    try {
+        await api.delete(`/posts/comments/${comment.id}`)
+        post.comments = post.comments.filter(c => c.id !== comment.id)
+    } catch (err) {
+        console.error('Failed to delete comment', err)
+    }
 }
 
 function confirmDeleteComment(comment, post) {
-  showConfirm(
-    'Видалити коментар?',
-    'Ви дійсно хочете видалити цей коментар?',
-    () => deleteComment(comment, post)
-  )
+    showConfirm(
+        'Видалити коментар?',
+        'Ви дійсно хочете видалити цей коментар?',
+        () => deleteComment(comment, post)
+    )
 }
 
 // --- ADD COMMENT ---
 async function addComment(post) {
-  const content = newComment.value[post.id]
-  if (!content || !content.trim()) return
-  try {
-    const res = await api.post(`/posts/${post.id}/comments`, { content })
-    if (!post.comments) post.comments = []
-    post.comments.push(res.data.comment)
-    newComment.value[post.id] = ''
-  } catch (err) {
-    console.error('Failed to add comment', err)
-  }
+    const content = newComment.value[post.id]
+    if (!content || !content.trim()) return
+    try {
+        const res = await api.post(`/posts/${post.id}/comments`, { content })
+        if (!post.comments) post.comments = []
+        post.comments.push(res.data.comment)
+        newComment.value[post.id] = ''
+    } catch (err) {
+        console.error('Failed to add comment', err)
+    }
 }
 
 function confirmAddComment(post) {
-  showConfirm(
-    'Додати коментар?',
-    'Ви дійсно хочете додати цей коментар?',
-    () => addComment(post)
-  )
+    showConfirm(
+        'Додати коментар?',
+        'Ви дійсно хочете додати цей коментар?',
+        () => addComment(post)
+    )
 }
 
 // ================= MOUNT =================
 onMounted(() => {
-  loadPosts()
-  loadSuggestedUsers()
+    loadPosts()
+    loadSuggestedUsers()
 })
 </script>
 
@@ -494,7 +496,12 @@ onMounted(() => {
     font-size: 12px;
     padding: 4px 10px;
     border-radius: 999px;
-    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%); /* для звичайних користувачів */
+    color: #000;
+}
+
+.post-type.company-role {
+    background: linear-gradient(90deg, #fde68a 0%, #f59e0b 100%); /* для company */
     color: #000;
 }
 
