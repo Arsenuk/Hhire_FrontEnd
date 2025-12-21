@@ -71,9 +71,30 @@
                                         <v-img :src="getAvatarUrl(comment.user.avatar)"
                                             lazy-src="./assets/default-avatar.png" />
                                     </v-avatar>
-                                    <div class="ml-3">
-                                        <div class="comment-name">{{ comment.user.name }}</div>
-                                        <div class="comment-content">{{ comment.content }}</div>
+                                    <div class="ml-3 w-100">
+                                        <div class="d-flex justify-space-between align-center">
+                                            <div>
+                                                <span class="comment-name">{{ comment.user.name }}</span>
+                                                <span class="comment-content" v-if="!isEditingComment(comment.id)">{{
+                                                    comment.content }}</span>
+                                                <v-text-field v-else v-model="editContent[comment.id]" dense
+                                                    hide-details solo flat placeholder="Редагувати коментар..." />
+                                            </div>
+                                            <div v-if="isOwnComment(comment)">
+                                                <v-btn icon small @click="startEdit(comment)">
+                                                    <v-icon>mdi-pencil</v-icon>
+                                                </v-btn>
+                                                <v-btn icon small @click="deleteComment(comment, post)">
+                                                    <v-icon color="red">mdi-delete</v-icon>
+                                                </v-btn>
+                                            </div>
+                                        </div>
+                                        <div v-if="isEditingComment(comment.id)" class="mt-1">
+                                            <v-btn small text color="primary"
+                                                @click="saveEdit(comment, post)">Save</v-btn>
+                                            <v-btn small text color="secondary"
+                                                @click="cancelEdit(comment.id)">Cancel</v-btn>
+                                        </div>
                                     </div>
                                 </v-list-item>
 
@@ -81,6 +102,11 @@
                                     <v-list-item-title>No comments yet</v-list-item-title>
                                 </v-list-item>
                             </v-list>
+
+                            <!-- Додавання нового коментаря -->
+                            <v-text-field v-model="newComment[post.id]" label="Написати коментар..." dense outlined
+                                clearable class="mt-2" @keyup.enter="addComment(post)" />
+                            <v-btn small color="primary" class="mt-1" @click="addComment(post)">Post</v-btn>
                         </div>
                     </v-expand-transition>
                 </v-card>
@@ -122,7 +148,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/api.js'
+import { useAuthStore } from '@/stores/auth.js'
 
+// --- POSTS ---
 const allPosts = ref([])
 const posts = ref([])
 const expandedPosts = ref([])
@@ -130,57 +158,102 @@ const expandedPosts = ref([])
 const pageSize = 6
 const currentPage = ref(1)
 
-const allTags = ref([])          // всі унікальні теги
-const selectedTags = ref([])     // вибрані теги
+const allTags = ref([])
+const selectedTags = ref([])
 
+// --- Suggested users ---
 const suggestedUsers = ref([])
 
+// --- COMMENTS ---
+const newComment = ref({})
+const editContent = ref({})
+const editingCommentId = ref(null)
+
+// --- AUTH ---
+const authStore = useAuthStore()
+const currentUser = computed(() => authStore.user)
+
+// --- UTILS ---
 const getAvatarUrl = (avatar) => avatar ? `http://localhost:3000${avatar}` : './assets/default-avatar.png'
 const formatDate = (dateStr) => new Date(dateStr).toLocaleString()
 
+// ================== LOAD POSTS ==================
 async function loadPosts() {
-    try {
-        const res = await api.get('/posts/feed')
-        const rawPosts = res.data.posts || res.data || []
+  try {
+    const res = await api.get('/posts/feed')
+    const rawPosts = res.data.posts || res.data || []
 
-        allPosts.value = rawPosts.map(post => {
-            const owner = post.owner || {}
-            return {
-                ...post,
-                owner: {
-                    id: owner.id || (post.company_id || post.user_id),
-                    name: owner.name || post.username || 'Unknown',
-                    role: owner.role || (post.company_id ? 'company' : 'user'),
-                    avatar: owner.avatar || null
-                }
-            }
-        })
+    allPosts.value = rawPosts.map(post => {
+      const owner = post.owner || {}
 
-        // збираємо всі унікальні теги
-        const tagsSet = new Set()
-        allPosts.value.forEach(p => p.tags?.forEach(t => tagsSet.add(t)))
-        allTags.value = Array.from(tagsSet)
+      return {
+        ...post,
 
-        currentPage.value = 1
-        posts.value = allPosts.value.slice(0, pageSize)
-    } catch (err) {
-        console.error('Failed to load feed', err)
-    }
+        // фільтруємо видалені коментарі ТУТ
+        comments: Array.isArray(post.comments)
+          ? post.comments.filter(c => c.status !== 'deleted')
+          : [],
+
+        owner: {
+          id: owner.id || (post.company_id || post.user_id),
+          name: owner.name || post.username || 'Unknown',
+          role: owner.role || (post.company_id ? 'company' : 'user'),
+          avatar: owner.avatar || null
+        }
+      }
+    })
+
+    // --- tags ---
+    const tagsSet = new Set()
+    allPosts.value.forEach(p => p.tags?.forEach(t => tagsSet.add(t)))
+    allTags.value = Array.from(tagsSet)
+
+    currentPage.value = 1
+    posts.value = allPosts.value.slice(0, pageSize)
+
+  } catch (err) {
+    console.error('Failed to load feed', err)
+  }
 }
 
+
+// --- LOAD MORE POSTS ---
 function loadMorePosts() {
     const nextPage = currentPage.value + 1
     posts.value = allPosts.value.slice(0, nextPage * pageSize)
     currentPage.value = nextPage
 }
 
-function toggleComments(postId) {
-    expandedPosts.value = expandedPosts.value.includes(postId)
-        ? expandedPosts.value.filter(id => id !== postId)
-        : [...expandedPosts.value, postId]
+// --- LOAD COMMENTS ---
+async function loadComments(post) {
+  try {
+    const res = await api.get(`/posts/${post.id}/comments`)
+    const comments = res.data.comments || []
+    // Відфільтровуємо видалені
+    post.comments = comments.filter(c => c.status !== 'deleted')
+  } catch (err) {
+    console.error('Failed to load comments', err)
+    post.comments = []
+  }
 }
 
-// застосування фільтрів по тегах
+
+// --- TOGGLE COMMENTS ---
+async function toggleComments(postId) {
+  const post = posts.value.find(p => p.id === postId)
+  if (!post) return
+
+  if (expandedPosts.value.includes(postId)) {
+    expandedPosts.value = expandedPosts.value.filter(id => id !== postId)
+  } else {
+    expandedPosts.value.push(postId)
+    if (!post.comments || post.comments.length === 0) {
+      await loadComments(post)
+    }
+  }
+}
+
+// --- FILTERS ---
 const filteredPosts = computed(() => {
     if (selectedTags.value.length === 0) return posts.value
     return posts.value.filter(post => post.tags?.some(tag => selectedTags.value.includes(tag)))
@@ -198,6 +271,7 @@ function clearFilters() {
     selectedTags.value = []
 }
 
+// --- SUGGESTED USERS ---
 async function loadSuggestedUsers() {
     suggestedUsers.value = [
         { id: 1, name: 'Alice', avatar: null },
@@ -209,6 +283,62 @@ function sendContactRequest(userId) {
     console.log('Send request to', userId)
 }
 
+// ================= COMMENTS =================
+function isOwnComment(comment) {
+    return comment.user_id === currentUser.value?.id
+}
+
+function isEditingComment(commentId) {
+    return editingCommentId.value === commentId
+}
+
+function startEdit(comment) {
+    editingCommentId.value = comment.id
+    editContent.value[comment.id] = comment.content
+}
+
+function cancelEdit(commentId) {
+    editingCommentId.value = null
+    editContent.value[commentId] = ''
+}
+
+async function saveEdit(comment, post) {
+    try {
+        const content = editContent.value[comment.id]
+        if (!content || !content.trim()) return
+
+        await api.put(`/posts/comments/${comment.id}`, { content })
+        comment.content = content
+        editingCommentId.value = null
+        editContent.value[comment.id] = ''
+    } catch (err) {
+        console.error('Failed to edit comment', err)
+    }
+}
+
+async function deleteComment(comment, post) {
+    try {
+        await api.delete(`/posts/comments/${comment.id}`)
+        post.comments = post.comments.filter(c => c.id !== comment.id)
+    } catch (err) {
+        console.error('Failed to delete comment', err)
+    }
+}
+
+async function addComment(post) {
+    const content = newComment.value[post.id]
+    if (!content || !content.trim()) return
+    try {
+        const res = await api.post(`/posts/${post.id}/comments`, { content })
+        if (!post.comments) post.comments = []
+        post.comments.push(res.data.comment)
+        newComment.value[post.id] = ''
+    } catch (err) {
+        console.error('Failed to add comment', err)
+    }
+}
+
+// ================= MOUNT =================
 onMounted(() => {
     loadPosts()
     loadSuggestedUsers()
@@ -387,4 +517,3 @@ onMounted(() => {
     text-transform: none;
 }
 </style>
-
