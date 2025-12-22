@@ -18,7 +18,7 @@
         </v-col>
       </v-row>
 
-      <!-- Форма редагування -->
+      <!-- Форма редагування профілю -->
       <v-dialog v-model="editing" persistent max-width="600px">
         <v-card>
           <v-card-title>Edit Profile</v-card-title>
@@ -48,18 +48,33 @@
           </v-card>
         </v-col>
 
+        <!-- Useful Links з кнопками редагування та видалення -->
         <v-col cols="12" md="4">
           <v-card class="profile-card">
-            <v-card-title>Useful Links</v-card-title>
+            <v-card-title class="d-flex justify-space-between align-center">
+              Useful Links
+              <v-btn size="small" icon="mdi-plus" @click="openAddLink" />
+            </v-card-title>
+
             <v-card-text>
               <v-list dense>
-                <v-list-item v-for="link in links" :key="link.id">
+                <v-list-item
+                  v-for="link in links"
+                  :key="link.id"
+                  class="d-flex justify-space-between"
+                >
                   <v-list-item-title>
                     <a :href="link.url" target="_blank" rel="noopener noreferrer">
                       {{ link.description || link.url }}
                     </a>
                   </v-list-item-title>
+
+                  <template #append>
+                    <v-btn icon="mdi-pencil" size="x-small" @click="openEditLink(link)" />
+                    <v-btn icon="mdi-delete" size="x-small" @click="deleteLink(link.id)" />
+                  </template>
                 </v-list-item>
+
                 <v-list-item v-if="links.length === 0">
                   <v-list-item-title>User didn't provide information</v-list-item-title>
                 </v-list-item>
@@ -68,6 +83,33 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- Діалог додавання / редагування лінку -->
+      <v-dialog v-model="showLinkDialog" max-width="500">
+        <v-card>
+          <v-card-title>
+            {{ editingLink ? 'Edit Link' : 'Add Link' }}
+          </v-card-title>
+
+          <v-card-text>
+            <v-text-field
+              label="URL"
+              v-model="linkForm.url"
+              required
+            />
+            <v-text-field
+              label="Description"
+              v-model="linkForm.description"
+            />
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer />
+            <v-btn text @click="closeLinkDialog">Cancel</v-btn>
+            <v-btn color="primary" @click="saveLink">Save</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Нижній блок: Posts -->
       <v-row>
@@ -99,6 +141,7 @@
   </v-container>
 </template>
 
+
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -108,16 +151,18 @@ import { api } from '@/api/api.js'
 const router = useRouter()
 const authStore = useAuthStore()
 const user = computed(() => authStore.user)
+
+// Основні дані
 const links = ref([])
 const posts = ref([])
-const editing = ref(false)
 
+// Редагування профілю
+const editing = ref(false)
 const editForm = ref({
   name: '',
   description: '',
   avatarFile: null
 })
-
 const defaultAvatar = './assets/default-avatar.png'
 
 const getAvatarUrl = (avatar) => {
@@ -125,6 +170,16 @@ const getAvatarUrl = (avatar) => {
   return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
 }
 
+// CRUD User Links
+const editingLink = ref(null) // null або обʼєкт лінку
+const linkForm = ref({
+  url: '',
+  description: ''
+})
+
+const showLinkDialog = ref(false)
+
+// Завантаження профілю, лінків і постів
 async function loadProfile() {
   try {
     const [profileRes, linksRes, postsRes] = await Promise.all([
@@ -136,7 +191,7 @@ async function loadProfile() {
     links.value = linksRes.data
     posts.value = postsRes.data.posts
 
-    // оновлюємо форму редагування
+    // Заповнюємо форму редагування профілю
     editForm.value.name = profileRes.data.name
     editForm.value.description = profileRes.data.description
   } catch (err) {
@@ -145,19 +200,20 @@ async function loadProfile() {
   }
 }
 
+// Профіль: редагування та збереження
 function cancelEdit() {
   editing.value = false
 }
 
 async function saveProfile() {
   try {
-    // 1️⃣ Оновлюємо name та description через JSON
+    // Оновлення name та description
     await api.put('/users/profile', {
       name: editForm.value.name,
       description: editForm.value.description
     })
 
-    // 2️⃣ Якщо аватар обрано, оновлюємо через FormData на окремий POST
+    // Якщо обрано аватар, окремий POST
     if (editForm.value.avatarFile) {
       const avatarData = new FormData()
       avatarData.append('avatar', editForm.value.avatarFile)
@@ -174,6 +230,60 @@ async function saveProfile() {
   }
 }
 
+// User Links: методи
+function openAddLink() {
+  editingLink.value = null
+  linkForm.value = { url: '', description: '' }
+  showLinkDialog.value = true
+}
+
+function openEditLink(link) {
+  editingLink.value = link
+  linkForm.value = { url: link.url, description: link.description }
+  showLinkDialog.value = true
+}
+
+async function saveLink() {
+  try {
+    if (!linkForm.value.url) {
+      alert('URL is required')
+      return
+    }
+
+    if (editingLink.value) {
+      // Update
+      await api.put(`/user-links/${editingLink.value.id}`, linkForm.value)
+    } else {
+      // Create
+      await api.post('/user-links', linkForm.value)
+    }
+
+    // Оновлюємо список лінків
+    const res = await api.get('/user-links')
+    links.value = res.data
+    closeLinkDialog()
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.error || err.message || 'Failed to save link')
+  }
+}
+
+async function deleteLink(id) {
+  if (!confirm('Delete this link?')) return
+  try {
+    await api.delete(`/user-links/${id}`)
+    links.value = links.value.filter(l => l.id !== id)
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.error || err.message || 'Failed to delete link')
+  }
+}
+
+function closeLinkDialog() {
+  showLinkDialog.value = false
+}
+
+// onMounted: завантаження даних
 onMounted(() => {
   authStore.loadUserFromStorage()
   loadProfile()
@@ -181,46 +291,59 @@ onMounted(() => {
 </script>
 
 
+
 <style scoped>
+/* ===================== Загальний контейнер ===================== */
 .profile-page {
   margin-top: 60px;
   padding: 0 16px;
   padding-top: clamp(70px, 10vh, 100px);
+  font-family: 'Junge', serif;
+  color: #000;
 }
 
-/* Аватар */
+/* ===================== Аватар ===================== */
 .avatar-border {
   border: 2px solid #97e5ee;
   padding: 2px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Ім'я користувача */
+.v-avatar img {
+  object-fit: cover;
+}
+
+/* ===================== Ім'я користувача ===================== */
 .profile-name-col h1 {
-  font-family: 'Junge', serif;
   font-weight: 700;
   font-size: clamp(20px, 2.5vw, 28px);
-  color: #000;
   margin: 0;
 }
 
-/* Кнопка Logout */
+/* ===================== Кнопки ===================== */
+.edit-btn,
 .logout-btn {
   background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
   color: #000;
   font-weight: 500;
   text-transform: none;
   min-width: 120px;
+  transition: all 0.2s ease-in-out;
 }
 
-/* Картки */
+.edit-btn:hover,
+.logout-btn:hover {
+  opacity: 0.85;
+}
+
+/* ===================== Картки ===================== */
 .profile-card {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   padding: 16px;
 }
 
-/* Списки посилань і постів */
+/* ===================== Списки ===================== */
 v-list-item a {
   color: #00796b;
   text-decoration: none;
@@ -230,15 +353,26 @@ v-list-item a:hover {
   text-decoration: underline;
 }
 
-.edit-btn {
-  background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
-  color: #000;
-  font-weight: 500;
-  text-transform: none;
-  min-width: 120px;
+/* Кнопки у списках */
+.v-list-item .v-btn {
+  margin-left: 4px;
 }
 
-/* Мобільна адаптивність */
+/* ===================== Діалоги ===================== */
+.v-dialog .v-card {
+  border-radius: 12px;
+}
+
+.v-dialog .v-card-title {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.v-dialog .v-btn {
+  min-width: 80px;
+}
+
+/* ===================== Мобільна адаптивність ===================== */
 @media (max-width: 768px) {
   .profile-header {
     flex-direction: column;
@@ -254,4 +388,28 @@ v-list-item a:hover {
     width: 100%;
   }
 }
+
+/* ===================== Секція Useful Links ===================== */
+.profile-card .v-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-card .v-list-item-title a {
+  word-break: break-all;
+  font-weight: 500;
+}
+
+/* ===================== Додаткові дрібні стилі ===================== */
+.v-text-field,
+.v-textarea,
+.v-file-input {
+  margin-bottom: 12px;
+}
+
+.v-card-actions {
+  justify-content: flex-end;
+}
 </style>
+
