@@ -52,6 +52,12 @@
                 </div>
 
                 <v-btn class="next-btn mt-6" block @click="nextStep">Next →</v-btn>
+
+                <p class="text-center mt-4">
+                  Already have an account?
+                  <RouterLink to="/login" class="login-link">Log In</RouterLink>
+                </p>
+
               </div>
 
               <!-- Step 2: Profile Information -->
@@ -533,5 +539,16 @@ const submitForm = async () => {
   .step-label {
     font-size: 11px;
   }
+}
+
+.login-link {
+  color: #3ce18c;
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.login-link:hover {
+  text-decoration: underline;
 }
 </style>
