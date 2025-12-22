@@ -85,6 +85,7 @@ import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { api } from '@/api/api.js'
+import defaultAvatar from '@/assets/default-avatar.png'
 
 const route = useRoute()
 const router = useRouter()
@@ -93,7 +94,10 @@ const authStore = useAuthStore()
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 const user = computed(() => authStore.user)
 
-const getAvatarUrl = (avatar) => avatar ? `http://localhost:3000/${avatar}` : '/default-avatar.png'
+const getAvatarUrl = (avatar) => {
+  if (!avatar) return defaultAvatar
+  return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
+}
 
 const searchQuery = ref('')
 const notifications = ref([

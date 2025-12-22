@@ -1,15 +1,11 @@
 <template>
   <v-container fluid class="profile-page">
     <template v-if="user">
-      <!-- Верхній блок: аватар + ім'я + кнопка Logout -->
+      <!-- Верхній блок: аватар + ім'я + кнопка Edit Profile -->
       <v-row class="profile-header mb-6" align="center" justify="space-between">
         <v-col cols="12" md="2" class="text-center">
           <v-avatar size="120" class="avatar-border">
-            <v-img
-              :src="getAvatarUrl(user.avatar)"
-              lazy-src="./assets/defaultAvatar"
-              :alt="user.name || 'Avatar'"
-            />
+            <v-img :src="getAvatarUrl(user.avatar)" lazy-src="./assets/defaultAvatar" :alt="user.name || 'Avatar'" />
           </v-avatar>
         </v-col>
 
@@ -18,9 +14,28 @@
         </v-col>
 
         <v-col cols="12" md="2" class="text-center text-md-right">
-          <v-btn class="logout-btn" @click="logout">Logout</v-btn>
+          <v-btn class="edit-btn" @click="editing = true">Edit Profile</v-btn>
         </v-col>
       </v-row>
+
+      <!-- Форма редагування -->
+      <v-dialog v-model="editing" persistent max-width="600px">
+        <v-card>
+          <v-card-title>Edit Profile</v-card-title>
+          <v-card-text>
+            <v-form ref="form" @submit.prevent="saveProfile">
+              <v-text-field v-model="editForm.name" label="Name" :rules="[v => !!v || 'Name is required']" />
+              <v-textarea v-model="editForm.description" label="Description" />
+              <v-file-input label="Change Avatar" accept="image/*" v-model="editForm.avatarFile" />
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="cancelEdit">Cancel</v-btn>
+            <v-btn color="primary" @click="saveProfile">Save</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Середній блок: Description та Useful Links -->
       <v-row class="mb-6">
@@ -95,6 +110,14 @@ const authStore = useAuthStore()
 const user = computed(() => authStore.user)
 const links = ref([])
 const posts = ref([])
+const editing = ref(false)
+
+const editForm = ref({
+  name: '',
+  description: '',
+  avatarFile: null
+})
+
 const defaultAvatar = './assets/default-avatar.png'
 
 const getAvatarUrl = (avatar) => {
@@ -112,21 +135,42 @@ async function loadProfile() {
     authStore.user = profileRes.data
     links.value = linksRes.data
     posts.value = postsRes.data.posts
+
+    // оновлюємо форму редагування
+    editForm.value.name = profileRes.data.name
+    editForm.value.description = profileRes.data.description
   } catch (err) {
     console.error(err)
     alert(err.response?.data?.error || err.message || 'Failed to load profile')
   }
 }
 
-async function logout() {
+function cancelEdit() {
+  editing.value = false
+}
+
+async function saveProfile() {
   try {
-    await api.post('/auth/logout')
-  } finally {
-    authStore.user = null
-    authStore.accessToken = null
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('user')
-    router.push('/')
+    // 1️⃣ Оновлюємо name та description через JSON
+    await api.put('/users/profile', {
+      name: editForm.value.name,
+      description: editForm.value.description
+    })
+
+    // 2️⃣ Якщо аватар обрано, оновлюємо через FormData на окремий POST
+    if (editForm.value.avatarFile) {
+      const avatarData = new FormData()
+      avatarData.append('avatar', editForm.value.avatarFile)
+      await api.post('/users/me/avatar', avatarData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+    }
+
+    editing.value = false
+    await loadProfile()
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.error || err.message || 'Failed to update profile')
   }
 }
 
@@ -135,6 +179,7 @@ onMounted(() => {
   loadProfile()
 })
 </script>
+
 
 <style scoped>
 .profile-page {
@@ -171,7 +216,7 @@ onMounted(() => {
 /* Картки */
 .profile-card {
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   padding: 16px;
 }
 
@@ -185,6 +230,14 @@ v-list-item a:hover {
   text-decoration: underline;
 }
 
+.edit-btn {
+  background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
+  color: #000;
+  font-weight: 500;
+  text-transform: none;
+  min-width: 120px;
+}
+
 /* Мобільна адаптивність */
 @media (max-width: 768px) {
   .profile-header {
@@ -192,9 +245,11 @@ v-list-item a:hover {
     align-items: center;
     gap: 12px;
   }
+
   .profile-name-col {
     text-align: center;
   }
+
   .logout-btn {
     width: 100%;
   }
