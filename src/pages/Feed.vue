@@ -317,7 +317,10 @@ function sendContactRequest(userId) {
 
 // ================= COMMENTS =================
 function isOwnComment(comment) {
-    return comment.user_id === currentUser.value?.id
+    // Якщо є comment.user_id — використовуємо його (старі коментарі)
+    // Інакше беремо comment.user.id (нові коментарі)
+    const commentUserId = comment.user_id ?? comment.user?.id
+    return commentUserId === currentUser.value?.id
 }
 
 function isEditingComment(commentId) {
@@ -389,13 +392,32 @@ async function addComment(post) {
     if (!content || !content.trim()) return
     try {
         const res = await api.post(`/posts/${post.id}/comments`, { content })
+        const comment = res.data.comment
+
+        // Додаємо вкладений user
+        const normalizedComment = {
+            ...comment,
+            user: {
+                id: currentUser.value.id,
+                name: currentUser.value.name,
+                avatar: currentUser.value.avatar || null
+            }
+        }
+
         if (!post.comments) post.comments = []
-        post.comments.push(res.data.comment)
+        post.comments.push(normalizedComment)
         newComment.value[post.id] = ''
+
+        // Автоматично відкриваємо секцію коментарів
+        if (!expandedPosts.value.includes(post.id)) {
+            expandedPosts.value.push(post.id)
+        }
     } catch (err) {
         console.error('Failed to add comment', err)
     }
 }
+
+
 
 function confirmAddComment(post) {
     showConfirm(
