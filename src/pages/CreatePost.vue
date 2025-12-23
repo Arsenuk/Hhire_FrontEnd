@@ -5,92 +5,71 @@
         <v-card class="form-card pa-8" elevation="8">
           <h2 class="form-title text-center">Create a Post</h2>
           <p class="form-subtitle text-center mb-6">
-            Share your thoughts or write a company review
+            Share your thoughts with the community
           </p>
 
-          <!-- 🔥 Post type switch -->
-          <div class="post-type-switch mb-6">
-            <v-btn
-              :class="postType === 'social' ? 'selected-type' : 'unselected-type'"
-              @click="postType = 'social'"
-            >
-              Social Post
-            </v-btn>
-
-            <v-btn
-              :class="postType === 'review' ? 'selected-type review' : 'unselected-type'"
-              @click="postType = 'review'"
-            >
-              Company Review
-            </v-btn>
-          </div>
-
-          <!-- FORM -->
           <form @submit.prevent="submitPost">
-            <!-- Company select (review only) -->
-            <div v-if="postType === 'review'" class="mb-5">
-              <p class="form-label">Company</p>
-              <div class="custom-input">
-                <v-icon size="20" color="#97e5ee" class="input-icon">
-                  mdi-domain
-                </v-icon>
-                <select v-model="company" class="input-field">
-                  <option value="">Select company</option>
-                  <option v-for="c in companies" :key="c" :value="c">
-                    {{ c }}
-                  </option>
-                </select>
-              </div>
+            <!-- TITLE -->
+            <div class="mb-5">
+              <p class="form-label">Title</p>
+              <input v-model="title" class="input-field" placeholder="Post title" required />
             </div>
 
-            <!-- Rating (review only) -->
-            <div v-if="postType === 'review'" class="mb-5">
-              <p class="form-label">Rating</p>
-              <div class="rating-row">
-                <v-icon
-                  v-for="star in 5"
-                  :key="star"
-                  size="28"
-                  class="star"
-                  :color="star <= rating ? '#f59e0b' : '#ddd'"
-                  @click="rating = star"
-                >
-                  mdi-star
-                </v-icon>
-                <span v-if="rating" class="rating-text">
-                  {{ rating }} / 5
-                </span>
-              </div>
-            </div>
-
-            <!-- Content -->
+            <!-- CONTENT -->
             <div class="mb-6">
-              <p class="form-label">
-                {{ postType === 'review' ? 'Your review' : 'What’s on your mind?' }}
-              </p>
-              <textarea
-                v-model="content"
-                rows="6"
-                class="textarea"
-                placeholder="Write something..."
-                required
-              ></textarea>
+              <p class="form-label">Content</p>
+              <textarea v-model="content" rows="6" class="textarea" placeholder="Write your post..."
+                required></textarea>
               <div class="char-count">
                 {{ content.length }} characters
               </div>
             </div>
 
-            <!-- Actions -->
+            <!-- TAGS (simple) -->
+            <div class="mb-6">
+              <p class="form-label">Tags</p>
+              <input v-model="rawTags" class="input-field" placeholder="e.g. startup, tech, review" />
+              <div class="char-count">
+                Up to 10 tags, separated by commas
+              </div>
+            </div>
+
+            <!-- ACTIONS -->
             <div class="actions">
               <v-btn variant="outlined" @click="cancel">
                 Cancel
               </v-btn>
 
-              <v-btn class="submit-btn" type="submit">
+              <v-btn class="submit-btn" type="button" @click="openConfirm">
                 Publish
               </v-btn>
+
             </div>
           </form>
+
+          <!-- CONFIRM DIALOG -->
+          <v-dialog v-model="showConfirm" max-width="420">
+            <v-card>
+              <v-card-title class="text-h6">
+                Confirm publication
+              </v-card-title>
+
+              <v-card-text>
+                Are you sure you want to publish this post?
+              </v-card-text>
+
+              <v-card-actions>
+                <v-spacer />
+                <v-btn variant="text" @click="showConfirm = false">
+                  Cancel
+                </v-btn>
+                <v-btn class="submit-btn" :loading="submitting" @click="confirmSubmit">
+                  Publish
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
         </v-card>
       </v-col>
     </v-row>
@@ -100,34 +79,58 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { api } from '@/api/api.js'
 
 const router = useRouter()
 
-const postType = ref('social')
+// form data
+const title = ref('')
 const content = ref('')
-const company = ref('')
-const rating = ref(0)
+const rawTags = ref('')
 
-// mock, потім заміниш API
-const companies = [
-  'TechCorp Solutions',
-  'GreenLeaf Industries',
-  'CloudServe Pro'
-]
+const showConfirm = ref(false)
+const submitting = ref(false)
 
-const submitPost = () => {
-  console.log({
-    type: postType.value,
-    content: content.value,
-    company: company.value,
-    rating: rating.value
-  })
 
-  router.push('/Feed')
+// ---- SUBMIT POST ----
+const submitPost = async () => {
+  if (submitting.value) return
+  submitting.value = true
+
+  try {
+    const tags = rawTags.value
+      .split(',')
+      .map(t => t.trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, 10)
+
+    await api.post('/posts', {
+      title: title.value,
+      content: content.value,
+      tags
+    })
+
+    router.push('/feed')
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.error || 'Failed to create post')
+  } finally {
+    submitting.value = false
+  }
+}
+
+
+const openConfirm = () => {
+  showConfirm.value = true
+}
+
+const confirmSubmit = async () => {
+  showConfirm.value = false
+  await submitPost()
 }
 
 const cancel = () => {
-  router.push('/Feed')
+  router.push('/feed')
 }
 </script>
 
@@ -145,11 +148,11 @@ const cancel = () => {
 
 .form-card {
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   border-radius: 16px;
 }
 
-/* Title */
+/* Titles */
 .form-title {
   font-family: 'Junge', serif;
   font-size: 26px;
@@ -162,82 +165,21 @@ const cancel = () => {
   color: #555;
 }
 
-/* Post type buttons */
-.post-type-switch {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.post-type-switch .v-btn {
-  width: 100%;
-  height: 56px;
-  text-transform: none;
-  font-family: 'Junge', serif;
-}
-
-.selected-type {
-  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
-  color: #000;
-  font-weight: 600;
-}
-
-.selected-type.review {
-  background: linear-gradient(90deg, #fde68a 0%, #f59e0b 100%);
-}
-
-.unselected-type {
-  border: 1px solid #ddd;
-  background: #fff;
-}
-
 /* Inputs */
 .form-label {
   font-family: 'Junge', serif;
   font-size: 14px;
   margin-bottom: 6px;
-  padding-left: 10px;
-}
-
-.custom-input {
-  display: flex;
-  align-items: center;
-  border: 1px solid #ddd;
-  border-radius: 12px;
-  padding: 12px 16px;
-  background: #fff;
-}
-
-.input-icon {
-  margin-right: 12px;
 }
 
 .input-field {
-  border: none;
-  outline: none;
-  flex: 1;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 12px 14px;
   font-family: 'Junge', serif;
-  font-size: 15px;
 }
 
-/* Rating */
-.rating-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.star {
-  cursor: pointer;
-}
-
-.rating-text {
-  margin-left: 8px;
-  font-size: 14px;
-  color: #555;
-}
-
-/* Textarea */
 .textarea {
   width: 100%;
   border: 1px solid #ddd;
