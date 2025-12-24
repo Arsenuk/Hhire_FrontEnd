@@ -6,10 +6,7 @@
       <v-row class="profile-header mb-6" align="center" justify="space-between">
         <v-col cols="12" md="2" class="text-center">
           <v-avatar size="120" class="avatar-border">
-            <v-img
-              :src="getAvatarUrl(user.avatar)"
-              :alt="user.name || 'Avatar'"
-            />
+            <v-img :src="getAvatarUrl(user.avatar)" :alt="user.name || 'Avatar'" />
           </v-avatar>
         </v-col>
 
@@ -23,6 +20,25 @@
           </v-btn>
         </v-col>
       </v-row>
+
+      <!-- Діалог редагування профілю -->
+      <v-dialog v-model="editing" persistent max-width="600px">
+        <v-card>
+          <v-card-title>Edit Profile</v-card-title>
+          <v-card-text>
+            <v-form ref="form" @submit.prevent="saveProfile">
+              <v-text-field v-model="editForm.name" label="Name" :rules="[v => !!v || 'Name is required']" />
+              <v-textarea v-model="editForm.description" label="Description" />
+              <v-file-input label="Change Avatar" accept="image/*" v-model="editForm.avatarFile" />
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn text @click="cancelEdit">Cancel</v-btn>
+            <v-btn color="primary" @click="saveProfile">Save</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- ================= DESCRIPTION + LINKS ================= -->
       <v-row class="mb-6">
@@ -44,11 +60,7 @@
 
             <v-card-text>
               <v-list dense>
-                <v-list-item
-                  v-for="link in links"
-                  :key="link.id"
-                  class="d-flex justify-space-between"
-                >
+                <v-list-item v-for="link in links" :key="link.id" class="d-flex justify-space-between">
                   <v-list-item-title>
                     <a :href="link.url" target="_blank">
                       {{ link.description || link.url }}
@@ -56,9 +68,14 @@
                   </v-list-item-title>
 
                   <template #append>
-                    <v-btn icon="mdi-pencil" size="x-small" @click="openEditLink(link)" />
-                    <v-btn icon="mdi-delete" size="x-small" @click="deleteLink(link.id)" />
+                    <v-btn icon small @click="openEditLink(link)">
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn icon small @click="deleteLink(link.id)">
+                      <v-icon color="red">mdi-delete</v-icon>
+                    </v-btn>
                   </template>
+
                 </v-list-item>
 
                 <v-list-item v-if="links.length === 0">
@@ -70,6 +87,28 @@
         </v-col>
       </v-row>
 
+      <!-- Діалог додавання / редагування лінку -->
+      <v-dialog v-model="showLinkDialog" persistent max-width="500px">
+        <v-card>
+          <v-card-title>
+            {{ editingLink ? 'Edit Link' : 'Add Link' }}
+          </v-card-title>
+
+          <v-card-text>
+            <v-form ref="linkFormRef" @submit.prevent="saveLink">
+              <v-text-field label="URL" v-model="linkForm.url" required />
+              <v-text-field label="Description" v-model="linkForm.description" />
+            </v-form>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer />
+            <v-btn text @click="closeLinkDialog">Cancel</v-btn>
+            <v-btn color="primary" @click="saveLink">Save</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- ================= POSTS ================= -->
       <v-row>
         <v-col cols="12">
@@ -78,21 +117,14 @@
 
             <v-card-text>
               <v-row>
-                <v-col
-                  v-for="post in posts"
-                  :key="post.id"
-                  cols="12"
-                  md="6"
-                >
+                <v-col v-for="post in posts" :key="post.id" cols="12" md="6">
                   <v-card class="post-card mb-4">
 
                     <!-- ===== POST HEADER (avatar + name) ===== -->
                     <v-card-title class="post-header">
                       <div class="post-user">
                         <v-avatar size="36">
-                          <v-img
-                            :src="getAvatarUrl(post.owner?.avatar)"
-                          />
+                          <v-img :src="getAvatarUrl(post.owner?.avatar)" />
                         </v-avatar>
 
                         <div class="post-user-info">
@@ -105,10 +137,7 @@
                         </div>
                       </div>
 
-                      <div
-                        v-if="isOwnPost(post)"
-                        class="post-actions"
-                      >
+                      <div v-if="isOwnPost(post)" class="post-actions">
                         <v-btn icon size="x-small" @click="startEditPost(post)">
                           <v-icon>mdi-pencil</v-icon>
                         </v-btn>
@@ -125,14 +154,8 @@
 
                       <!-- TAGS -->
                       <div class="post-tags" v-if="post.tags?.length">
-                        <v-chip
-                          v-for="tag in post.tags"
-                          :key="tag"
-                          size="small"
-                          variant="outlined"
-                          color="teal"
-                          class="ma-1"
-                        >
+                        <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined" color="teal"
+                          class="ma-1">
                           #{{ tag }}
                         </v-chip>
                       </div>
@@ -148,6 +171,26 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- Діалог додавання/редагування лінку -->
+      <v-dialog v-model="editingPostDialog" persistent max-width="600px">
+        <v-card>
+          <v-card-title>Edit Post</v-card-title>
+          <v-card-text>
+            <v-form ref="postForm" @submit.prevent="savePost">
+              <v-text-field v-model="editPostForm.title" label="Title" required />
+              <v-textarea v-model="editPostForm.content" label="Content" required />
+              <v-combobox v-model="editPostForm.tags" label="Tags" multiple small-chips deletable-chips hide-selected
+                clearable />
+            </v-form>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn text @click="cancelEditPost">Cancel</v-btn>
+            <v-btn color="primary" @click="savePost">Save</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
     </template>
 
@@ -527,4 +570,3 @@ a:hover {
   }
 }
 </style>
-
