@@ -1,11 +1,15 @@
 <template>
   <v-container fluid class="profile-page">
     <template v-if="user">
-      <!-- Верхній блок: аватар + ім'я + кнопка Edit Profile -->
+
+      <!-- ================= HEADER ================= -->
       <v-row class="profile-header mb-6" align="center" justify="space-between">
         <v-col cols="12" md="2" class="text-center">
           <v-avatar size="120" class="avatar-border">
-            <v-img :src="getAvatarUrl(user.avatar)" lazy-src="./assets/defaultAvatar" :alt="user.name || 'Avatar'" />
+            <v-img
+              :src="getAvatarUrl(user.avatar)"
+              :alt="user.name || 'Avatar'"
+            />
           </v-avatar>
         </v-col>
 
@@ -14,30 +18,13 @@
         </v-col>
 
         <v-col cols="12" md="2" class="text-center text-md-right">
-          <v-btn class="edit-btn" @click="editing = true">Edit Profile</v-btn>
+          <v-btn class="edit-btn" @click="editing = true">
+            Edit Profile
+          </v-btn>
         </v-col>
       </v-row>
 
-      <!-- Форма редагування профілю -->
-      <v-dialog v-model="editing" persistent max-width="600px">
-        <v-card>
-          <v-card-title>Edit Profile</v-card-title>
-          <v-card-text>
-            <v-form ref="form" @submit.prevent="saveProfile">
-              <v-text-field v-model="editForm.name" label="Name" :rules="[v => !!v || 'Name is required']" />
-              <v-textarea v-model="editForm.description" label="Description" />
-              <v-file-input label="Change Avatar" accept="image/*" v-model="editForm.avatarFile" />
-            </v-form>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="cancelEdit">Cancel</v-btn>
-            <v-btn color="primary" @click="saveProfile">Save</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <!-- Середній блок: Description та Useful Links -->
+      <!-- ================= DESCRIPTION + LINKS ================= -->
       <v-row class="mb-6">
         <v-col cols="12" md="8">
           <v-card class="profile-card">
@@ -48,7 +35,6 @@
           </v-card>
         </v-col>
 
-        <!-- Useful Links з кнопками редагування та видалення -->
         <v-col cols="12" md="4">
           <v-card class="profile-card">
             <v-card-title class="d-flex justify-space-between align-center">
@@ -64,7 +50,7 @@
                   class="d-flex justify-space-between"
                 >
                   <v-list-item-title>
-                    <a :href="link.url" target="_blank" rel="noopener noreferrer">
+                    <a :href="link.url" target="_blank">
                       {{ link.description || link.url }}
                     </a>
                   </v-list-item-title>
@@ -84,62 +70,94 @@
         </v-col>
       </v-row>
 
-      <!-- Діалог додавання / редагування лінку -->
-      <v-dialog v-model="showLinkDialog" max-width="500">
-        <v-card>
-          <v-card-title>
-            {{ editingLink ? 'Edit Link' : 'Add Link' }}
-          </v-card-title>
-
-          <v-card-text>
-            <v-text-field
-              label="URL"
-              v-model="linkForm.url"
-              required
-            />
-            <v-text-field
-              label="Description"
-              v-model="linkForm.description"
-            />
-          </v-card-text>
-
-          <v-card-actions>
-            <v-spacer />
-            <v-btn text @click="closeLinkDialog">Cancel</v-btn>
-            <v-btn color="primary" @click="saveLink">Save</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-
-      <!-- Нижній блок: Posts -->
+      <!-- ================= POSTS ================= -->
       <v-row>
         <v-col cols="12">
           <v-card class="profile-card">
             <v-card-title>Posts</v-card-title>
+
             <v-card-text>
-              <v-list dense>
-                <v-list-item v-for="post in posts" :key="post.id">
-                  <v-list-item-title>{{ post.title }}</v-list-item-title>
-                  <v-list-item-subtitle>{{ post.content }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item v-if="posts.length === 0">
-                  <v-list-item-title>User didn't provide information</v-list-item-title>
-                </v-list-item>
-              </v-list>
+              <v-row>
+                <v-col
+                  v-for="post in posts"
+                  :key="post.id"
+                  cols="12"
+                  md="6"
+                >
+                  <v-card class="post-card mb-4">
+
+                    <!-- ===== POST HEADER (avatar + name) ===== -->
+                    <v-card-title class="post-header">
+                      <div class="post-user">
+                        <v-avatar size="36">
+                          <v-img
+                            :src="getAvatarUrl(post.owner?.avatar)"
+                          />
+                        </v-avatar>
+
+                        <div class="post-user-info">
+                          <div class="post-username">
+                            {{ post.owner?.name || 'Unknown user' }}
+                          </div>
+                          <div class="post-meta">
+                            {{ formatDate(post.created_at) }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div
+                        v-if="isOwnPost(post)"
+                        class="post-actions"
+                      >
+                        <v-btn icon size="x-small" @click="startEditPost(post)">
+                          <v-icon>mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn icon size="x-small" @click="confirmDeletePost(post)">
+                          <v-icon color="red">mdi-delete</v-icon>
+                        </v-btn>
+                      </div>
+                    </v-card-title>
+
+                    <!-- ===== POST BODY ===== -->
+                    <v-card-text>
+                      <h4 class="mb-2">{{ post.title }}</h4>
+                      <p>{{ post.content }}</p>
+
+                      <!-- TAGS -->
+                      <div class="post-tags" v-if="post.tags?.length">
+                        <v-chip
+                          v-for="tag in post.tags"
+                          :key="tag"
+                          size="small"
+                          variant="outlined"
+                          color="teal"
+                          class="ma-1"
+                        >
+                          #{{ tag }}
+                        </v-chip>
+                      </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+
+                <v-col v-if="posts.length === 0" cols="12">
+                  <v-card-text>User didn't provide posts</v-card-text>
+                </v-col>
+              </v-row>
             </v-card-text>
           </v-card>
         </v-col>
       </v-row>
+
     </template>
 
-    <!-- Loader -->
+    <!-- ================= LOADER ================= -->
     <v-row v-else justify="center" align="center" class="fill-height">
-      <v-col cols="12" class="text-center">
-        <v-progress-circular indeterminate color="primary" size="50"></v-progress-circular>
-      </v-col>
+      <v-progress-circular indeterminate color="primary" size="50" />
     </v-row>
   </v-container>
 </template>
+
 
 
 <script setup>
@@ -283,6 +301,66 @@ function closeLinkDialog() {
   showLinkDialog.value = false
 }
 
+// Posts edit
+const editingPostDialog = ref(false)
+const editPostForm = ref({ id: null, title: '', content: '', tags: [] })
+
+function isOwnPost(post) {
+  return post.user_id === user.value?.id
+}
+
+
+function startEditPost(post) {
+  editingPostDialog.value = true
+  editPostForm.value = {
+    id: post.id,
+    title: post.title,
+    content: post.content,
+    tags: [...post.tags] // <-- string[]
+  }
+}
+
+
+function cancelEditPost() {
+  editingPostDialog.value = false
+  editPostForm.value = { id: null, title: '', content: '' }
+}
+
+async function savePost() {
+  try {
+    const { id, title, content, tags } = editPostForm.value
+    await api.put(`/posts/${id}`, { title, content })
+
+    const index = posts.value.findIndex(p => p.id === id)
+    if (index !== -1) {
+      posts.value[index].title = title
+      posts.value[index].content = content
+      posts.value[index].tags = tags.map(name => ({ id: name, name })) // адаптувати під апі
+    }
+
+    cancelEditPost()
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.error || 'Failed to save post')
+  }
+}
+
+async function confirmDeletePost(post) {
+  if (!confirm('Delete this post?')) return
+  try {
+    await api.delete(`/posts/${post.id}`)
+    posts.value = posts.value.filter(p => p.id !== post.id)
+  } catch (err) {
+    console.error(err)
+    alert(err.response?.data?.error || 'Failed to delete post')
+  }
+}
+
+// Допоміжна функція для форматування дати
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleString()
+}
+
 // onMounted: завантаження даних
 onMounted(() => {
   authStore.loadUserFromStorage()
@@ -293,123 +371,160 @@ onMounted(() => {
 
 
 <style scoped>
-/* ===================== Загальний контейнер ===================== */
+/* ================= PAGE ================= */
 .profile-page {
-  margin-top: 60px;
-  padding: 0 16px;
-  padding-top: clamp(70px, 10vh, 100px);
-  font-family: 'Junge', serif;
-  color: #000;
+  /* background: #0f172a; */
+  background-color: #f9f9f9;
+  min-height: 100vh;
+  padding: clamp(80px, 10vh, 120px) 16px 16px;
+  color: #e5e7eb;
 }
 
-/* ===================== Аватар ===================== */
+/* ================= HEADER ================= */
+.profile-header {
+  background: linear-gradient(135deg, #baf2b3, #7b91f2cc);
+  border-radius: 18px;
+  padding: 24px;
+}
+
 .avatar-border {
-  border: 2px solid #97e5ee;
-  padding: 2px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  border: 3px solid #14b8a6;
 }
 
-.v-avatar img {
-  object-fit: cover;
-}
-
-/* ===================== Ім'я користувача ===================== */
 .profile-name-col h1 {
+  font-size: 28px;
   font-weight: 700;
-  font-size: clamp(20px, 2.5vw, 28px);
-  margin: 0;
 }
 
-/* ===================== Кнопки ===================== */
-.edit-btn,
-.logout-btn {
-  background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
-  color: #000;
-  font-weight: 500;
-  text-transform: none;
-  min-width: 120px;
-  transition: all 0.2s ease-in-out;
-}
-
-.edit-btn:hover,
-.logout-btn:hover {
-  opacity: 0.85;
-}
-
-/* ===================== Картки ===================== */
-.profile-card {
+/* ================= BUTTON ================= */
+.edit-btn {
+  background: #14b8a6;
+  color: #020617;
+  font-weight: 600;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  padding: 16px;
 }
 
-/* ===================== Списки ===================== */
-v-list-item a {
-  color: #00796b;
+/* ================= CARDS ================= */
+.profile-card {
+  /* background: #020617; */
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+/* ================= LINKS ================= */
+a {
+  color: #5eead4;
   text-decoration: none;
 }
 
-v-list-item a:hover {
+a:hover {
   text-decoration: underline;
 }
 
-/* Кнопки у списках */
-.v-list-item .v-btn {
-  margin-left: 4px;
+/* ================= POSTS ================= */
+.post-card {
+  /* background: #020617; */
+  border-radius: 18px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* ===================== Діалоги ===================== */
-.v-dialog .v-card {
-  border-radius: 12px;
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.55);
 }
 
-.v-dialog .v-card-title {
-  font-weight: 600;
-  font-size: 18px;
-}
-
-.v-dialog .v-btn {
-  min-width: 80px;
-}
-
-/* ===================== Мобільна адаптивність ===================== */
-@media (max-width: 768px) {
-  .profile-header {
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .profile-name-col {
-    text-align: center;
-  }
-
-  .logout-btn {
-    width: 100%;
-  }
-}
-
-/* ===================== Секція Useful Links ===================== */
-.profile-card .v-list-item {
+/* ===== POST HEADER ===== */
+.post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 12px;
 }
 
-.profile-card .v-list-item-title a {
-  word-break: break-all;
+.post-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.post-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-username {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.post-meta {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.post-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* ===== POST BODY ===== */
+.post-card h4 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.post-card p {
+  font-size: 14px;
+  color: #cbd5f5;
+  line-height: 1.6;
+}
+
+/* ================= TAGS ================= */
+.post-tags {
+  margin-top: 12px;
+}
+
+.post-tags .v-chip {
+  background: rgba(20, 184, 166, 0.12);
+  border-color: #14b8a6;
+  color: #5eead4;
   font-weight: 500;
 }
 
-/* ===================== Додаткові дрібні стилі ===================== */
-.v-text-field,
-.v-textarea,
-.v-file-input {
-  margin-bottom: 12px;
+/* ================= LIST ================= */
+.v-list-item {
+  border-radius: 12px;
+  transition: background 0.2s ease;
 }
 
-.v-card-actions {
-  justify-content: flex-end;
+.v-list-item:hover {
+  background: rgba(20, 184, 166, 0.08);
+}
+
+/* ================= EMPTY STATE ================= */
+.v-card-text {
+  color: #94a3b8;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 960px) {
+  .profile-header {
+    text-align: center;
+  }
+
+  .profile-name-col {
+    margin-top: 12px;
+  }
+
+  .post-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .post-actions {
+    align-self: flex-end;
+  }
 }
 </style>
 
