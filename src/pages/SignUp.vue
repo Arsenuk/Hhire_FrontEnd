@@ -32,17 +32,19 @@
               <div v-if="currentStep === 1" class="step-content">
                 <h2 class="signup-title text-center mb-4">Account Information</h2>
 
-                <div class="custom-input mb-4">
+                <div class="custom-input mb-4" :class="{ 'input-error': firstNameError }">
                   <v-icon size="20" color="#97e5ee" class="input-icon">mdi-account-outline</v-icon>
                   <input v-model="firstName" type="text" placeholder="User Name" class="input-field" />
                 </div>
+                <p v-if="firstNameError" class="error-text">{{ firstNameError }}</p>
 
-                <div :class="['custom-input', 'mb-4', emailError ? 'input-error' : '']">
+                <div class="custom-input mb-4" :class="{ 'input-error': emailError }">
                   <v-icon size="20" color="#97e5ee" class="input-icon">mdi-email-outline</v-icon>
                   <input v-model="email" type="email" placeholder="your@example.com" class="input-field" />
                 </div>
+                <p v-if="emailError" class="error-text">{{ emailError }}</p>
 
-                <div class="custom-input mb-4">
+                <div class="custom-input mb-4" :class="{ 'input-error': passwordError }">
                   <v-icon size="20" color="#97e5ee" class="input-icon">mdi-lock-outline</v-icon>
                   <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Enter password"
                     class="input-field" />
@@ -50,6 +52,7 @@
                     {{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}
                   </v-icon>
                 </div>
+                <p v-if="passwordError" class="error-text">{{ passwordError }}</p>
 
                 <v-btn class="next-btn mt-6" block @click="nextStep">Next →</v-btn>
 
@@ -57,7 +60,6 @@
                   Already have an account?
                   <RouterLink to="/login" class="login-link">Log In</RouterLink>
                 </p>
-
               </div>
 
               <!-- Step 2: Profile Information -->
@@ -65,10 +67,24 @@
                 <h2 class="signup-title text-center mb-4">Profile Details</h2>
 
                 <!-- Description -->
-                <div class="custom-input mb-4">
+                <div class="custom-input mb-4" :class="{ 'input-error': descriptionError }">
                   <v-icon size="20" color="#97e5ee" class="input-icon">mdi-text-box-outline</v-icon>
                   <textarea v-model="description" placeholder="Describe yourself, share your goals..."
                     class="input-field textarea-field"></textarea>
+                </div>
+                <p v-if="descriptionError" class="error-text">{{ descriptionError }}</p>
+
+                <!-- Avatar Upload -->
+                <div class="profile-image-upload mb-4">
+                  <label class="image-input-wrapper" @click="triggerFileInput">
+                    <v-icon size="24" color="#97e5ee">mdi-image-outline</v-icon>
+                    <div class="image-text">
+                      <p>Click to upload an image (optional)</p>
+                      <p v-if="profileImageName">{{ profileImageName }}</p>
+                    </div>
+                    <input ref="fileInput" type="file" accept="image/*" @change="handleFileUpload"
+                      style="display: none" />
+                  </label>
                 </div>
 
                 <!-- Links -->
@@ -78,26 +94,14 @@
                     <input v-model="link.url" type="text" placeholder="Enter link URL" class="input-field"
                       :class="{ 'input-error': link.error }" />
                     <input v-model="link.description" type="text" placeholder="Enter description"
-                      class="input-field mt-2" />
+                      class="input-field mt-2" :class="{ 'input-error': link.error }" />
                   </div>
                   <v-btn class="remove-link-btn" v-if="links.length > 1" icon small @click="removeLink(index)">
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
+                  <p v-if="link.error" class="error-text">Both URL and description are required</p>
                 </div>
                 <v-btn class="add-link-btn" text small @click="addLink">+ Add another link</v-btn>
-
-                <!-- Profile Image Upload -->
-                <div class="profile-image-upload mb-4">
-                  <div class="image-input-wrapper" @click="triggerFileInput">
-                    <v-icon size="24" color="#97e5ee">mdi-image-outline</v-icon>
-                    <div class="image-text">
-                      <p>Click to upload an image</p>
-                      <p v-if="profileImageName">{{ profileImageName }}</p>
-                    </div>
-                    <input ref="fileInput" type="file" accept="image/png" @change="handleFileUpload"
-                      style="display: none" />
-                  </div>
-                </div>
 
                 <!-- Navigation Buttons -->
                 <div class="d-flex justify-space-between mt-4">
@@ -105,6 +109,8 @@
                   <v-btn class="next-btn" @click="submitForm">Submit</v-btn>
                 </div>
               </div>
+
+
             </div>
           </transition>
 
@@ -115,140 +121,179 @@
 </template>
 
 
-
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.js'
-import { register, login } from '@/services/authService.js'
-import { api } from '@/api/api.js'
+import { useAuthStore } from '@/stores/auth'
+import { register } from '@/services/authService'
+import { api } from '@/api/api'
 
+// ---------------- ROUTER / STORE ----------------
 const router = useRouter()
 const authStore = useAuthStore()
 
-// --- Responsive card width ---
-const windowWidth = ref(window.innerWidth)
-const cardWidth = computed(() => {
-  if (windowWidth.value >= 1200) return '600px'
-  if (windowWidth.value >= 992) return '80%'
-  if (windowWidth.value >= 768) return '90%'
-  return '95%'
-})
-const updateWidth = () => { windowWidth.value = window.innerWidth }
-onMounted(() => window.addEventListener('resize', updateWidth))
-onUnmounted(() => window.removeEventListener('resize', updateWidth))
-
-// --- Multi-step ---
-const steps = ref([{ id: 1 }, { id: 2 }])
+// ---------------- STEPS ----------------
 const currentStep = ref(1)
+const steps = ref([
+  { id: 1, name: 'Account Creation' },
+  { id: 2, name: 'Profile Information' }
+])
 
-// --- Step 1: Account Creation ---
-const firstName = ref('')
+// ---------------- STEP 1 FIELDS ----------------
 const email = ref('')
-const emailError = ref(false)
 const password = ref('')
-const showPassword = ref(false)
+const firstName = ref('')
 
-// --- Step 2: Profile Info ---
+// ---------------- STEP 2 FIELDS ----------------
 const description = ref('')
-const links = ref([{ url: '', description: '', error: false }])
-const profileImage = ref(null)
+const profileImageFile = ref(null)
 const profileImageName = ref('')
+const links = ref([{ url: '', description: '' }])
 
-// --- Navigation ---
-const togglePassword = () => { showPassword.value = !showPassword.value }
+// ---------------- UI ----------------
+const showPassword = ref(false)
+const loading = ref(false)
+const error = ref('')
 
-const nextStep = async () => {
-  if (currentStep.value === 1) {
-    // Перевірка обов'язкових полів
-    emailError.value = false
-    if (!firstName.value.trim()) { alert('Please enter your name'); return }
-    if (!email.value.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
-      emailError.value = true
-      return
-    }
-    if (!password.value.trim()) { alert('Please enter a password'); return }
+// ---------------- Validation Errors ----------------
+const firstNameError = ref('')
+const emailError = ref('')
+const passwordError = ref('')
+const descriptionError = ref('')
 
-    try {
-      // Реєстрація акаунта
-      await register(email.value.trim(), password.value.trim(), firstName.value.trim())
-
-      // Логін після реєстрації
-      const loginRes = await login(email.value.trim(), password.value.trim())
-      authStore.user = loginRes.user
-      localStorage.setItem('user', JSON.stringify(loginRes.user))
-
-      // Перехід на другий крок
-      currentStep.value++
-    } catch (err) {
-      alert(err.response?.data?.error || err.message)
-    }
-  }
+// ---------------- STEP NAVIGATION ----------------
+function nextStep() {
+  if (currentStep.value === 1) submitStepOne()
+  else currentStep.value++
 }
 
-const prevStep = () => {
+function prevStep() {
   if (currentStep.value > 1) currentStep.value--
 }
 
-// --- File upload ---
-const triggerFileInput = () => { document.querySelector('input[type="file"]').click() }
-const handleFileUpload = e => {
-  if (e.target.files.length) {
-    profileImage.value = e.target.files[0]
-    profileImageName.value = e.target.files[0].name
+// ---------------- PASSWORD TOGGLE ----------------
+function togglePassword() {
+  showPassword.value = !showPassword.value
+}
+
+// ---------------- STEP 1: REGISTER + LOGIN ----------------
+async function submitStepOne() {
+  // Скидаємо помилки
+  firstNameError.value = ''
+  emailError.value = ''
+  passwordError.value = ''
+  error.value = ''
+
+  if (!firstName.value.trim()) {
+    firstNameError.value = 'Please enter your name'
+    return
+  }
+  if (!email.value.trim()) {
+    emailError.value = 'Please enter your email'
+    return
+  }
+  if (!password.value.trim() || password.value.length < 6) {
+    passwordError.value = 'Password must be at least 6 characters'
+    return
+  }
+
+  loading.value = true
+  try {
+    await register(email.value.trim(), password.value.trim(), firstName.value.trim())
+    await authStore.login(email.value.trim(), password.value.trim())
+    currentStep.value = 2
+  } catch (err) {
+    console.error(err)
+    error.value = 'Registration failed'
+  } finally {
+    loading.value = false
   }
 }
 
-// --- Links ---
-const addLink = () => links.value.push({ url: '', description: '', error: false })
-const removeLink = index => links.value.splice(index, 1)
+// ---------------- AVATAR ----------------
+function triggerFileInput() {
+  document.querySelector('input[type="file"]').click()
+}
 
-// --- Submit Step 2: Profile Update ---
-const submitForm = async () => {
+function handleFileUpload(e) {
+  const file = e.target.files[0]
+  if (file) {
+    profileImageFile.value = file
+    profileImageName.value = file.name
+  }
+}
+
+// ---------------- LINKS ----------------
+function addLink() {
+  links.value.push({ url: '', description: '' })
+}
+
+function removeLink(index) {
+  if (links.value.length > 1) links.value.splice(index, 1)
+}
+
+// ---------------- STEP 2: SAVE PROFILE ----------------
+async function submitForm() {
+  descriptionError.value = ''
+  links.value.forEach(l => l.error = false)
+  error.value = ''
+
+  if (!description.value.trim()) {
+    descriptionError.value = 'Please add a description about yourself'
+    return
+  }
+
+  let hasInvalidLink = false
+  links.value.forEach(l => {
+    if (!l.url.trim() || !l.description.trim()) {
+      l.error = true
+      hasInvalidLink = true
+    }
+  })
+  if (hasInvalidLink) {
+    error.value = 'Please fill all link fields'
+    return
+  }
+
+  loading.value = true
   try {
-    // --- Перевірка лінків ---
-    let validLinks = true
-    links.value.forEach(link => {
-      link.error = !link.url.trim() || !link.description.trim()
-      if (link.error) validLinks = false
+    // ✅ 1. PROFILE
+    await api.put('/users/profile', {
+      name: firstName.value,
+      description: description.value
     })
-    if (!validLinks) { alert('Please fill all links with description'); return }
 
-    // --- Попап для необов’язкових полів ---
-    const optionalEmpty = !description.value?.trim() && !profileImage.value
-    if (optionalEmpty) {
-      const proceed = confirm('You have not added description or avatar. Continue without them?')
-      if (!proceed) return
-    }
-
-    // --- Оновлення опису ---
-    if (description.value?.trim()) {
-      await api.put('/users/profile', { description: description.value.trim() })
-    }
-
-    // --- Додавання лінків ---
-    for (const link of links.value) {
-      if (link.url.trim() && link.description.trim()) {
-        await api.post('/user-links', { url: link.url.trim(), description: link.description.trim() })
-      }
-    }
-
-    // --- Завантаження аватару ---
-    if (profileImage.value) {
+    // ✅ 2. AVATAR
+    if (profileImageFile.value) {
       const formData = new FormData()
-      formData.append('avatar', profileImage.value)
-      await api.post('/users/me/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      formData.append('avatar', profileImageFile.value)
+
+      await api.post('/users/me/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
     }
 
+    // ✅ 3. LINKS
+    for (const link of links.value) {
+      await api.post('/user-links', {
+        url: link.url,
+        description: link.description
+      })
+    }
+
+    // ✅ 4. REDIRECT
     router.push('/feed')
   } catch (err) {
     console.error(err)
-    alert(err.response?.data?.error || 'Profile update failed')
+    error.value = 'Failed to save profile'
+  } finally {
+    loading.value = false
   }
 }
+
+
+
 </script>
-
-
 
 
 <style scoped>
@@ -362,6 +407,14 @@ const submitForm = async () => {
 .input-error {
   border-color: red !important;
 }
+
+.error-text {
+  color: red;
+  font-size: 12px;
+  margin-top: 4px;
+  font-family: 'Junge', serif;
+}
+
 
 .step-content {
   width: 100%;
