@@ -78,7 +78,7 @@
 
                 <!-- Avatar Upload -->
                 <div class="profile-image-upload mb-4">
-                  <label class="image-input-wrapper" @click="triggerFileInput">
+                  <label class="image-input-wrapper">
                     <v-icon size="24" color="#97e5ee">mdi-image-outline</v-icon>
                     <div class="image-text">
                       <p>Click to upload an image (optional)</p>
