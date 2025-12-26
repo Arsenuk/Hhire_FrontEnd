@@ -19,14 +19,16 @@
                   <p class="step-label">{{ step.id === 1 ? 'Account Creation' : 'Profile Information' }}</p>
                 </div>
                 <div class="progress-line-bg"></div>
-                <div class="progress-line-active"
-                  :style="{ width: ((currentStep - 1) / (steps.length - 1) * 100) + '%' }"></div>
+                <div class="progress-line-active" :style="{
+                  width: ((currentStep - 1) / (steps.length - 1) * 100) + '%',
+                  opacity: currentStep === 2 ? 0.3 : 1
+                }"></div>
               </div>
             </div>
           </div>
 
           <!-- Step Content -->
-          <transition name="fade" mode="out-in">
+          <transition name=" fade" mode="out-in">
             <div :key="currentStep">
               <!-- Step 1: Account Creation -->
               <div v-if="currentStep === 1" class="step-content">
@@ -290,9 +292,6 @@ async function submitForm() {
     loading.value = false
   }
 }
-
-
-
 </script>
 
 
