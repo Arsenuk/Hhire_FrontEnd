@@ -69,7 +69,7 @@
                     <v-btn icon size="x-small" @click="openEditLink(link)">
                       <v-icon>mdi-pencil</v-icon>
                     </v-btn>
-                    <v-btn icon size="x-small" @click="confirmDeleteLink(link.id)">
+                    <v-btn icon size="x-small" @click="openDeleteLink(link.id)">
                       <v-icon color="red">mdi-delete</v-icon>
                     </v-btn>
                   </template>
@@ -118,7 +118,7 @@
                         <v-btn icon size="x-small" @click="startEditPost(post)">
                           <v-icon>mdi-pencil</v-icon>
                         </v-btn>
-                        <v-btn icon size="x-small" @click="confirmDeletePost(post)">
+                        <v-btn icon size="x-small" @click="openDeletePost(post)">
                           <v-icon color="red">mdi-delete</v-icon>
                         </v-btn>
                       </div>
@@ -216,9 +216,58 @@
       </v-card>
     </v-dialog>
 
+    <!-- ================= DELETE LINK CONFIRM ================= -->
+    <v-dialog v-model="showDeleteLinkDialog" max-width="420">
+      <v-card class="confirm-card">
+        <v-card-title class="confirm-title">
+          Delete link
+        </v-card-title>
+
+        <v-card-text class="confirm-text">
+          Are you sure you want to delete this link?
+          <br />
+          This action cannot be undone.
+        </v-card-text>
+
+        <v-card-actions class="confirm-actions">
+          <v-spacer />
+          <v-btn variant="text" class="confirm-cancel" @click="showDeleteLinkDialog = false">
+            Cancel
+          </v-btn>
+          <v-btn class="confirm-delete" :loading="loading" @click="deleteConfirmedLink">
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- ================= DELETE POST CONFIRM ================= -->
+    <v-dialog v-model="showDeletePostDialog" max-width="420">
+      <v-card class="confirm-card">
+        <v-card-title class="confirm-title">
+          Delete Post
+        </v-card-title>
+
+        <v-card-text class="confirm-text">
+          Are you sure you want to delete this post?
+          <br />
+          This action cannot be undone.
+        </v-card-text>
+
+        <v-card-actions class="confirm-actions">
+          <v-spacer />
+          <v-btn variant="text" class="confirm-cancel" @click="showDeletePostDialog = false">
+            Cancel
+          </v-btn>
+          <v-btn class="confirm-delete" :loading="loading" @click="deleteConfirmedPost">
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
-
 
 
 <script setup>
@@ -257,6 +306,9 @@ const showLinkDialog = ref(false)
 const linkFormRef = ref(null)
 const editingLink = ref(null)
 
+const showDeleteLinkDialog = ref(false)
+const linkToDelete = ref(null)
+
 const linkForm = ref({
   url: '',
   description: ''
@@ -271,6 +323,10 @@ const urlRules = [
 const posts = ref([])
 const editingPostDialog = ref(false)
 const postFormRef = ref(null)
+
+const showDeletePostDialog = ref(false)
+const postToDelete = ref(null)
+
 
 const editPostForm = ref({
   id: null,
@@ -387,15 +443,29 @@ async function saveLink() {
   }
 }
 
-async function deleteLink(id) {
+function openDeleteLink(id) {
+  linkToDelete.value = id
+  showDeleteLinkDialog.value = true
+}
+
+// Підтвердження видалення з діалогу
+async function deleteConfirmedLink() {
+  if (!linkToDelete.value) return
+
   loading.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
+
   try {
-    await api.delete(`/user-links/${id}`)
-    links.value = links.value.filter(l => l.id !== id)
+    await api.delete(`/user-links/${linkToDelete.value}`)
+    links.value = links.value.filter(l => l.id !== linkToDelete.value)
+    successMessage.value = 'Link deleted successfully'
   } catch {
     errorMessage.value = 'Failed to delete link'
   } finally {
     loading.value = false
+    showDeleteLinkDialog.value = false
+    linkToDelete.value = null
   }
 }
 
@@ -414,7 +484,6 @@ function startEditPost(post) {
   }
 }
 
-
 function cancelEditPost() {
   editingPostDialog.value = false
 }
@@ -428,22 +497,19 @@ async function savePost() {
   successMessage.value = ''
 
   try {
-    // Зберігаємо тільки title/content на бекенд
     await api.put(`/posts/${editPostForm.value.id}`, {
       title: editPostForm.value.title,
       content: editPostForm.value.content,
-      tags: editPostForm.value.tags // ← ОБОВʼЯЗКОВО
+      tags: editPostForm.value.tags
     })
 
-
-    // Оновлюємо локальні дані
     const index = posts.value.findIndex(p => p.id === editPostForm.value.id)
     if (index !== -1) {
       posts.value[index] = {
         ...posts.value[index],
         title: editPostForm.value.title,
         content: editPostForm.value.content,
-        tags: [...editPostForm.value.tags] // локальні теги
+        tags: [...editPostForm.value.tags]
       }
     }
 
@@ -456,21 +522,30 @@ async function savePost() {
   }
 }
 
-async function confirmDeletePost(post) {
-  if (!confirm('Delete this post?')) return
+async function deleteConfirmedPost() {
+  if (!postToDelete.value) return
   loading.value = true
   errorMessage.value = ''
   successMessage.value = ''
   try {
-    await api.delete(`/posts/${post.id}`)
-    posts.value = posts.value.filter(p => p.id !== post.id)
+    await api.delete(`/posts/${postToDelete.value.id}`)
+    posts.value = posts.value.filter(p => p.id !== postToDelete.value.id)
     successMessage.value = 'Post deleted'
+    showDeletePostDialog.value = false
+    postToDelete.value = null
   } catch {
     errorMessage.value = 'Failed to delete post'
   } finally {
     loading.value = false
   }
 }
+
+
+function openDeletePost(post) {
+  postToDelete.value = post
+  showDeletePostDialog.value = true
+}
+
 // ================= UTILS =================
 function formatDate(d) {
   return new Date(d).toLocaleString()
@@ -481,6 +556,7 @@ onMounted(() => {
   loadProfile()
 })
 </script>
+
 
 
 
@@ -640,5 +716,46 @@ a:hover {
   .post-actions {
     align-self: flex-end;
   }
+}
+
+/* ================= CONFIRM DELETE ================= */
+.confirm-card {
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.confirm-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #020617;
+}
+
+.confirm-text {
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.confirm-actions {
+  padding: 12px 16px 16px;
+}
+
+/* Cancel */
+.confirm-cancel {
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Delete */
+.confirm-delete {
+  background: #ef4444;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 6px 18px;
+}
+
+.confirm-delete:hover {
+  background: #dc2626;
 }
 </style>
