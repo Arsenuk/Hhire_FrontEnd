@@ -58,13 +58,13 @@
             </v-btn>
           </template>
           <v-list>
-            <RouterLink to="/profile">
+            <RouterLink to="/ProfileMe">
               <v-list-item>
                 <v-list-item-title>Profile</v-list-item-title>
               </v-list-item>
             </RouterLink>
             <v-list-item @click="logout">
-              <v-list-item-title>Logout</v-list-item-title>
+              <v-list-item-title>Log out</v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -110,12 +110,12 @@ const navLinks = computed(() =>
     ? [
       { label: 'Feed', to: '/feed' },
       { label: 'Contacts', to: '/contacts' },
-      { label: 'Last News', to: '/last-news' }
+      // { label: 'Last News', to: '/last-news' }
     ]
     : [
       { label: 'Get Started', to: '/' },
       { label: 'Feed', to: '/feed' },
-      { label: 'Last News', to: '/last-news' }
+      // { label: 'Last News', to: '/last-news' }
     ]
 )
 

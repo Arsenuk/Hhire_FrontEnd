@@ -28,8 +28,7 @@
 
                 <!-- SORT BUTTONS -->
                 <div class="d-flex gap-3 mb-3">
-                    <v-btn :class="{ 'active-sort-btn': sortType === 'latest' }" small
-                        @click="sortType = 'latest'">
+                    <v-btn :class="{ 'active-sort-btn': sortType === 'latest' }" small @click="sortType = 'latest'">
                         Latest
                     </v-btn>
                     <v-btn :class="{ 'active-sort-btn': sortType === 'mostComment' }" small
@@ -43,7 +42,7 @@
                     <!-- HEADER -->
                     <v-card-title class="d-flex justify-space-between align-center">
                         <div class="d-flex align-center gap-3">
-                            <v-avatar size="40">
+                            <v-avatar size="40" class="clickable-avatar" @click="goToProfile(post.owner.id)">
                                 <v-img :src="getAvatarUrl(post.owner.avatar)" lazy-src="./assets/default-avatar.png" />
                             </v-avatar>
                             <span class="post-title">{{ post.title }}</span>
@@ -83,7 +82,8 @@
                             <v-list dense>
                                 <v-list-item v-for="comment in post.comments || []" :key="comment.id"
                                     class="comment-item">
-                                    <v-avatar size="36" class="comment-avatar">
+                                    <v-avatar size="36" class="comment-avatar clickable-avatar"
+                                        @click="goToProfile(comment.user.id)">
                                         <v-img :src="getAvatarUrl(comment.user.avatar)" />
                                     </v-avatar>
 
@@ -145,7 +145,7 @@
                     <v-card-text>
                         <v-list>
                             <v-list-item v-for="suggested in suggestedUsers" :key="suggested.id">
-                                <v-avatar size="36">
+                                <v-avatar size="36" class="clickable-avatar" @click="goToProfile(suggested.id)">
                                     <v-img :src="getAvatarUrl(suggested.avatar)"
                                         lazy-src="./assets/default-avatar.png" />
                                 </v-avatar>
@@ -186,6 +186,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/api.js'
 import { useAuthStore } from '@/stores/auth.js'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 // --- POSTS ---
 const allPosts = ref([])
@@ -459,14 +462,25 @@ async function addComment(post) {
     }
 }
 
-
-
 function confirmAddComment(post) {
     showConfirm(
         'Додати коментар?',
         'Ви дійсно хочете додати цей коментар?',
         () => addComment(post)
     )
+}
+
+// --- GO TO PROFILE ---
+function goToProfile(userId) {
+    // якщо userId === поточний користувач
+    if (userId === currentUser.value?.id) {
+        router.push('/ProfileMe')
+    } else {
+        router.push({
+            path: `/profile/${userId}`,
+        })
+
+    }
 }
 
 // ================= MOUNT =================
