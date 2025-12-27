@@ -25,7 +25,21 @@
 
             <!-- ================= CENTER: POSTS ================= -->
             <v-col cols="12" md="6">
-                <v-card v-for="post in filteredPosts" :key="post.id" class="post-card mb-4">
+
+                <!-- SORT BUTTONS -->
+                <div class="d-flex gap-3 mb-3">
+                    <v-btn :class="{ 'active-sort-btn': sortType === 'latest' }" small
+                        @click="sortType = 'latest'">
+                        Latest
+                    </v-btn>
+                    <v-btn :class="{ 'active-sort-btn': sortType === 'mostComment' }" small
+                        @click="sortType = 'mostComment'">
+                        Most Comment
+                    </v-btn>
+                </div>
+
+                <!-- POSTS -->
+                <v-card v-for="post in sortedPosts" :key="post.id" class="post-card mb-4">
                     <!-- HEADER -->
                     <v-card-title class="d-flex justify-space-between align-center">
                         <div class="d-flex align-center gap-3">
@@ -181,6 +195,10 @@ const expandedPosts = ref([])
 const pageSize = 6
 const currentPage = ref(1)
 
+// --- SORT ---
+const sortType = ref('latest') // latest або mostComment
+
+// --- TAGS ---
 const allTags = ref([])
 const selectedTags = ref([])
 
@@ -226,19 +244,26 @@ async function loadPosts() {
 
         allPosts.value = rawPosts.map(post => {
             const owner = post.owner || {}
+
             return {
                 ...post,
+                tags: Array.isArray(post.tags)
+                    ? post.tags.map(t => typeof t === 'string' ? t : t.name)
+                    : [],
+
                 comments: Array.isArray(post.comments)
                     ? post.comments.filter(c => c.status !== 'deleted')
                     : [],
+
                 owner: {
-                    id: owner.id || (post.company_id || post.user_id),
-                    name: owner.name || post.username || 'Unknown',
-                    role: owner.role || (post.company_id ? 'company' : 'user'),
-                    avatar: owner.avatar || null
+                    id: owner.id ?? post.user_id ?? post.company_id ?? null,
+                    name: owner.name ?? 'Unknown',
+                    role: owner.role ?? (post.company_id ? 'company' : 'user'),
+                    avatar: owner.avatar ?? null
                 }
             }
         })
+
 
         const tagsSet = new Set()
         allPosts.value.forEach(p => p.tags?.forEach(t => tagsSet.add(t)))
@@ -302,6 +327,23 @@ function toggleTag(tag) {
 function clearFilters() {
     selectedTags.value = []
 }
+
+// --- Фільтр + Сортування ---
+const sortedPosts = computed(() => {
+    let result = selectedTags.value.length === 0
+        ? posts.value.slice()
+        : posts.value.filter(post =>
+            post.tags?.some(tag => selectedTags.value.includes(tag))
+        )
+
+    if (sortType.value === 'latest') {
+        result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    } else if (sortType.value === 'mostComment') {
+        result.sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0))
+    }
+
+    return result
+})
 
 // --- SUGGESTED USERS ---
 async function loadSuggestedUsers() {
@@ -518,12 +560,14 @@ onMounted(() => {
     font-size: 12px;
     padding: 4px 10px;
     border-radius: 999px;
-    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%); /* для звичайних користувачів */
+    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+    /* для звичайних користувачів */
     color: #000;
 }
 
 .post-type.company-role {
-    background: linear-gradient(90deg, #fde68a 0%, #f59e0b 100%); /* для company */
+    background: linear-gradient(90deg, #fde68a 0%, #f59e0b 100%);
+    /* для company */
     color: #000;
 }
 
@@ -595,6 +639,13 @@ onMounted(() => {
     border-left: 1px solid rgba(151, 229, 238, 0.6);
     border-bottom: 1px solid rgba(151, 229, 238, 0.6);
     transform: rotate(45deg);
+}
+
+/* ===== SORT BUTTONS ===== */
+.active-sort-btn {
+    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+    color: #000;
+    font-weight: 600;
 }
 
 /* ===== AVATAR ===== */
