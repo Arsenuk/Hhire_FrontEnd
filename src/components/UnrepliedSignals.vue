@@ -25,14 +25,9 @@
             <div class="post-username">{{ signal.sender_name }}</div>
             <div class="post-meta">{{ signal.message }}</div>
           </div>
-
-          <!-- Кнопка Reply -->
+          
           <v-list-item-action>
-            <v-btn
-              small
-              class="reply-btn"
-              @click.stop="openDialog(signal)"
-            >
+            <v-btn small class="reply-btn" @click.stop="openDialog(signal)">
               Reply
             </v-btn>
           </v-list-item-action>
@@ -55,16 +50,8 @@
         </v-card-title>
 
         <v-card-text class="confirm-text">
-          <div class="message-box">
-            {{ activeSignal?.message }}
-          </div>
-          <v-textarea
-            v-model="replyMessage"
-            label="Write your reply"
-            rows="3"
-            auto-grow
-            outlined
-          />
+          <div class="message-box">{{ activeSignal?.message }}</div>
+          <v-textarea v-model="replyMessage" label="Write your reply" rows="3" auto-grow outlined />
         </v-card-text>
 
         <v-card-actions class="confirm-actions">
@@ -77,9 +64,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { api } from '@/api/api.js'
 import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  updateNotify: Function // функція з Header для оновлення count
+})
 
 const signals = ref([])
 const dialog = ref(false)
@@ -90,15 +81,29 @@ const router = useRouter()
 const getAvatarUrl = (avatar) =>
   avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
 
+// --- Fetch signals ---
 const fetchSignals = async () => {
   try {
     const res = await api.get('/signals/inbox')
-    signals.value = res.data.signals.filter((s) => s.status === 'new')
+    const newSignals = res.data.signals.filter(s => s.status === 'new')
+    signals.value = newSignals
+    if (props.updateNotify) props.updateNotify(newSignals.length)
   } catch (err) {
     console.error(err)
   }
 }
 
+// --- Auto refresh ---
+let intervalId = null
+onMounted(() => {
+  fetchSignals()
+  intervalId = setInterval(fetchSignals, 7000) // кожні 15 сек
+})
+onUnmounted(() => {
+  if (intervalId) clearInterval(intervalId)
+})
+
+// --- Dialog functions ---
 const openDialog = (signal) => {
   activeSignal.value = signal
   replyMessage.value = ''
@@ -111,6 +116,7 @@ const closeDialog = () => {
   replyMessage.value = ''
 }
 
+// --- Respond to signal ---
 const respond = async (type) => {
   if (!activeSignal.value || !replyMessage.value.trim()) {
     alert('Please enter a reply')
@@ -127,8 +133,8 @@ const respond = async (type) => {
       })
     }
 
-    signals.value = signals.value.filter((s) => s.id !== activeSignal.value.id)
     closeDialog()
+    await fetchSignals() // 🔹 після reply оновлюємо signals та notify
   } catch (err) {
     console.error(err)
     alert('Failed to respond')
@@ -136,10 +142,7 @@ const respond = async (type) => {
 }
 
 const goToProfile = (userId) => router.push(`/profile/${userId}`)
-
-onMounted(fetchSignals)
 </script>
-
 <style scoped>
 /* ===== POST CARD ===== */
 .post-card {

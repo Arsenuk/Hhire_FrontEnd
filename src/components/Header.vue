@@ -17,24 +17,25 @@
     <!-- Права частина -->
     <div class="header-right">
       <template v-if="isLoggedIn">
-        <v-text-field v-model="searchQuery" placeholder="Search..." dense hide-details outlined rounded
-          prepend-inner-icon="mdi-magnify" class="search-field" />
-
+        <!-- Notify: кількість сигналів без відповіді -->
         <v-menu offset-y>
           <template #activator="{ props }">
-            <v-btn icon v-bind="props">
+            <v-btn icon v-bind="props" class="position-relative">
               <v-icon>mdi-bell</v-icon>
+              <span v-if="unansweredSignals > 0" class="notif-count">{{ unansweredSignals }}</span>
             </v-btn>
           </template>
           <v-card style="width: 300px;">
             <v-card-title>Notifications</v-card-title>
             <v-card-text>
               <v-list>
-                <v-list-item v-for="notif in notifications" :key="notif.id">
-                  <v-list-item-title>{{ notif.text }}</v-list-item-title>
+                <v-list-item v-if="unansweredSignals === 0">
+                  <v-list-item-title>No new signals</v-list-item-title>
                 </v-list-item>
-                <v-list-item v-if="notifications.length === 0">
-                  <v-list-item-title>No new notifications</v-list-item-title>
+                <v-list-item v-else>
+                  <v-list-item-title>
+                    You have {{ unansweredSignals }} signals awaiting reply
+                  </v-list-item-title>
                 </v-list-item>
               </v-list>
             </v-card-text>
@@ -54,7 +55,6 @@
                 <v-img :src="getAvatarUrl(user?.avatar)" lazy-src="./assets/default-avatar.png"
                   :alt="user?.name || 'Avatar'" />
               </v-avatar>
-
             </v-btn>
           </template>
           <v-list>
@@ -81,7 +81,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { api } from '@/api/api.js'
@@ -99,24 +99,16 @@ const getAvatarUrl = (avatar) => {
   return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
 }
 
-const searchQuery = ref('')
-const notifications = ref([
-  { id: 1, text: 'New message from Alice' },
-  { id: 2, text: 'Bob liked your post' }
-])
-
 const navLinks = computed(() =>
   isLoggedIn.value
     ? [
-      { label: 'Feed', to: '/feed' },
-      { label: 'Contacts', to: '/contacts' },
-      // { label: 'Last News', to: '/last-news' }
-    ]
+        { label: 'Feed', to: '/feed' },
+        { label: 'Contacts', to: '/contacts' },
+      ]
     : [
-      { label: 'Get Started', to: '/' },
-      { label: 'Feed', to: '/feed' },
-      // { label: 'Last News', to: '/last-news' }
-    ]
+        { label: 'Get Started', to: '/' },
+        { label: 'Feed', to: '/feed' },
+      ]
 )
 
 const isActive = path => route.path === path
@@ -132,6 +124,31 @@ async function logout() {
     router.push('/')
   }
 }
+
+// --- Notifications: кількість сигналів без відповіді ---
+const unansweredSignals = ref(0)
+
+const fetchUnansweredSignals = async () => {
+  if (!isLoggedIn.value) return
+  try {
+    const res = await api.get('/signals/inbox')
+    unansweredSignals.value = res.data.signals.filter(s => s.status === 'new').length
+  } catch (err) {
+    console.error('Failed to fetch signals', err)
+  }
+}
+
+// --- Автооновлення кожні 15 сек ---
+let intervalId = null
+
+onMounted(() => {
+  fetchUnansweredSignals()
+  intervalId = setInterval(fetchUnansweredSignals, 15000)
+})
+
+onUnmounted(() => {
+  if (intervalId) clearInterval(intervalId)
+})
 </script>
 
 <style scoped>
@@ -161,7 +178,6 @@ async function logout() {
 .brand-name {
   font-family: 'Junge', serif;
   font-size: clamp(16px, 2vw, 22px);
-  /* динамічний розмір */
   font-weight: 400;
 }
 
@@ -215,14 +231,25 @@ async function logout() {
   min-width: 120px;
 }
 
-/* Search field адаптивний */
-.search-field {
-  width: clamp(100px, 20vw, 200px);
+/* Notif count */
+.position-relative {
+  margin-top: 12px;
+  position: relative;
+}
+
+.notif-count {
+  font-size: 10px;
+  color: #fff;
+  background-color: #ef4444;
+  border-radius: 50%;
+  padding: 2px 6px;
+  position: absolute;
+  top: -4px;
+  right: -4px;
 }
 
 /* Media queries для мобільних */
 @media (max-width: 768px) {
-
   .header-left,
   .header-center,
   .header-right {
