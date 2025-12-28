@@ -6,13 +6,36 @@
         <v-list-item
           v-for="signal in signals"
           :key="signal.id"
-          @click="openDialog(signal)"
           class="signal-item"
+          :ripple="false"
         >
-          <v-list-item>
-            <v-list-item-title>From: {{ signal.sender_name }}</v-list-item-title>
-            <v-list-item-subtitle>{{ signal.message }}</v-list-item-subtitle>
-          </v-list-item>
+          <!-- Аватарка -->
+          <template #prepend>
+            <v-avatar
+              size="48"
+              class="cursor-pointer"
+              @click.stop="goToProfile(signal.sender_id)"
+            >
+              <v-img :src="getAvatarUrl(signal.sender_avatar)" />
+            </v-avatar>
+          </template>
+
+          <!-- Контент сигналу -->
+          <div class="signal-content">
+            <div class="post-username">{{ signal.sender_name }}</div>
+            <div class="post-meta">{{ signal.message }}</div>
+          </div>
+
+          <!-- Кнопка Reply -->
+          <v-list-item-action>
+            <v-btn
+              small
+              class="reply-btn"
+              @click.stop="openDialog(signal)"
+            >
+              Reply
+            </v-btn>
+          </v-list-item-action>
         </v-list-item>
 
         <v-list-item v-if="signals.length === 0">
@@ -21,17 +44,17 @@
       </v-list>
     </v-card-text>
 
-    <!-- Dialog -->
-    <v-dialog v-model="dialog" max-width="500px" persistent>
-      <v-card>
-        <v-card-title class="justify-space-between">
-          <span>Signal from {{ activeSignal?.sender_name }}</span>
+    <!-- Модальне вікно -->
+    <v-dialog v-model="dialog" max-width="500px" persistent transition="dialog-bottom-transition">
+      <v-card class="confirm-card">
+        <v-card-title class="confirm-title justify-space-between">
+          Signal from {{ activeSignal?.sender_name }}
           <v-btn icon @click="closeDialog">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-card-title>
 
-        <v-card-text>
+        <v-card-text class="confirm-text">
           <div class="message-box">
             {{ activeSignal?.message }}
           </div>
@@ -44,9 +67,9 @@
           />
         </v-card-text>
 
-        <v-card-actions class="justify-end">
-          <v-btn color="grey" @click="respond('decline')">Decline</v-btn>
-          <v-btn color="primary" @click="respond('sing')">Sing & Follow</v-btn>
+        <v-card-actions class="confirm-actions">
+          <v-btn class="confirm-cancel" @click="closeDialog">Refuse offer</v-btn>
+          <v-btn class="confirm-delete" @click="respond('sing')">Send & Follow</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -56,16 +79,21 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/api.js'
+import { useRouter } from 'vue-router'
 
 const signals = ref([])
 const dialog = ref(false)
 const activeSignal = ref(null)
 const replyMessage = ref('')
 
+const router = useRouter()
+const getAvatarUrl = (avatar) =>
+  avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
+
 const fetchSignals = async () => {
   try {
     const res = await api.get('/signals/inbox')
-    signals.value = res.data.signals.filter(s => s.status === 'new')
+    signals.value = res.data.signals.filter((s) => s.status === 'new')
   } catch (err) {
     console.error(err)
   }
@@ -90,10 +118,8 @@ const respond = async (type) => {
   }
 
   try {
-    // Відправляємо відповідь
     await api.post(`/signals/${activeSignal.value.id}/reply`, { message: replyMessage.value })
 
-    // Якщо type === sing → робимо follow
     if (type === 'sing') {
       await api.post('/follows', {
         targetId: activeSignal.value.sender_id,
@@ -101,43 +127,150 @@ const respond = async (type) => {
       })
     }
 
-    alert('Response sent!')
+    signals.value = signals.value.filter((s) => s.id !== activeSignal.value.id)
     closeDialog()
-    fetchSignals()
   } catch (err) {
     console.error(err)
     alert('Failed to respond')
   }
 }
 
+const goToProfile = (userId) => router.push(`/profile/${userId}`)
+
 onMounted(fetchSignals)
 </script>
 
 <style scoped>
+/* ===== POST CARD ===== */
+.post-card {
+  border-radius: 18px;
+  background-color: #f5f7fa;
+  color: #1e293b;
+  margin-bottom: 16px;
+  padding: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+}
+
+/* ===== SIGNAL ITEM ===== */
 .signal-item {
-  cursor: pointer;
-  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   border-radius: 12px;
-  padding: 8px 12px;
+  padding: 10px 14px;
+  transition: background 0.2s;
+  background-color: transparent !important;
 }
 
 .signal-item:hover {
-  background: rgba(151, 229, 238, 0.2);
+  background: rgba(59, 130, 246, 0.1) !important;
+  transform: none !important;
 }
 
-.post-card {
+.signal-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.post-username {
+  font-weight: 600;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.post-meta {
+  font-size: 14px;
+  color: #475569;
+}
+
+/* ===== REPLY BUTTON ===== */
+.reply-btn {
+  font-weight: 500;
+  color: #fff;
+  background-color: #6366f1;
+  border-radius: 12px;
+  padding: 6px 12px;
+  transition: background 0.2s;
+}
+
+.reply-btn:hover {
+  background-color: #4f46e5;
+}
+
+/* ===== MODAL ===== */
+.confirm-card {
   border-radius: 18px;
-  padding-bottom: 4px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  background: #f3f4f6;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  color: #1e293b;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.confirm-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1e293b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .message-box {
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
   border-radius: 12px;
-  background-color: #f0f4f8;
+  background-color: #e0e7ff;
   font-size: 14px;
   white-space: pre-wrap;
+  color: #1e293b;
+  border: 1px solid #c7d2fe;
+}
+
+.v-textarea {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+}
+
+/* ===== MODAL ACTIONS ===== */
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+
+.confirm-cancel {
+  background: #f87171;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 8px 16px;
+}
+
+.confirm-cancel:hover {
+  background: #ef4444;
+}
+
+.confirm-delete {
+  background: #22c55e;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 8px 16px;
+}
+
+.confirm-delete:hover {
+  background: #16a34a;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }
 </style>

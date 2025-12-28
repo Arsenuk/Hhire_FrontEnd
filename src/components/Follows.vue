@@ -6,22 +6,28 @@
         <v-list-item
           v-for="user in users"
           :key="user.id"
+          class="follow-item"
           @click="goToProfile(user.id)"
+          :ripple="false"
         >
+          <!-- Аватарка -->
           <template #prepend>
             <v-avatar size="40">
               <v-img :src="getAvatarUrl(user.avatar)" />
             </v-avatar>
           </template>
 
-          <v-list-item-title>{{ user.name }}</v-list-item-title>
-          <v-list-item-subtitle>
-            Last post: {{ user.lastPost ? formatDate(user.lastPost) : 'No posts' }}
-          </v-list-item-subtitle>
+          <!-- Контент користувача -->
+          <div class="follow-content">
+            <div class="follow-name">{{ user.name }}</div>
+            <div class="follow-meta">
+              Last post: {{ user.lastPost ? formatDate(user.lastPost) : 'No posts' }}
+            </div>
+          </div>
         </v-list-item>
 
         <v-list-item v-if="users.length === 0">
-          <v-list-item-title>No follows yet</v-list-item-title>
+          <v-list-item-title class="no-follow">No follows yet</v-list-item-title>
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -57,25 +63,64 @@ function formatDate(d) {
 }
 </script>
 
+
 <style scoped>
 .post-card {
   border-radius: 18px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  background-color: #f3f4f6;
+  color: #1e293b;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
 .post-card .v-card-title {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
+  color: #1e293b;
 }
 
-.v-list-item {
-  cursor: pointer;
-  transition: background 0.2s;
+/* Користувачі */
+.follow-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   border-radius: 12px;
+  padding: 10px 14px;
+  background-color: transparent;
+  transition: transform 0.15s;
 }
 
-.v-list-item:hover {
-  background: rgba(151, 229, 238, 0.2);
+/* Забираємо будь-яку підсвітку Vuetify */
+.follow-item:hover {
+  background-color:  rgba(59, 130, 246, 0.1) !important ;
+  transform: none;
+}
+
+.follow-content {
+  display: flex;
+  flex-direction: column;
+}
+.follow-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.follow-meta {
+  font-size: 13px;
+  color: #475569;
+  margin-top: 2px;
+}
+
+/* Текст при відсутності підписок */
+.no-follow {
+  color: #94a3b8;
+  font-style: italic;
 }
 </style>
+
