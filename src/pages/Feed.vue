@@ -138,27 +138,17 @@
                 </v-btn>
             </v-col>
 
-            <!-- ================= RIGHT: SUGGESTED ================= -->
+            <!-- ================= RIGHT: POPULAR TAGS ================= -->
             <v-col cols="12" md="4">
                 <v-card class="suggested-card">
-                    <v-card-title>Suggested Users</v-card-title>
+                    <v-card-title>Популярні теги</v-card-title>
                     <v-card-text>
-                        <v-list>
-                            <v-list-item v-for="suggested in suggestedUsers" :key="suggested.id">
-                                <v-avatar size="36" class="clickable-avatar" @click="goToProfile(suggested.id)">
-                                    <v-img :src="getAvatarUrl(suggested.avatar)"
-                                        lazy-src="./assets/default-avatar.png" />
-                                </v-avatar>
-
-                                <v-list-item-title class="ml-3">{{ suggested.name }}</v-list-item-title>
-
-                                <v-list-item-action>
-                                    <v-btn small color="primary" @click="sendContactRequest(suggested.id)">
-                                        Connect
-                                    </v-btn>
-                                </v-list-item-action>
-                            </v-list-item>
-                        </v-list>
+                        <v-row dense>
+                            <v-chip v-for="tag in topTags" :key="tag" class="ma-1" color="primary" outlined small
+                                @click="toggleTag(tag)" :class="{ 'filter-chip-selected': selectedTags.includes(tag) }">
+                                #{{ tag }}
+                            </v-chip>
+                        </v-row>
                     </v-card-text>
                 </v-card>
             </v-col>
@@ -348,17 +338,22 @@ const sortedPosts = computed(() => {
     return result
 })
 
-// --- SUGGESTED USERS ---
-async function loadSuggestedUsers() {
-    suggestedUsers.value = [
-        { id: 1, name: 'Alice', avatar: null },
-        { id: 2, name: 'Bob', avatar: null }
-    ]
-}
+// --- ТОП 5 НАЙПОПУЛЯРНІШИХ ТЕГІВ ---
+const topTags = computed(() => {
+    const tagCounts = {}
 
-function sendContactRequest(userId) {
-    console.log('Send request to', userId)
-}
+    allPosts.value.forEach(post => {
+        post.tags?.forEach(tag => {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        })
+    })
+
+    // Перетворюємо на масив і сортуємо за популярністю
+    return Object.entries(tagCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(entry => entry[0])
+})
 
 // ================= COMMENTS =================
 function isOwnComment(comment) {
@@ -486,7 +481,6 @@ function goToProfile(userId) {
 // ================= MOUNT =================
 onMounted(() => {
     loadPosts()
-    loadSuggestedUsers()
 })
 </script>
 
