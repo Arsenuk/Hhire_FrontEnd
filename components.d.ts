@@ -12,10 +12,15 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./src/components/AppFooter.vue')['default']
+    Follows: typeof import('./src/components/Follows.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     ProfileUser: typeof import('./src/components/ProfileUser.vue')['default']
+    RepliedSignals: typeof import('./src/components/RepliedSignals.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SendSignals: typeof import('./src/components/SendSignals.vue')['default']
+    SuggestedUsers: typeof import('./src/components/SuggestedUsers.vue')['default']
+    UnrepliedSignals: typeof import('./src/components/UnrepliedSignals.vue')['default']
   }
 }

@@ -1,83 +1,61 @@
 <template>
   <v-container class="feed-page">
     <v-row dense>
-
-      <!-- ===== LEFT: FOLLOWS ===== -->
-      <v-col cols="12" md="6">
-        <v-card class="post-card mb-4">
-          <v-card-title>FOLLOWS</v-card-title>
-          <v-card-text>
-            <v-list>
+      <!-- ===== LEFT: NAVIGATION PANEL ===== -->
+      <v-col cols="12" md="3">
+        <div class="sticky-sidebar">
+          <v-card class="sidebar-card">
+            <v-list nav density="comfortable">
               <v-list-item
-                v-for="user in users"
-                :key="user.id"
-                @click="goToProfile(user.id)"
+                v-for="tab in tabs"
+                :key="tab.key"
+                :active="currentTab === tab.key"
+                @click="currentTab = tab.key"
+                class="nav-item"
+                rounded="xl"
               >
-                <template #prepend>
-                  <v-avatar size="48">
-                    <v-img :src="getAvatarUrl(user.avatar)" />
-                  </v-avatar>
-                </template>
-
-                <v-list-item-title>{{ user.name }}</v-list-item-title>
-                <v-list-item-subtitle>
-                  Last post: {{ user.lastPost ? formatDate(user.lastPost) : 'No posts' }}
-                </v-list-item-subtitle>
-              </v-list-item>
-
-              <v-list-item v-if="users.length === 0">
-                <v-list-item-title>No follows yet</v-list-item-title>
+                <v-list-item-title class="nav-title">
+                  {{ tab.label }}
+                </v-list-item-title>
               </v-list-item>
             </v-list>
-          </v-card-text>
+          </v-card>
+        </div>
+      </v-col>
+
+      <!-- ===== RIGHT: MAIN CONTENT ===== -->
+      <v-col cols="12" md="9">
+        <v-card class="content-card">
+          <component :is="currentComponent" />
         </v-card>
       </v-col>
-
-      <!-- ===== RIGHT: Suggested Users ===== -->
-      <v-col cols="12" md="3">
-        <SuggestedUsers />
-      </v-col>
-
-      <!-- ===== RIGHT: Unreplied Signals ===== -->
-      <v-col cols="12" md="3">
-        <UnrepliedSignals />
-      </v-col>
-
     </v-row>
   </v-container>
 </template>
 
+
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { ref, computed } from 'vue'
 
-// Заглушки для компонентів, поки що просто пусті
-// import SuggestedUsers from '@/components/SuggestedUsers.vue'
-// import UnrepliedSignals from '@/components/UnrepliedSignals.vue'
+import Follows from '@/components/Follows.vue'
+import SuggestedUsers from '@/components/SuggestedUsers.vue'
+import UnrepliedSignals from '@/components/UnrepliedSignals.vue'
+import SendSignals from '@/components/SendSignals.vue'
 
-const router = useRouter()
-const users = ref([])
+const currentTab = ref('follows')
 
-const getAvatarUrl = (a) =>
-  a ? `http://localhost:3000${a}` : '/assets/default-avatar.png'
+const tabs = [
+  { key: 'follows', label: 'Follows', component: Follows },
+  { key: 'suggested', label: 'Suggested Users', component: SuggestedUsers },
+  { key: 'unreplied', label: 'Unreplied Signals', component: UnrepliedSignals },
+  { key: 'send', label: 'Send Signals', component: SendSignals },
 
-onMounted(async () => {
-  try {
-    const res = await api.get('/follows/following')
-    users.value = res.data
-  } catch (err) {
-    console.error('Failed to load following users', err)
-  }
+]
+
+const currentComponent = computed(() => {
+  const tab = tabs.find(t => t.key === currentTab.value)
+  return tab ? tab.component : null
 })
-
-function goToProfile(id) {
-  router.push(`/profile/${id}`)
-}
-
-function formatDate(d) {
-  return new Date(d).toLocaleDateString()
-}
 </script>
 
 <style scoped>
@@ -89,26 +67,47 @@ function formatDate(d) {
   font-family: 'Junge', serif;
 }
 
-/* Використовуємо вже надані стилі feed/post-card */
-.post-card {
+/* ===== SIDEBAR ===== */
+.sticky-sidebar {
+  position: sticky;
+  top: 80px;
+}
+
+.sidebar-card {
   border-radius: 18px;
-  padding-bottom: 4px;
-  background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  padding: 12px 8px;
+  background-color: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
 }
 
-.post-card .v-card-title {
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.v-list-item {
+/* ===== NAV ITEMS ===== */
+.nav-item {
+  margin: 4px 0;
   cursor: pointer;
-  transition: background 0.2s;
-  border-radius: 12px;
+  transition: background 0.25s ease, transform 0.15s ease;
 }
 
-.v-list-item:hover {
+.nav-item:hover {
   background: rgba(151, 229, 238, 0.2);
+  transform: translateX(2px);
+}
+
+.nav-item.v-list-item--active {
+  background: rgba(151, 229, 238, 0.35);
+}
+
+.nav-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ===== CONTENT ===== */
+.content-card {
+  border-radius: 18px;
+  padding: 16px;
+  background-color: #ffffff;
+  min-height: 300px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
 }
 </style>
+
