@@ -20,10 +20,26 @@
           </v-avatar>
         </v-col>
 
-        <v-col cols="12" md="7">
+        <v-col cols="12" md="6">
           <h1 class="profile-name">
             {{ user.name || "User didn't provide information" }}
           </h1>
+        </v-col>
+
+        <!-- FOLLOW BUTTON -->
+        <v-col
+          cols="12"
+          md="4"
+          class="text-right"
+          v-if="authUser && authUser.id !== user.id"
+        >
+          <v-btn
+            :loading="followLoading"
+            :color="isFollowing ? 'grey' : 'primary'"
+            @click="toggleFollow"
+          >
+            {{ isFollowing ? 'Unfollow' : 'Follow' }}
+          </v-btn>
         </v-col>
       </v-row>
 
@@ -51,6 +67,7 @@
                     </a>
                   </v-list-item-title>
                 </v-list-item>
+
                 <v-list-item v-if="links.length === 0">
                   <v-list-item-title>User didn't provide information</v-list-item-title>
                 </v-list-item>
@@ -88,8 +105,15 @@
                     <v-card-text>
                       <h4 class="mb-2">{{ post.title }}</h4>
                       <p>{{ post.content }}</p>
+
                       <div v-if="post.tags?.length" class="post-tags mt-3">
-                        <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined" class="ma-1">
+                        <v-chip
+                          v-for="tag in post.tags"
+                          :key="tag"
+                          size="small"
+                          variant="outlined"
+                          class="ma-1"
+                        >
                           #{{ tag }}
                         </v-chip>
                       </div>
@@ -115,31 +139,40 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { api } from '@/api/api.js'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
-const router = useRouter()
+const authStore = useAuthStore()
+const authUser = computed(() => authStore.user)
 
 const user = ref(null)
 const posts = ref([])
 const links = ref([])
-const loading = ref(true)
 const errorMessage = ref('')
+const loading = ref(true)
+
+const isFollowing = ref(false)
+const followLoading = ref(false)
 
 const userId = ref(route.params.id)
+
 const getAvatarUrl = (avatar) =>
   avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
 
 async function loadUserProfile() {
   loading.value = true
   errorMessage.value = ''
+
   try {
     const res = await api.get(`/users/${userId.value}/profile`)
-    user.value = res.data         // тут напряму об’єкт користувача
-    posts.value = res.data.posts || []   // якщо бекенд не повертає posts, залишиться пусто
-    links.value = res.data.links || []   // якщо бекенд не повертає links
+    user.value = res.data
+    posts.value = res.data.posts || []
+    links.value = res.data.links || []
+
+    await checkFollowStatus()
   } catch (err) {
     console.error(err)
     errorMessage.value = 'Failed to load profile'
@@ -148,6 +181,42 @@ async function loadUserProfile() {
   }
 }
 
+async function checkFollowStatus() {
+  if (!authUser.value || authUser.value.id === user.value.id) return
+
+  const res = await api.get('/follows/status', {
+    params: {
+      targetId: user.value.id,
+      targetType: 'user'
+    }
+  })
+
+  isFollowing.value = res.data.following
+}
+
+async function toggleFollow() {
+  followLoading.value = true
+
+  try {
+    if (isFollowing.value) {
+      await api.delete('/follows', {
+        data: {
+          targetId: user.value.id,
+          targetType: 'user'
+        }
+      })
+      isFollowing.value = false
+    } else {
+      await api.post('/follows', {
+        targetId: user.value.id,
+        targetType: 'user'
+      })
+      isFollowing.value = true
+    }
+  } finally {
+    followLoading.value = false
+  }
+}
 
 onMounted(loadUserProfile)
 
