@@ -19,8 +19,8 @@
 
           <!-- Контент сигналу -->
           <div class="signal-content">
-            <div class="signal-title">{{ signal.receiver_name }}</div>
-            <div class="signal-message">{{ signal.message }}</div>
+            <div class="signal-title">{{ signal.sender_name }}</div>
+            <div class="signal-message">{{ signal.last_message }}</div>
           </div>
 
           <!-- Кнопка видалення -->
@@ -49,10 +49,11 @@ const signals = ref([]);
 
 const fetchSignals = async () => {
   try {
-    const res = await api.get('/signals/sent');
-    signals.value = res.data.signals.filter(
-      s => s.status !== 'answered' && s.status !== 'deleted'
-    );
+    const res = await api.get('/signals/conversations/sent');
+
+    signals.value = res.data.conversations
+      .filter(c => c.outcome !== 'success' && c.outcome !== 'rejected');
+      
   } catch (err) {
     console.error('Failed to load sent signals', err);
   }

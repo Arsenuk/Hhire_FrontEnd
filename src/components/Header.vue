@@ -129,14 +129,18 @@ async function logout() {
 const unansweredSignals = ref(0)
 
 const fetchUnansweredSignals = async () => {
-  if (!isLoggedIn.value) return
+  if (!isLoggedIn.value) return;
+
   try {
-    const res = await api.get('/signals/inbox')
-    unansweredSignals.value = res.data.signals.filter(s => s.status === 'new').length
+    const res = await api.get('/signals/conversations/inbox?unread=true');
+
+    unansweredSignals.value = res.data.conversations
+      .reduce((sum, conv) => sum + (conv.unread_count || 0), 0);
+
   } catch (err) {
-    console.error('Failed to fetch signals', err)
+    console.error('Failed to fetch signals', err);
   }
-}
+};
 
 // --- Автооновлення кожні 15 сек ---
 let intervalId = null

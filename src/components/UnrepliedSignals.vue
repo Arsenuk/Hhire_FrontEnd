@@ -3,19 +3,10 @@
     <v-card-title>Unreplied Signals</v-card-title>
     <v-card-text>
       <v-list>
-        <v-list-item
-          v-for="signal in signals"
-          :key="signal.id"
-          class="signal-item"
-          :ripple="false"
-        >
+        <v-list-item v-for="signal in signals" :key="signal.conversation_id" class="signal-item" :ripple="false">
           <!-- Аватарка -->
           <template #prepend>
-            <v-avatar
-              size="48"
-              class="cursor-pointer"
-              @click.stop="goToProfile(signal.sender_id)"
-            >
+            <v-avatar size="48" class="cursor-pointer" @click.stop="goToProfile(signal.sender_id)">
               <v-img :src="getAvatarUrl(signal.sender_avatar)" />
             </v-avatar>
           </template>
@@ -23,9 +14,9 @@
           <!-- Контент сигналу -->
           <div class="signal-content">
             <div class="post-username">{{ signal.sender_name }}</div>
-            <div class="post-meta">{{ signal.message }}</div>
+            <div class="post-meta">{{ signal.last_message }}</div>
           </div>
-          
+
           <v-list-item-action>
             <v-btn small class="reply-btn" @click.stop="openDialog(signal)">
               Reply
@@ -50,7 +41,7 @@
         </v-card-title>
 
         <v-card-text class="confirm-text">
-          <div class="message-box">{{ activeSignal?.message }}</div>
+          <div class="message-box">{{ activeSignal?.last_message }}</div>
           <v-textarea v-model="replyMessage" label="Write your reply" rows="3" auto-grow outlined />
         </v-card-text>
 
@@ -67,10 +58,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { api } from '@/api/api.js'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth.js'
 
 const props = defineProps({
-  updateNotify: Function // функція з Header для оновлення count
+  updateNotify: Function
 })
+
+const authStore = useAuthStore()
 
 const signals = ref([])
 const dialog = ref(false)
@@ -78,32 +72,43 @@ const activeSignal = ref(null)
 const replyMessage = ref('')
 
 const router = useRouter()
+
 const getAvatarUrl = (avatar) =>
   avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
 
-// --- Fetch signals ---
+// ---------------- FETCH ----------------
 const fetchSignals = async () => {
   try {
-    const res = await api.get('/signals/inbox')
-    const newSignals = res.data.signals.filter(s => s.status === 'new')
-    signals.value = newSignals
-    if (props.updateNotify) props.updateNotify(newSignals.length)
+    const res = await api.get('/signals/conversations/inbox?unread=true')
+
+    signals.value = res.data.conversations
+
+    if (props.updateNotify) {
+      const totalUnread = signals.value.reduce(
+        (sum, s) => sum + (s.unread_count || 0),
+        0
+      )
+      props.updateNotify(totalUnread)
+    }
+
   } catch (err) {
-    console.error(err)
+    console.error('❌ FETCH ERROR:', err.response?.data || err)
   }
 }
 
-// --- Auto refresh ---
+// ---------------- LIFECYCLE ----------------
 let intervalId = null
+
 onMounted(() => {
   fetchSignals()
-  intervalId = setInterval(fetchSignals, 7000) // кожні 15 сек
+  intervalId = setInterval(fetchSignals, 7000)
 })
+
 onUnmounted(() => {
   if (intervalId) clearInterval(intervalId)
 })
 
-// --- Dialog functions ---
+// ---------------- UI ----------------
 const openDialog = (signal) => {
   activeSignal.value = signal
   replyMessage.value = ''
@@ -116,33 +121,58 @@ const closeDialog = () => {
   replyMessage.value = ''
 }
 
-// --- Respond to signal ---
+// ---------------- RESPOND ----------------
 const respond = async (type) => {
   if (!activeSignal.value || !replyMessage.value.trim()) {
     alert('Please enter a reply')
     return
   }
 
+  const currentUserId = authStore.user?.id
+
   try {
-    await api.post(`/signals/${activeSignal.value.id}/reply`, { message: replyMessage.value })
+    const convId = activeSignal.value.conversation_id
+
+    const res = await api.get(`/signals/conversations/${convId}/messages`)
+    const messages = res.data.messages || []
+    const lastMessage = messages[messages.length - 1]
+
+    await api.post(`/signals/${lastMessage.id}/reply`, {
+      message: replyMessage.value
+    })
 
     if (type === 'sing') {
-      await api.post('/follows', {
-        targetId: activeSignal.value.sender_id,
+      const targetId =
+        lastMessage.sender_id === currentUserId
+          ? lastMessage.receiver_id
+          : lastMessage.sender_id
+
+      const followPayload = {
+        targetId: targetId,
         targetType: 'user'
-      })
+      }
+
+      try {
+        await api.post('/follows', followPayload)
+      } catch (err) {
+        console.error('❌ FOLLOW ERROR:', err.response?.data || err)
+      }
     }
 
     closeDialog()
-    await fetchSignals() // 🔹 після reply оновлюємо signals та notify
+    await fetchSignals()
+
   } catch (err) {
-    console.error(err)
-    alert('Failed to respond')
+    console.error('❌ RESPOND ERROR:', err.response?.data || err)
   }
 }
 
-const goToProfile = (userId) => router.push(`/profile/${userId}`)
+// ---------------- NAV ----------------
+const goToProfile = (userId) =>
+  router.push(`/profile/${userId}`)
 </script>
+
+
 <style scoped>
 /* ===== POST CARD ===== */
 .post-card {
@@ -210,7 +240,7 @@ const goToProfile = (userId) => router.push(`/profile/${userId}`)
 .confirm-card {
   border-radius: 18px;
   background: #f3f4f6;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   color: #1e293b;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
