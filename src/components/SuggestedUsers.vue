@@ -3,13 +3,8 @@
     <v-card-title>Suggested Users</v-card-title>
     <v-card-text>
       <v-list>
-        <v-list-item
-          v-for="user in suggestedUsers"
-          :key="user.id"
-          @click="goToProfile(user.id)"
-          class="user-item"
-          :ripple="false"
-        >
+        <v-list-item v-for="user in suggestedUsers" :key="user.id" @click="goToProfile(user.id)" class="user-item"
+          :ripple="false">
           <template #prepend>
             <v-avatar size="48" class="cursor-pointer">
               <v-img :src="getAvatarUrl(user.avatar)" />
@@ -40,13 +35,8 @@
           </v-btn>
         </v-card-title>
         <v-card-text class="confirm-text">
-          <v-textarea
-            v-model="message"
-            label="Message"
-            rows="4"
-            auto-grow
-            outlined
-          />
+          <v-text-field v-model="subject" label="Subject" placeholder="Enter subject..." outlined class="mb-3" />
+          <v-textarea v-model="message" label="Message" rows="4" auto-grow outlined />
         </v-card-text>
         <v-card-actions class="confirm-actions">
           <v-btn class="confirm-cancel" @click="closeDialog">Cancel</v-btn>
@@ -70,6 +60,7 @@ const suggestedUsers = ref([]);
 const dialog = ref(false);
 const selectedUser = ref(null);
 const message = ref('');
+const subject = ref('');
 
 const getAvatarUrl = (a) => a ? `http://localhost:3000${a}` : '/assets/default-avatar.png';
 
@@ -85,6 +76,7 @@ const fetchSuggestedUsers = async () => {
 const openConnectDialog = (user) => {
   selectedUser.value = user;
   message.value = '';
+  subject.value = ''; // 🔥 додати
   dialog.value = true;
 };
 
@@ -94,13 +86,15 @@ const closeDialog = () => {
 
 const sendSignal = async () => {
   if (!message.value.trim()) return alert('Enter a message');
+  if (!subject.value.trim()) return alert('Enter subject');
   try {
     await api.post('/signals', {
       sender_type: 'user',
       sender_id: auth.user.id,
       receiver_type: 'user',
       receiver_id: selectedUser.value.id,
-      message: message.value
+      message: message.value,
+      subject: subject.value // 🔥 ОСЬ ЦЕ ГОЛОВНЕ
     });
     dialog.value = false;
     alert('Signal sent!');
@@ -119,7 +113,7 @@ onMounted(fetchSuggestedUsers);
 .post-card {
   border-radius: 18px;
   background-color: #f3f4f6;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   color: #1e293b;
   padding: 16px;
 }
@@ -172,7 +166,7 @@ onMounted(fetchSuggestedUsers);
 .confirm-card {
   border-radius: 18px;
   background: #f3f4f6;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   color: #1e293b;
 }
 

@@ -1,139 +1,160 @@
 <template>
-  <v-card class="post-card mb-4">
-    <v-card-title>Sent Signals</v-card-title>
+  <v-list-item v-for="signal in signals" :key="signal.conversation_id" class="signal-item" :ripple="false">
+    <!-- Аватар -->
+    <template #prepend>
+      <v-avatar size="44">
+        <v-img :src="getAvatarUrl(signal.receiver_avatar)" />
+      </v-avatar>
+    </template>
 
-    <v-card-text>
-      <v-list>
-        <v-list-item
-          v-for="signal in signals"
-          :key="signal.id"
-          class="signal-item"
-          :ripple="false"
-        >
-          <!-- Аватарка отримувача -->
-          <template #prepend>
-            <v-avatar size="40">
-              <v-img :src="getAvatarUrl(signal.receiver_avatar)" />
-            </v-avatar>
-          </template>
+    <!-- Контент -->
+    <div class="signal-content">
+      <div class="signal-header">
+        <span class="signal-name">
+          {{ signal.receiver_name || 'Unknown user' }}
+        </span>
 
-          <!-- Контент сигналу -->
-          <div class="signal-content">
-            <div class="signal-title">{{ signal.sender_name }}</div>
-            <div class="signal-message">{{ signal.last_message }}</div>
-          </div>
+        <span class="signal-date">
+          {{ formatDate(signal.last_message_at) }}
+        </span>
+      </div>
 
-          <!-- Кнопка видалення -->
-          <v-btn
-            icon
-            class="delete-btn"
-            @click="deleteSignal(signal)"
-          >
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-list-item>
+      <!-- SUBJECT -->
+      <div class="signal-subject">
+        {{ signal.subject || 'No subject' }}
+      </div>
 
-        <v-list-item v-if="signals.length === 0">
-          <v-list-item-title class="no-signal">No sent signals</v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-card-text>
-  </v-card>
+      <!-- MESSAGE -->
+      <div class="signal-message">
+        {{ signal.last_message }}
+      </div>
+    </div>
+
+    <!-- Delete -->
+    <v-btn icon class="delete-btn" @click="deleteSignal(signal)">
+      <v-icon size="18">mdi-close</v-icon>
+    </v-btn>
+  </v-list-item>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { api } from '@/api/api.js';
+import { computed, onMounted } from 'vue'
+import { useSignalStore } from '@/stores/signal.store'
 
-const signals = ref([]);
+const signalStore = useSignalStore()
 
-const fetchSignals = async () => {
-  try {
-    const res = await api.get('/signals/conversations/sent');
+const signals = computed(() => signalStore.sent)
 
-    signals.value = res.data.conversations
-      .filter(c => c.outcome !== 'success' && c.outcome !== 'rejected');
-      
-  } catch (err) {
-    console.error('Failed to load sent signals', err);
-  }
-};
+onMounted(() => {
+  signalStore.fetchSent()
+})
 
+// ---------------- DELETE ----------------
 const deleteSignal = async (signal) => {
-  if (!confirm('Delete this signal?')) return;
+  if (!confirm('Delete this signal?')) return
 
   try {
-    await api.delete(`/signals/${signal.id}`);
-    signals.value = signals.value.filter(s => s.id !== signal.id);
+    await signalStore.deleteSignal(signal.id) // 🔥 FIX
+    await signalStore.fetchSent()             // 🔥 refresh
   } catch (err) {
-    console.error(err);
-    alert('Failed to delete signal');
+    console.error('DELETE ERROR:', err)
   }
-};
+}
 
+// ---------------- UTILS ----------------
 const getAvatarUrl = (avatar) =>
-  avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png';
+  avatar
+    ? `http://localhost:3000${avatar}`
+    : '/assets/default-avatar.png'
 
-onMounted(fetchSignals);
+const formatDate = (date) => {
+  if (!date) return ''
+  return new Date(date).toLocaleDateString('uk-UA', {
+    day: '2-digit',
+    month: 'short'
+  })
+}
 </script>
 
 <style scoped>
-.post-card {
-  border-radius: 18px;
-  background-color: #f3f4f6;
-  color: #1e293b;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-/* Сигнали */
 .signal-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  border-radius: 12px;
-  padding: 10px 14px;
-  background-color: transparent;
-  transition: none; /* прибираємо будь-які ефекти */
+  gap: 14px;
+  border-radius: 14px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-/* hover без смужки і зсуву */
 .signal-item:hover {
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  transform: none !important;
+  background-color: rgba(59, 130, 246, 0.08);
 }
 
+/* Контент */
 .signal-content {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 
-.signal-title {
+/* Header (name + date) */
+.signal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signal-name {
   font-weight: 600;
   font-size: 14px;
-  color: #1e293b;
+  color: #0f172a;
 }
 
-.signal-message {
+.signal-date {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* Subject */
+.signal-subject {
   font-size: 13px;
-  color: #475569;
+  font-weight: 500;
+  color: #334155;
   margin-top: 2px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Delete button */
+/* Message */
+.signal-message {
+  font-size: 12.5px;
+  color: #64748b;
+  margin-top: 2px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Delete */
+.delete-btn {
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.signal-item:hover .delete-btn {
+  opacity: 1;
+}
+
 .delete-btn {
   color: #ef4444;
-  transition: color 0.2s;
 }
 
 .delete-btn:hover {
   color: #b91c1c;
-}
-
-/* Текст при відсутності сигналів */
-.no-signal {
-  color: #94a3b8;
-  font-style: italic;
 }
 </style>

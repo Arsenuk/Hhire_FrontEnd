@@ -3,12 +3,14 @@
     <v-row justify="center" align="center" class="fill-height">
       <v-col cols="12" md="6" class="form-col">
         <v-card class="form-card pa-8" elevation="8">
+
           <h2 class="form-title text-center">Create a Post</h2>
           <p class="form-subtitle text-center mb-6">
             Share your thoughts with the community
           </p>
 
-          <form @submit.prevent="submitPost">
+          <form @submit.prevent="openConfirm">
+
             <!-- TITLE -->
             <div class="mb-5">
               <p class="form-label">Title</p>
@@ -20,12 +22,21 @@
               <p class="form-label">Content</p>
               <textarea v-model="content" rows="6" class="textarea" placeholder="Write your post..."
                 required></textarea>
+
               <div class="char-count">
                 {{ content.length }} characters
               </div>
             </div>
 
-            <!-- TAGS (simple) -->
+            <!-- INTENT (НОВЕ ПОЛЕ) -->
+            <div class="mb-6">
+              <p class="form-label">Intent</p>
+
+              <v-select v-model="intent" :items="intentOptions" item-title="label" item-value="value"
+                placeholder="Select intent" density="comfortable" />
+            </div>
+
+            <!-- TAGS -->
             <div class="mb-6">
               <p class="form-label">Tags</p>
               <input v-model="rawTags" class="input-field" placeholder="e.g. startup, tech, review" />
@@ -34,20 +45,29 @@
               </div>
             </div>
 
+          
+            <!-- IMAGES (НОВЕ ПОЛЕ) -->
+            <div class="mb-6">
+              <p class="form-label">Images</p>
+
+              <v-file-input v-model="images" multiple accept="image/*" show-size density="comfortable"
+                label="Upload images" />
+            </div>
+
             <!-- ACTIONS -->
             <div class="actions">
               <v-btn variant="outlined" @click="cancel">
                 Cancel
               </v-btn>
 
-              <v-btn class="submit-btn" type="button" @click="openConfirm">
+              <v-btn class="submit-btn" type="submit">
                 Publish
               </v-btn>
-
             </div>
+
           </form>
 
-          <!-- CONFIRM DIALOG -->
+          <!-- CONFIRM -->
           <v-dialog v-model="showConfirm" max-width="420">
             <v-card>
               <v-card-title class="text-h6">
@@ -60,9 +80,11 @@
 
               <v-card-actions>
                 <v-spacer />
+
                 <v-btn variant="text" @click="showConfirm = false">
                   Cancel
                 </v-btn>
+
                 <v-btn class="submit-btn" :loading="submitting" @click="confirmSubmit">
                   Publish
                 </v-btn>
@@ -83,16 +105,35 @@ import { api } from '@/api/api.js'
 
 const router = useRouter()
 
-// form data
 const title = ref('')
 const content = ref('')
 const rawTags = ref('')
+const intent = ref('general')
+const images = ref([])
+
 
 const showConfirm = ref(false)
 const submitting = ref(false)
 
+// --- INTENTS (з беку) ---
+const intentOptions = [
+  { label: 'General', value: 'general' },
+  { label: 'Job', value: 'job' },
+  { label: 'Mentorship', value: 'mentorship' },
+  { label: 'Partnership', value: 'partnership' },
+  { label: 'Hire', value: 'hire' },
+  { label: 'Offer', value: 'offer' }
+]
 
-// ---- SUBMIT POST ----
+const openConfirm = () => {
+  showConfirm.value = true
+}
+
+const confirmSubmit = async () => {
+  showConfirm.value = false
+  await submitPost()
+}
+
 const submitPost = async () => {
   if (submitting.value) return
   submitting.value = true
@@ -104,29 +145,34 @@ const submitPost = async () => {
       .filter(Boolean)
       .slice(0, 10)
 
-    await api.post('/posts', {
-      title: title.value,
-      content: content.value,
-      tags
+      
+    const formData = new FormData()
+
+    formData.append('title', title.value)
+    formData.append('content', content.value)
+    formData.append('intent', intent.value)
+
+    formData.append('sender_type', 'user')
+
+    tags.forEach(tag => formData.append('tags[]', tag))
+
+    images.value.forEach(file => {
+      formData.append('images', file)
+    })
+
+    await api.post('/posts/user', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
 
     router.push('/feed')
   } catch (err) {
     console.error(err)
-    alert(err.response?.data?.error || 'Failed to create post')
+    alert(err.response?.data?.message ||
+      err.response?.data?.error ||
+      'Failed to create post')
   } finally {
     submitting.value = false
   }
-}
-
-
-const openConfirm = () => {
-  showConfirm.value = true
-}
-
-const confirmSubmit = async () => {
-  showConfirm.value = false
-  await submitPost()
 }
 
 const cancel = () => {

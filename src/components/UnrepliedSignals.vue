@@ -55,57 +55,26 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
-import { api } from '@/api/api.js'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
+import { useSignalStore } from '@/stores/signal.store'
+import { api } from '@/api/api.js'
 
-const props = defineProps({
-  updateNotify: Function
-})
-
+const signalStore = useSignalStore()
 const authStore = useAuthStore()
+const router = useRouter()
 
-const signals = ref([])
 const dialog = ref(false)
 const activeSignal = ref(null)
 const replyMessage = ref('')
 
-const router = useRouter()
+// ✅ READ ONLY from store
+const signals = computed(() => signalStore.inbox)
 
-const getAvatarUrl = (avatar) =>
-  avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
-
-// ---------------- FETCH ----------------
-const fetchSignals = async () => {
-  try {
-    const res = await api.get('/signals/conversations/inbox?unread=true')
-
-    signals.value = res.data.conversations
-
-    if (props.updateNotify) {
-      const totalUnread = signals.value.reduce(
-        (sum, s) => sum + (s.unread_count || 0),
-        0
-      )
-      props.updateNotify(totalUnread)
-    }
-
-  } catch (err) {
-    console.error('❌ FETCH ERROR:', err.response?.data || err)
-  }
-}
-
-// ---------------- LIFECYCLE ----------------
-let intervalId = null
-
+// ---------------- INIT ----------------
 onMounted(() => {
-  fetchSignals()
-  intervalId = setInterval(fetchSignals, 7000)
-})
-
-onUnmounted(() => {
-  if (intervalId) clearInterval(intervalId)
+  signalStore.fetchInbox()
 })
 
 // ---------------- UI ----------------
@@ -121,6 +90,10 @@ const closeDialog = () => {
   replyMessage.value = ''
 }
 
+// ---------------- AVATAR ----------------
+const getAvatarUrl = (avatar) =>
+  avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
+
 // ---------------- RESPOND ----------------
 const respond = async (type) => {
   if (!activeSignal.value || !replyMessage.value.trim()) {
@@ -128,48 +101,47 @@ const respond = async (type) => {
     return
   }
 
-  const currentUserId = authStore.user?.id
-
   try {
     const convId = activeSignal.value.conversation_id
 
+    // отримуємо останнє повідомлення
     const res = await api.get(`/signals/conversations/${convId}/messages`)
     const messages = res.data.messages || []
+
     const lastMessage = messages[messages.length - 1]
 
-    await api.post(`/signals/${lastMessage.id}/reply`, {
-      message: replyMessage.value
-    })
+    // reply через store (ВАЖЛИВО)
+    await signalStore.reply(lastMessage.id, replyMessage.value)
 
+    // follow логіка
     if (type === 'sing') {
+      const currentUserId = authStore.user?.id
+
       const targetId =
         lastMessage.sender_id === currentUserId
           ? lastMessage.receiver_id
           : lastMessage.sender_id
 
-      const followPayload = {
-        targetId: targetId,
+      await api.post('/follows', {
+        targetId,
         targetType: 'user'
-      }
-
-      try {
-        await api.post('/follows', followPayload)
-      } catch (err) {
-        console.error('❌ FOLLOW ERROR:', err.response?.data || err)
-      }
+      })
     }
 
     closeDialog()
-    await fetchSignals()
+
+    // 🔥 refresh inbox після reply
+    await signalStore.fetchInbox()
 
   } catch (err) {
-    console.error('❌ RESPOND ERROR:', err.response?.data || err)
+    console.error('RESPOND ERROR:', err)
   }
 }
 
 // ---------------- NAV ----------------
-const goToProfile = (userId) =>
+const goToProfile = (userId) => {
   router.push(`/profile/${userId}`)
+}
 </script>
 
 

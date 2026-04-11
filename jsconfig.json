@@ -1,9 +1,7 @@
 {
-  "vueCompilerOptions": {
-    "globalTypesPath": "./node_modules/@vue/tsconfig/global.d.ts"
-  },
   "compilerOptions": {
     "allowJs": true,
+    "ignoreDeprecations": "6.0",
     "target": "es5",
     "module": "esnext",
     "baseUrl": "./",
