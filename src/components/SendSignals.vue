@@ -71,7 +71,7 @@ const deleteSignal = async (signal) => {
 };
 
 const getAvatarUrl = (avatar) =>
-  avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png';
+  avatar || '/assets/default-avatar.png'
 
 onMounted(fetchSignals);
 </script>
