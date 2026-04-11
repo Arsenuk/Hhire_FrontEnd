@@ -128,7 +128,11 @@
                     <v-card-text>
                       <h4 class="mb-2">{{ post.title }}</h4>
                       <p>{{ post.content }}</p>
-
+                      <div v-if="post.intent" class="post-intent mb-2">
+                        <v-chip size="small" variant="outlined" color="secondary">
+                          {{ post.intent }}
+                        </v-chip>
+                      </div>
                       <div v-if="post.tags?.length" class="post-tags mt-3">
                         <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined" class="ma-1">
                           #{{ tag }}

@@ -61,6 +61,15 @@
                     <!-- CONTENT + TAGS -->
                     <v-card-text>
                         {{ post.content }}
+
+                        <!-- INTENT (NEW) -->
+                        <div v-if="post.intent" class="post-intent mt-2">
+                            <v-chip small class="ma-1" color="secondary" variant="outlined">
+                                {{ post.intent }}
+                            </v-chip>
+                        </div>
+
+                        <!-- TAGS -->
                         <div v-if="post.tags && post.tags.length" class="post-tags mt-2">
                             <v-chip v-for="(tag, index) in post.tags" :key="index" small color="primary" class="ma-1"
                                 outlined>
@@ -633,6 +642,13 @@ onMounted(() => {
 
     width: 100%;
     position: relative;
+}
+
+.post-intent .v-chip {
+    background: rgba(255, 193, 7, 0.12);
+    border-color: #facc15;
+    color: #a16207;
+    font-weight: 600;
 }
 
 /* КРАПЛЯ-ПОКАЖЧИК (як у месенджерах) */
