@@ -1,56 +1,58 @@
 <template>
   <v-card class="post-card mb-4">
-    <v-card-title>Suggested Users</v-card-title>
-    <v-card-text>
-      <v-list>
-        <v-list-item
-          v-for="user in suggestedUsers"
-          :key="user.id"
-          @click="goToProfile(user.id)"
-          class="user-item"
-          :ripple="false"
-        >
-          <template #prepend>
-            <v-avatar size="48" class="cursor-pointer">
+    <v-card-title class="title">Suggested Users</v-card-title>
+
+    <v-card-text class="card-body">
+      <v-list class="list">
+        <v-list-item v-for="user in suggestedUsers" :key="user.id" class="user-item" :ripple="false">
+          <!-- LEFT SIDE -->
+          <div class="left" @click="goToProfile(user.id)">
+            <v-avatar size="48" class="avatar">
               <v-img :src="getAvatarUrl(user.avatar)" />
             </v-avatar>
-          </template>
 
-          <div class="user-content">
-            <div class="user-name">{{ user.name }}</div>
-            <div class="user-desc">{{ user.description || 'No description' }}</div>
+            <div class="user-content">
+              <div class="user-name">{{ user.name }}</div>
+              <div class="user-desc">
+                {{ user.description || 'No description' }}
+              </div>
+            </div>
           </div>
 
-          <v-list-item-action>
-            <v-btn small class="connect-btn" @click.stop="openConnectDialog(user)">
+          <!-- RIGHT SIDE ACTION -->
+          <div class="right">
+            <v-btn class="connect-btn" variant="flat" @click.stop="openConnectDialog(user)">
               Connect
             </v-btn>
-          </v-list-item-action>
+          </div>
         </v-list-item>
       </v-list>
     </v-card-text>
 
-    <!-- Connect Dialog -->
-    <v-dialog v-model="dialog" max-width="500px" persistent transition="dialog-bottom-transition">
+    <!-- DIALOG -->
+    <v-dialog v-model="dialog" max-width="520px" persistent>
       <v-card class="confirm-card">
-        <v-card-title class="confirm-title justify-space-between">
-          Send Signal to {{ selectedUser?.name }}
-          <v-btn icon @click="closeDialog">
+        <v-card-title class="confirm-title">
+          Send Signal
+          <span class="to-user">to {{ selectedUser?.name }}</span>
+
+          <v-btn icon variant="text" @click="closeDialog">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-card-title>
-        <v-card-text class="confirm-text">
-          <v-textarea
-            v-model="message"
-            label="Message"
-            rows="4"
-            auto-grow
-            outlined
-          />
+
+        <v-card-text>
+          <v-textarea v-model="message" label="Write your message" rows="4" auto-grow variant="outlined" />
         </v-card-text>
+
         <v-card-actions class="confirm-actions">
-          <v-btn class="confirm-cancel" @click="closeDialog">Cancel</v-btn>
-          <v-btn class="confirm-delete" @click="sendSignal">Send</v-btn>
+          <v-btn class="cancel-btn" @click="closeDialog">
+            Cancel
+          </v-btn>
+
+          <v-btn class="send-btn" @click="sendSignal">
+            Send
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -117,116 +119,157 @@ onMounted(fetchSuggestedUsers);
 
 <style scoped>
 .post-card {
-  border-radius: 18px;
-  background-color: #f3f4f6;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-  color: #1e293b;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   padding: 16px;
 }
 
+.title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #111827;
+}
+
+/* LIST */
+.list {
+  padding: 0;
+}
+
+/* ITEM ROW */
 .user-item {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  border-radius: 12px;
-  padding: 10px 14px;
-  transition: background 0.2s;
-  background-color: transparent;
+  align-items: stretch;
+  /* 🔥 ключ */
+  justify-content: space-between;
+
+  padding: 0;
+  border-radius: 14px;
+
+  transition: all 0.2s ease;
+  background: transparent;
 }
 
 .user-item:hover {
-  background-color: rgba(59, 130, 246, 0.1);
+  background: rgba(99, 102, 241, 0.06);
+}
+
+/* LEFT SIDE */
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  flex: 1;
+  padding: 12px 14px;
+
+  cursor: pointer;
+}
+
+.avatar {
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .user-content {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  min-width: 0;
 }
 
 .user-name {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
+  color: #111827;
 }
 
 .user-desc {
-  font-size: 14px;
-  color: #475569;
+  font-size: 13px;
+  color: #6b7280;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
 }
 
-/* Connect button */
+/* RIGHT SIDE FULL HEIGHT ACTION */
+.right {
+  display: flex;
+  align-items: stretch;
+}
+
+/* CONNECT BUTTON = FULL HEIGHT COLUMN */
 .connect-btn {
-  font-weight: 500;
-  color: #fff;
-  background-color: #6366f1;
-  border-radius: 12px;
-  padding: 6px 12px;
-  transition: background 0.2s;
+  height: 30px;
+  border-radius: 14px !important;
+
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  color: #000000;
+
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: none;
+
+  padding: 0 18px;
+
+  /* min-width: 120px; */
+
+  box-shadow: none;
+  transition: all 0.2s ease;
 }
 
 .connect-btn:hover {
-  background-color: #4f46e5;
+  background: linear-gradient(90deg, #62ab23 33%, #4b9ce2 100%);
+  transform: translateY(-1px);
 }
 
-/* ===== MODAL ===== */
+.connect-btn:active {
+  transform: scale(0.98);
+}
+
+/* DIALOG */
 .confirm-card {
   border-radius: 18px;
-  background: #f3f4f6;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  color: #1e293b;
+  background: #f9fafb;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
 }
 
 .confirm-title {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.confirm-text {
-  margin-top: 8px;
+.to-user {
+  font-weight: 500;
+  color: #6366f1;
 }
 
-.v-textarea {
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #cbd5e1;
-}
-
-/* Modal actions */
 .confirm-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 10px;
   padding: 12px 16px 16px;
 }
 
-.confirm-cancel {
-  background: #f87171;
-  color: #fff;
-  font-weight: 600;
+.cancel-btn {
+  background: #e5e7eb;
+  color: #111827;
   border-radius: 12px;
-  padding: 8px 16px;
+  font-weight: 600;
 }
 
-.confirm-cancel:hover {
-  background: #ef4444;
-}
-
-.confirm-delete {
+.send-btn {
   background: #22c55e;
   color: #fff;
-  font-weight: 600;
   border-radius: 12px;
-  padding: 8px 16px;
+  font-weight: 600;
 }
 
-.confirm-delete:hover {
+.send-btn:hover {
   background: #16a34a;
-}
-
-.cursor-pointer {
-  cursor: pointer;
 }
 </style>

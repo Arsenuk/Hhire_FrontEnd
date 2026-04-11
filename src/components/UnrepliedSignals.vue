@@ -1,63 +1,78 @@
 <template>
   <v-card class="post-card mb-4">
-    <v-card-title>Unreplied Signals</v-card-title>
-    <v-card-text>
-      <v-list>
-        <v-list-item
-          v-for="signal in signals"
-          :key="signal.id"
-          class="signal-item"
-          :ripple="false"
-        >
-          <!-- Аватарка -->
+    <v-card-title class="card-title">
+      Unreplied Signals
+    </v-card-title>
+
+    <v-card-text class="card-body">
+      <v-list class="signal-list">
+
+        <v-list-item v-for="signal in signals" :key="signal.id" class="signal-item" :ripple="false">
+          <!-- AVATAR -->
           <template #prepend>
-            <v-avatar
-              size="48"
-              class="cursor-pointer"
-              @click.stop="goToProfile(signal.sender_id)"
-            >
+            <v-avatar size="46" class="avatar" @click.stop="goToProfile(signal.sender_id)">
               <v-img :src="getAvatarUrl(signal.sender_avatar)" />
             </v-avatar>
           </template>
 
-          <!-- Контент сигналу -->
+          <!-- CONTENT -->
           <div class="signal-content">
-            <div class="post-username">{{ signal.sender_name }}</div>
-            <div class="post-meta">{{ signal.message }}</div>
+            <div class="signal-name">
+              {{ signal.sender_name }}
+            </div>
+
+            <div class="signal-message">
+              {{ signal.message }}
+            </div>
           </div>
-          
-          <v-list-item-action>
-            <v-btn small class="reply-btn" @click.stop="openDialog(signal)">
+
+          <!-- RIGHT ACTION (ALIGNED) -->
+          <template #append>
+            <v-btn class="reply-btn" @click.stop="openDialog(signal)">
               Reply
             </v-btn>
-          </v-list-item-action>
+          </template>
         </v-list-item>
 
-        <v-list-item v-if="signals.length === 0">
-          <v-list-item-title>No new signals</v-list-item-title>
-        </v-list-item>
+        <!-- EMPTY STATE -->
+        <div v-if="signals.length === 0" class="empty-state">
+          No new signals
+        </div>
+
       </v-list>
     </v-card-text>
 
-    <!-- Модальне вікно -->
-    <v-dialog v-model="dialog" max-width="500px" persistent transition="dialog-bottom-transition">
-      <v-card class="confirm-card">
-        <v-card-title class="confirm-title justify-space-between">
+    <!-- DIALOG -->
+    <v-dialog v-model="dialog" max-width="520px" persistent transition="dialog-bottom-transition">
+      <v-card class="modal-card">
+
+        <v-card-title class="modal-title">
           Signal from {{ activeSignal?.sender_name }}
-          <v-btn icon @click="closeDialog">
+
+          <v-btn icon class="close-btn" @click="closeDialog">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </v-card-title>
 
-        <v-card-text class="confirm-text">
-          <div class="message-box">{{ activeSignal?.message }}</div>
-          <v-textarea v-model="replyMessage" label="Write your reply" rows="3" auto-grow outlined />
+        <v-card-text class="modal-body">
+          <div class="message-box">
+            {{ activeSignal?.message }}
+          </div>
+
+          <v-textarea v-model="replyMessage" label="Write your reply" rows="3" auto-grow variant="outlined"
+            class="reply-input" />
         </v-card-text>
 
-        <v-card-actions class="confirm-actions">
-          <v-btn class="confirm-cancel" @click="closeDialog">Refuse offer</v-btn>
-          <v-btn class="confirm-delete" @click="respond('sing')">Send & Follow</v-btn>
+        <v-card-actions class="modal-actions">
+          <v-btn class="btn-refuse" @click="closeDialog">
+            Refuse
+          </v-btn>
+
+          <v-btn class="btn-send" @click="respond('sing')">
+            Send & Follow
+          </v-btn>
         </v-card-actions>
+
       </v-card>
     </v-dialog>
   </v-card>
@@ -148,136 +163,157 @@ const respond = async (type) => {
 const goToProfile = (userId) => router.push(`/profile/${userId}`)
 </script>
 <style scoped>
-/* ===== POST CARD ===== */
+/* ===== CARD ===== */
 .post-card {
   border-radius: 18px;
-  background-color: #f5f7fa;
-  color: #1e293b;
-  margin-bottom: 16px;
-  padding: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  padding: 14px;
 }
 
-.post-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+.card-title {
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
 }
 
-/* ===== SIGNAL ITEM ===== */
+/* ===== LIST ===== */
+.signal-list {
+  padding: 0;
+}
+
+/* ===== ITEM ===== */
 .signal-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-radius: 12px;
-  padding: 10px 14px;
-  transition: background 0.2s;
-  background-color: transparent !important;
+  padding: 12px 10px;
+  border-radius: 14px;
+  transition: all 0.2s ease;
 }
 
 .signal-item:hover {
-  background: rgba(59, 130, 246, 0.1) !important;
-  transform: none !important;
+  background: rgba(99, 102, 241, 0.06);
 }
 
+/* ===== AVATAR ===== */
+.avatar {
+  border: 2px solid rgba(99, 102, 241, 0.25);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+}
+
+/* ===== TEXT ===== */
 .signal-content {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  flex: 1;
 }
 
-.post-username {
+.signal-name {
   font-weight: 600;
-  font-size: 15px;
-  color: #1e293b;
-}
-
-.post-meta {
   font-size: 14px;
-  color: #475569;
+  color: #111827;
 }
 
-/* ===== REPLY BUTTON ===== */
+.signal-message {
+  font-size: 13px;
+  color: #6b7280;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== BUTTON RIGHT ===== */
 .reply-btn {
-  font-weight: 500;
-  color: #fff;
-  background-color: #6366f1;
-  border-radius: 12px;
-  padding: 6px 12px;
-  transition: background 0.2s;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: #000000;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 6px 14px;
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  text-transform: none;
 }
 
 .reply-btn:hover {
-  background-color: #4f46e5;
+  transform: translateY(-1px);
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+}
+
+/* ===== EMPTY ===== */
+.empty-state {
+  text-align: center;
+  color: #9ca3af;
+  padding: 20px;
+  font-style: italic;
 }
 
 /* ===== MODAL ===== */
-.confirm-card {
+.modal-card {
   border-radius: 18px;
-  background: #f3f4f6;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-  color: #1e293b;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: #ffffff;
+  padding: 10px;
 }
 
-.confirm-title {
-  font-weight: 700;
-  font-size: 18px;
-  color: #1e293b;
+.modal-title {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-weight: 700;
+  color: #111827;
+}
+
+.close-btn {
+  color: #6b7280;
+}
+
+.modal-body {
+  padding-top: 10px;
 }
 
 .message-box {
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 12px;
-  background-color: #e0e7ff;
-  font-size: 14px;
-  white-space: pre-wrap;
-  color: #1e293b;
+  background: #eef2ff;
   border: 1px solid #c7d2fe;
-}
-
-.v-textarea {
-  background: #fff;
+  padding: 12px;
   border-radius: 12px;
-  border: 1px solid #cbd5e1;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #111827;
 }
 
-/* ===== MODAL ACTIONS ===== */
-.confirm-actions {
+.reply-input {
+  background: #fff;
+}
+
+/* ===== MODAL BUTTONS ===== */
+.modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 12px 16px 16px;
+  gap: 10px;
+  padding: 10px 14px 14px;
 }
 
-.confirm-cancel {
+.btn-refuse {
   background: #f87171;
-  color: #fff;
+  color: white;
   font-weight: 600;
-  border-radius: 12px;
-  padding: 8px 16px;
+  border-radius: 10px;
 }
 
-.confirm-cancel:hover {
+.btn-refuse:hover {
   background: #ef4444;
 }
 
-.confirm-delete {
+.btn-send {
   background: #22c55e;
-  color: #fff;
+  color: white;
   font-weight: 600;
-  border-radius: 12px;
-  padding: 8px 16px;
+  border-radius: 10px;
 }
 
-.confirm-delete:hover {
+.btn-send:hover {
   background: #16a34a;
-}
-
-.cursor-pointer {
-  cursor: pointer;
 }
 </style>

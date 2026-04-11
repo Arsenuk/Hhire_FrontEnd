@@ -1,34 +1,44 @@
 <template>
   <v-card class="post-card mb-3">
-    <v-card-title>FOLLOWS</v-card-title>
-    <v-card-text>
-      <v-list>
-        <v-list-item
-          v-for="user in users"
-          :key="user.id"
-          class="follow-item"
-          @click="goToProfile(user.id)"
-          :ripple="false"
-        >
-          <!-- Аватарка -->
+    <v-card-title class="card-title">
+      FOLLOWS
+    </v-card-title>
+
+    <v-card-text class="card-body">
+      <v-list class="follow-list">
+
+        <v-list-item v-for="user in users" :key="user.id" class="follow-item" @click="goToProfile(user.id)"
+          :ripple="false">
+
+          <!-- AVATAR -->
           <template #prepend>
-            <v-avatar size="40">
+            <v-avatar size="42" class="avatar">
               <v-img :src="getAvatarUrl(user.avatar)" />
             </v-avatar>
           </template>
 
-          <!-- Контент користувача -->
+          <!-- CONTENT -->
           <div class="follow-content">
-            <div class="follow-name">{{ user.name }}</div>
+            <div class="follow-name">
+              {{ user.name }}
+            </div>
+
             <div class="follow-meta">
-              Last post: {{ user.lastPost ? formatDate(user.lastPost) : 'No posts' }}
+              Last post:
+              <span v-if="user.lastPost">
+                {{ formatDate(user.lastPost) }}
+              </span>
+              <span v-else>No posts</span>
             </div>
           </div>
+
         </v-list-item>
 
-        <v-list-item v-if="users.length === 0">
-          <v-list-item-title class="no-follow">No follows yet</v-list-item-title>
-        </v-list-item>
+        <!-- EMPTY STATE -->
+        <div v-if="users.length === 0" class="empty-state">
+          No follows yet
+        </div>
+
       </v-list>
     </v-card-text>
   </v-card>
@@ -67,60 +77,81 @@ function formatDate(d) {
 <style scoped>
 .post-card {
   border-radius: 18px;
-  background-color: #f3f4f6;
-  color: #1e293b;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  background: #ffffff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  padding: 14px;
 }
 
-.post-card .v-card-title {
+/* TITLE */
+.card-title {
   font-weight: 700;
   font-size: 16px;
-  color: #1e293b;
+  color: #111827;
+  letter-spacing: 0.3px;
 }
 
-/* Користувачі */
+/* LIST RESET */
+.follow-list {
+  padding: 0;
+}
+
+/* ITEM */
 .follow-item {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-radius: 12px;
-  padding: 10px 14px;
-  background-color: transparent;
-  transition: transform 0.15s;
+  padding: 12px 10px;
+  border-radius: 14px;
+  transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-/* Забираємо будь-яку підсвітку Vuetify */
 .follow-item:hover {
-  background-color:  rgba(59, 130, 246, 0.1) !important ;
-  transform: none;
+  background: rgba(59, 130, 246, 0.06);
+  transform: translateY(-1px);
 }
 
-.follow-content {
-  display: flex;
-  flex-direction: column;
+/* AVATAR */
+.avatar {
+  border: 2px solid rgba(59, 130, 246, 0.18);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
+
+/* CONTENT */
 .follow-content {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .follow-name {
   font-weight: 600;
   font-size: 14px;
-  color: #1e293b;
+  color: #111827;
 }
 
 .follow-meta {
   font-size: 13px;
-  color: #475569;
+  color: #6b7280;
   margin-top: 2px;
+
+  /* якщо довго — не ламає UI */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Текст при відсутності підписок */
-.no-follow {
-  color: #94a3b8;
+/* EMPTY STATE */
+.empty-state {
+  text-align: center;
+  padding: 18px;
+  color: #9ca3af;
   font-style: italic;
 }
-</style>
 
+/* smooth consistency with other cards */
+.post-card:hover {
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.10);
+}
+</style>
