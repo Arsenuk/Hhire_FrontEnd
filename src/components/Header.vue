@@ -131,8 +131,8 @@ const unansweredSignals = ref(0)
 const fetchUnansweredSignals = async () => {
   if (!isLoggedIn.value) return
   try {
-    const res = await api.get('/signals/inbox')
-    unansweredSignals.value = res.data.signals.filter(s => s.status === 'new').length
+    const res = await api.get('/signals/conversations/inbox')
+    unansweredSignals.value = res.data.signals.length
   } catch (err) {
     console.error('Failed to fetch signals', err)
   }

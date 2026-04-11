@@ -83,9 +83,11 @@ const getAvatarUrl = (avatar) =>
 
 // --- Fetch signals ---
 const fetchSignals = async () => {
+  console.log('FETCH CALLED 🔥')
+
   try {
-    const res = await api.get('/signals/inbox')
-    const newSignals = res.data.signals.filter(s => s.status === 'new')
+    const res = await api.get('/signals/conversations/inbox')
+    const newSignals = res.data.signals
     signals.value = newSignals
     if (props.updateNotify) props.updateNotify(newSignals.length)
   } catch (err) {
@@ -96,7 +98,9 @@ const fetchSignals = async () => {
 // --- Auto refresh ---
 let intervalId = null
 onMounted(() => {
+  console.log('🔥 MOUNTED')
   fetchSignals()
+  console.log('🔥 MOUNTED')
   intervalId = setInterval(fetchSignals, 7000) // кожні 15 сек
 })
 onUnmounted(() => {

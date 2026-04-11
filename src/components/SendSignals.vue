@@ -49,15 +49,15 @@ const signals = ref([]);
 
 const fetchSignals = async () => {
   try {
-    const res = await api.get('/signals/sent');
-    signals.value = res.data.signals.filter(
-      s => s.status !== 'answered' && s.status !== 'deleted'
-    );
+    const res = await api.get('/signals/conversations/sent');
+    
+    console.log('SENT:', res.data);
+
+    signals.value = res.data.conversations; // 🔥 ОСЬ ЦЕ ТИ ЗАБУВ
   } catch (err) {
     console.error('Failed to load sent signals', err);
   }
 };
-
 const deleteSignal = async (signal) => {
   if (!confirm('Delete this signal?')) return;
 
