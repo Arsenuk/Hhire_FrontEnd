@@ -5,25 +5,27 @@
     <v-card-text>
       <v-list>
         <v-list-item v-for="signal in signals" :key="signal.id" class="signal-item" :ripple="false">
-          <!-- Аватар -->
+
+          <!-- AVATAR -->
           <template #prepend>
             <v-avatar size="40" class="avatar">
               <v-img :src="getAvatarUrl(signal.receiver_avatar)" />
             </v-avatar>
           </template>
 
-          <!-- Контент -->
+          <!-- CONTENT -->
           <div class="signal-content">
             <div class="signal-title">{{ signal.receiver_name }}</div>
             <div class="signal-message">{{ signal.message }}</div>
           </div>
 
-          <!-- DELETE справа -->
+          <!-- DELETE -->
           <template #append>
             <v-btn icon variant="text" class="delete-btn" @click="deleteSignal(signal)">
               <v-icon size="20">mdi-close</v-icon>
             </v-btn>
           </template>
+
         </v-list-item>
 
         <v-list-item v-if="signals.length === 0">
@@ -31,43 +33,67 @@
             No sent signals
           </v-list-item-title>
         </v-list-item>
+
       </v-list>
     </v-card-text>
+
+    <!-- 🔥 SNACKBAR (BOTTOM CENTER) -->
+    <v-snackbar v-model="snackbar.show" timeout="2500" location="bottom" multi-line
+      rounded="pill">
+      {{ snackbar.text }}
+    </v-snackbar>
+
   </v-card>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/api/api.js'
 
 const signals = ref([])
 
+/* ===== SNACKBAR ===== */
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success'
+})
+
+const showToast = (text, color = 'success') => {
+  snackbar.value.text = text
+  snackbar.value.color = color
+  snackbar.value.show = true
+}
+
+/* ===== FETCH ===== */
 const fetchSignals = async () => {
   try {
     const res = await api.get('/signals/conversations/sent')
     signals.value = res.data.conversations
   } catch (err) {
-    console.error('Failed to load sent signals', err)
+    console.error(err)
+    showToast('Failed to load signals', 'error')
   }
 }
 
+/* ===== DELETE (NO ALERT) ===== */
 const deleteSignal = async (signal) => {
-  if (!confirm('Delete this signal?')) return
-
   try {
     await api.delete(`/signals/${signal.id}`)
+
     signals.value = signals.value.filter(s => s.id !== signal.id)
+
+    showToast('Signal deleted 🗑️', 'success')
+
   } catch (err) {
     console.error(err)
-    alert('Failed to delete signal')
+    showToast('Delete failed', 'error')
   }
 }
 
+/* ===== AVATAR ===== */
 const getAvatarUrl = (avatar) =>
   avatar || '/assets/default-avatar.png'
-
-// 👇 NEW
-const formatDate = (date) =>
-  date ? new Date(date).toLocaleString() : ''
 
 onMounted(fetchSignals)
 </script>
@@ -76,7 +102,7 @@ onMounted(fetchSignals)
 .post-card {
   border-radius: 20px;
   background: #ffffff;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   padding: 16px;
 }
 
@@ -88,10 +114,8 @@ onMounted(fetchSignals)
   padding: 12px 14px;
   border-radius: 14px;
   transition: all 0.2s ease;
-  background: transparent;
 }
 
-/* hover */
 .signal-item:hover {
   background: rgba(99, 102, 241, 0.06);
   transform: translateY(-1px);
@@ -100,15 +124,15 @@ onMounted(fetchSignals)
 /* AVATAR */
 .avatar {
   border: 2px solid rgba(99, 102, 241, 0.2);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 /* TEXT */
 .signal-content {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .signal-title {
@@ -120,22 +144,20 @@ onMounted(fetchSignals)
 .signal-message {
   font-size: 13px;
   color: #6b7280;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* DELETE BUTTON (справа + акуратний hover) */
+/* DELETE */
 .delete-btn {
-  opacity: 0.4;
+  opacity: 0.5;
   transition: all 0.2s ease;
   color: #ef4444;
 }
 
 .signal-item:hover .delete-btn {
   opacity: 1;
-  transform: scale(1.05);
 }
 
 .delete-btn:hover {

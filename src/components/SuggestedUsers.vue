@@ -5,7 +5,7 @@
     <v-card-text class="card-body">
       <v-list class="list">
         <v-list-item v-for="user in suggestedUsers" :key="user.id" class="user-item" :ripple="false">
-          <!-- LEFT SIDE -->
+          <!-- LEFT -->
           <div class="left" @click="goToProfile(user.id)">
             <v-avatar size="48" class="avatar">
               <v-img :src="getAvatarUrl(user.avatar)" />
@@ -19,7 +19,7 @@
             </div>
           </div>
 
-          <!-- RIGHT SIDE ACTION -->
+          <!-- RIGHT -->
           <div class="right">
             <v-btn class="connect-btn" variant="flat" @click.stop="openConnectDialog(user)">
               Connect
@@ -56,46 +56,74 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 🔥 SNACKBAR NOTIFICATIONS -->
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500" location="bottom" multi-line
+      rounded="pill">
+      {{ snackbar.text }}
+    </v-snackbar>
   </v-card>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { api } from '@/api/api.js';
-import { useAuthStore } from '@/stores/auth.js';
-import { useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue'
+import { api } from '@/api/api.js'
+import { useAuthStore } from '@/stores/auth.js'
+import { useRouter } from 'vue-router'
 
-const auth = useAuthStore();
-const router = useRouter();
+const auth = useAuthStore()
+const router = useRouter()
 
-const suggestedUsers = ref([]);
-const dialog = ref(false);
-const selectedUser = ref(null);
-const message = ref('');
+const suggestedUsers = ref([])
+const dialog = ref(false)
+const selectedUser = ref(null)
+const message = ref('')
 
-const getAvatarUrl = (a) => a ? `http://localhost:3000${a}` : '/assets/default-avatar.png';
+// 🔥 SNACKBAR STATE
+const snackbar = ref({
+  show: false,
+  text: '',
+  color: 'success'
+})
 
+const showToast = (text, color = 'success') => {
+  snackbar.value.text = text
+  snackbar.value.color = color
+  snackbar.value.show = true
+}
+
+const getAvatarUrl = (a) =>
+  a ? `http://localhost:3000${a}` : '/assets/default-avatar.png'
+
+// FETCH
 const fetchSuggestedUsers = async () => {
   try {
-    const res = await api.get('/users');
-    suggestedUsers.value = res.data.filter(u => u.id !== auth.user.id);
+    const res = await api.get('/users')
+    suggestedUsers.value = res.data.filter(u => u.id !== auth.user.id)
   } catch (err) {
-    console.error(err);
+    console.error(err)
+    showToast('Failed to load users', 'error')
   }
-};
+}
 
+// DIALOG
 const openConnectDialog = (user) => {
-  selectedUser.value = user;
-  message.value = '';
-  dialog.value = true;
-};
+  selectedUser.value = user
+  message.value = ''
+  dialog.value = true
+}
 
 const closeDialog = () => {
-  dialog.value = false;
-};
+  dialog.value = false
+}
 
+// SEND SIGNAL
 const sendSignal = async () => {
-  if (!message.value.trim()) return alert('Enter a message');
+  if (!message.value.trim()) {
+    showToast('Please enter a message', 'warning')
+    return
+  }
+
   try {
     await api.post('/signals', {
       sender_type: 'user',
@@ -103,32 +131,42 @@ const sendSignal = async () => {
       receiver_type: 'user',
       receiver_id: selectedUser.value.id,
       message: message.value
-    });
-    dialog.value = false;
-    alert('Signal sent!');
+    })
+
+    dialog.value = false
+    showToast('Signal sent successfully 🚀', 'success')
+
   } catch (err) {
-    console.error(err);
-    alert('Failed to send signal');
+    console.error(err)
+    showToast('Failed to send signal', 'error')
   }
-};
+}
 
-const goToProfile = (userId) => router.push(`/profile/${userId}`);
+const goToProfile = (userId) => router.push(`/profile/${userId}`)
 
-onMounted(fetchSuggestedUsers);
+onMounted(fetchSuggestedUsers)
 </script>
 
 <style scoped>
+/* ===== CARD ===== */
 .post-card {
-  border-radius: 20px;
+  border-radius: 22px;
   background: #ffffff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.06);
   padding: 16px;
+  transition: all 0.2s ease;
 }
 
+.post-card:hover {
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.08);
+}
+
+/* TITLE */
 .title {
   font-weight: 700;
   font-size: 16px;
   color: #111827;
+  letter-spacing: 0.3px;
 }
 
 /* LIST */
@@ -136,41 +174,51 @@ onMounted(fetchSuggestedUsers);
   padding: 0;
 }
 
-/* ITEM ROW */
+/* ===== USER ITEM ===== */
 .user-item {
   display: flex;
-  align-items: stretch;
-  /* 🔥 ключ */
   justify-content: space-between;
+  align-items: center;
 
   padding: 0;
-  border-radius: 14px;
+  border-radius: 16px;
+  margin-bottom: 10px;
 
-  transition: all 0.2s ease;
   background: transparent;
+  transition: all 0.25s ease;
 }
 
 .user-item:hover {
   background: rgba(99, 102, 241, 0.06);
+  transform: translateY(-1px);
 }
 
 /* LEFT SIDE */
 .left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 
   flex: 1;
   padding: 12px 14px;
 
   cursor: pointer;
+  min-width: 0;
 }
 
+/* AVATAR */
 .avatar {
+  border-radius: 14px;
   border: 2px solid rgba(99, 102, 241, 0.2);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
 }
 
+.user-item:hover .avatar {
+  transform: scale(1.03);
+}
+
+/* TEXT */
 .user-content {
   display: flex;
   flex-direction: column;
@@ -178,9 +226,10 @@ onMounted(fetchSuggestedUsers);
 }
 
 .user-name {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 14px;
   color: #111827;
+  letter-spacing: 0.2px;
 }
 
 .user-desc {
@@ -190,86 +239,116 @@ onMounted(fetchSuggestedUsers);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 260px;
+  max-width: 280px;
+  margin-top: 2px;
 }
 
-/* RIGHT SIDE FULL HEIGHT ACTION */
+/* RIGHT SIDE */
 .right {
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  padding-right: 14px;
 }
 
-/* CONNECT BUTTON = FULL HEIGHT COLUMN */
+/* CONNECT BUTTON */
 .connect-btn {
-  height: 30px;
+  height: 36px;
+  padding: 0 18px;
+
   border-radius: 14px !important;
 
-  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
-  color: #000000;
+  background: linear-gradient(135deg, #6366f1, #22c55e);
+  color: #ffffff;
 
   font-weight: 600;
   font-size: 13px;
   text-transform: none;
 
-  padding: 0 18px;
-
-  /* min-width: 120px; */
-
-  box-shadow: none;
-  transition: all 0.2s ease;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
+  transition: all 0.25s ease;
 }
 
 .connect-btn:hover {
-  background: linear-gradient(90deg, #62ab23 33%, #4b9ce2 100%);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(99, 102, 241, 0.35);
 }
 
 .connect-btn:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
 }
 
-/* DIALOG */
+/* ===== DIALOG ===== */
 .confirm-card {
-  border-radius: 18px;
-  background: #f9fafb;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+  padding: 8px;
 }
 
 .confirm-title {
   font-weight: 700;
   font-size: 16px;
+  color: #111827;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 10px 14px;
 }
 
 .to-user {
   font-weight: 500;
   color: #6366f1;
+  margin-left: 6px;
 }
 
+/* TEXTAREA */
+:deep(.v-textarea) {
+  border-radius: 14px;
+}
+
+/* ACTIONS */
 .confirm-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-  padding: 12px 16px 16px;
+  padding: 12px 14px 14px;
 }
 
+/* CANCEL */
 .cancel-btn {
-  background: #e5e7eb;
+  background: #f3f4f6;
   color: #111827;
+
   border-radius: 12px;
   font-weight: 600;
+  text-transform: none;
 }
 
+.cancel-btn:hover {
+  background: #e5e7eb;
+}
+
+/* SEND */
 .send-btn {
-  background: #22c55e;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
+
   border-radius: 12px;
   font-weight: 600;
+  text-transform: none;
+
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
 }
 
 .send-btn:hover {
-  background: #16a34a;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(34, 197, 94, 0.35);
+}
+
+/* SNACKBAR (optional polish) */
+:deep(.v-snackbar) {
+  border-radius: 12px;
+  font-weight: 500;
 }
 </style>
