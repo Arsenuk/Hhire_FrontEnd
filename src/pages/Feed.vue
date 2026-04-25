@@ -146,293 +146,38 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { api } from '@/api/api.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useRouter } from 'vue-router'
 import PostCard from '@/components/posts/PostCard.vue'
-import { getAvatarUrl, normalizePosts } from '@/utils/postDisplay.js'
+import { useFeed } from '@/composables/useFeed.js'
 
-const router = useRouter()
-
-// --- POSTS ---
-const allPosts = ref([])
-const posts = ref([])
-const expandedPosts = ref([])
-
-const pageSize = 6
-const currentPage = ref(1)
-
-// --- SORT ---
-const sortType = ref('latest') // latest або mostComment
-
-// --- TAGS ---
-const allTags = ref([])
-const selectedTags = ref([])
-
-// --- Suggested users ---
-const suggestedUsers = ref([])
-
-// --- COMMENTS ---
-const newComment = ref({})
-const editContent = ref({})
-const editingCommentId = ref(null)
-
-// --- AUTH ---
-const authStore = useAuthStore()
-const currentUser = computed(() => authStore.user)
-
-// --- CONFIRM DIALOG ---
-const confirmDialog = ref(false)
-const confirmTitle = ref('')
-const confirmText = ref('')
-let confirmAction = null
-
-function showConfirm(title, text, action) {
-    confirmTitle.value = title
-    confirmText.value = text
-    confirmAction = action
-    confirmDialog.value = true
-}
-
-function executeConfirmAction() {
-    if (confirmAction) confirmAction()
-    confirmDialog.value = false
-}
-
-// ================== LOAD POSTS ==================
-async function loadPosts() {
-    try {
-        const res = await api.get('/posts/feed')
-        const rawPosts = res.data.posts || res.data || []
-
-        allPosts.value = normalizePosts(rawPosts)
-
-
-        const tagsSet = new Set()
-        allPosts.value.forEach(p => p.tags?.forEach(t => tagsSet.add(t)))
-        allTags.value = Array.from(tagsSet)
-
-        currentPage.value = 1
-        posts.value = allPosts.value.slice(0, pageSize)
-    } catch (err) {
-        console.error('Failed to load feed', err)
-    }
-}
-
-// --- LOAD MORE POSTS ---
-function loadMorePosts() {
-    const nextPage = currentPage.value + 1
-    posts.value = allPosts.value.slice(0, nextPage * pageSize)
-    currentPage.value = nextPage
-}
-
-// --- LOAD COMMENTS ---
-async function loadComments(post) {
-    try {
-        const res = await api.get(`/posts/${post.id}/comments`)
-        const comments = res.data.comments || []
-        post.comments = comments.filter(c => c.status !== 'deleted')
-    } catch (err) {
-        console.error('Failed to load comments', err)
-        post.comments = []
-    }
-}
-
-// --- TOGGLE COMMENTS ---
-async function toggleComments(postId) {
-    const post = posts.value.find(p => p.id === postId)
-    if (!post) return
-
-    if (expandedPosts.value.includes(postId)) {
-        expandedPosts.value = expandedPosts.value.filter(id => id !== postId)
-    } else {
-        expandedPosts.value.push(postId)
-        if (!post.comments || post.comments.length === 0) {
-            await loadComments(post)
-        }
-    }
-}
-
-// --- FILTERS ---
-const filteredPosts = computed(() => {
-    if (selectedTags.value.length === 0) return posts.value
-    return posts.value.filter(post => post.tags?.some(tag => selectedTags.value.includes(tag)))
-})
-
-function toggleTag(tag) {
-    if (selectedTags.value.includes(tag)) {
-        selectedTags.value = selectedTags.value.filter(t => t !== tag)
-    } else {
-        selectedTags.value.push(tag)
-    }
-}
-
-function clearFilters() {
-    selectedTags.value = []
-}
-
-// --- Фільтр + Сортування ---
-const sortedPosts = computed(() => {
-    let result = selectedTags.value.length === 0
-        ? posts.value.slice()
-        : posts.value.filter(post =>
-            post.tags?.some(tag => selectedTags.value.includes(tag))
-        )
-
-    if (sortType.value === 'latest') {
-        result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    } else if (sortType.value === 'mostComment') {
-        result.sort((a, b) => (b.comments?.length || 0) - (a.comments?.length || 0))
-    }
-
-    return result
-})
-
-// --- ТОП 5 НАЙПОПУЛЯРНІШИХ ТЕГІВ ---
-const topTags = computed(() => {
-    const tagCounts = {}
-
-    allPosts.value.forEach(post => {
-        post.tags?.forEach(tag => {
-            tagCounts[tag] = (tagCounts[tag] || 0) + 1
-        })
-    })
-
-    // Перетворюємо на масив і сортуємо за популярністю
-    return Object.entries(tagCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(entry => entry[0])
-})
-
-// ================= COMMENTS =================
-function isOwnComment(comment) {
-    // Якщо є comment.user_id — використовуємо його (старі коментарі)
-    // Інакше беремо comment.user.id (нові коментарі)
-    const commentUserId = comment.user_id ?? comment.user?.id
-    return commentUserId === currentUser.value?.id
-}
-
-function isEditingComment(commentId) {
-    return editingCommentId.value === commentId
-}
-
-// --- EDIT COMMENT ---
-function startEdit(comment) {
-    editingCommentId.value = comment.id
-    editContent.value[comment.id] = comment.content
-}
-
-function confirmStartEdit(comment) {
-    showConfirm(
-        'Редагувати коментар?',
-        'Ви дійсно хочете редагувати цей коментар?',
-        () => startEdit(comment)
-    )
-}
-
-function cancelEdit(commentId) {
-    editingCommentId.value = null
-    editContent.value[commentId] = ''
-}
-
-async function saveEdit(comment, post) {
-    try {
-        const content = editContent.value[comment.id]
-        if (!content || !content.trim()) return
-
-        await api.put(`/posts/comments/${comment.id}`, { content })
-        comment.content = content
-        editingCommentId.value = null
-        editContent.value[comment.id] = ''
-    } catch (err) {
-        console.error('Failed to edit comment', err)
-    }
-}
-
-function confirmSaveEdit(comment, post) {
-    showConfirm(
-        'Зберегти зміни?',
-        'Ви дійсно хочете зберегти зміни в коментарі?',
-        () => saveEdit(comment, post)
-    )
-}
-
-// --- DELETE COMMENT ---
-async function deleteComment(comment, post) {
-    try {
-        await api.delete(`/posts/comments/${comment.id}`)
-        post.comments = post.comments.filter(c => c.id !== comment.id)
-    } catch (err) {
-        console.error('Failed to delete comment', err)
-    }
-}
-
-function confirmDeleteComment(comment, post) {
-    showConfirm(
-        'Видалити коментар?',
-        'Ви дійсно хочете видалити цей коментар?',
-        () => deleteComment(comment, post)
-    )
-}
-
-// --- ADD COMMENT ---
-async function addComment(post) {
-    const content = newComment.value[post.id]
-    if (!content || !content.trim()) return
-    try {
-        const res = await api.post(`/posts/${post.id}/comments`, { content })
-        const comment = res.data.comment
-
-        // Додаємо вкладений user
-        const normalizedComment = {
-            ...comment,
-            user: {
-                id: currentUser.value.id,
-                name: currentUser.value.name,
-                avatar: currentUser.value.avatar || null
-            }
-        }
-
-        if (!post.comments) post.comments = []
-        post.comments.push(normalizedComment)
-        newComment.value[post.id] = ''
-
-        // Автоматично відкриваємо секцію коментарів
-        if (!expandedPosts.value.includes(post.id)) {
-            expandedPosts.value.push(post.id)
-        }
-    } catch (err) {
-        console.error('Failed to add comment', err)
-    }
-}
-
-function confirmAddComment(post) {
-    showConfirm(
-        'Додати коментар?',
-        'Ви дійсно хочете додати цей коментар?',
-        () => addComment(post)
-    )
-}
-
-// --- GO TO PROFILE ---
-function goToProfile(userId) {
-    // якщо userId === поточний користувач
-    if (userId === currentUser.value?.id) {
-        router.push('/ProfileMe')
-    } else {
-        router.push({
-            path: `/profile/${userId}`,
-        })
-
-    }
-}
-
-// ================= MOUNT =================
-onMounted(() => {
-    loadPosts()
-})
+const {
+    allPosts,
+    allTags,
+    cancelEdit,
+    clearFilters,
+    confirmAddComment,
+    confirmDeleteComment,
+    confirmDialog,
+    confirmSaveEdit,
+    confirmStartEdit,
+    confirmText,
+    confirmTitle,
+    editContent,
+    executeConfirmAction,
+    expandedPosts,
+    getAvatarUrl,
+    goToProfile,
+    isEditingComment,
+    isOwnComment,
+    loadMorePosts,
+    newComment,
+    posts,
+    selectedTags,
+    sortType,
+    sortedPosts,
+    toggleComments,
+    toggleTag,
+    topTags,
+} = useFeed()
 </script>
 
 
@@ -704,3 +449,4 @@ onMounted(() => {
     text-transform: none;
 }
 </style>
+

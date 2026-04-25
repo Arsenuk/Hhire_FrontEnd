@@ -242,282 +242,46 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.js'
-import { api } from '@/api/api.js'
 import PostCard from '@/components/posts/PostCard.vue'
-import { getAvatarUrl, normalizePosts } from '@/utils/postDisplay.js'
+import { useProfileMe } from '@/composables/useProfileMe.js'
 
-const router = useRouter()
-const authStore = useAuthStore()
-const user = computed(() => authStore.user)
-
-// ================= COMMON UI STATE =================
-const loading = ref(false)
-const errorMessage = ref('')
-const successMessage = ref('')
-
-// ================= PROFILE =================
-const editing = ref(false)
-const formRef = ref(null)
-
-const editForm = ref({
-  name: '',
-  description: '',
-  avatarFile: null
-})
-
-const nameRules = [
-  v => !!v || 'Name is required',
-  v => v.length >= 2 || 'Minimum 2 characters'
-]
-
-// ================= LINKS =================
-const links = ref([])
-const showLinkDialog = ref(false)
-const linkFormRef = ref(null)
-const editingLink = ref(null)
-
-const showDeleteLinkDialog = ref(false)
-const linkToDelete = ref(null)
-
-const linkForm = ref({
-  url: '',
-  description: ''
-})
-
-const urlRules = [
-  v => !!v || 'URL is required',
-  v => /^https?:\/\//.test(v) || 'URL must start with http(s)'
-]
-
-// ================= POSTS =================
-const posts = ref([])
-const editingPostDialog = ref(false)
-const postFormRef = ref(null)
-
-const showDeletePostDialog = ref(false)
-const postToDelete = ref(null)
-
-
-const editPostForm = ref({
-  id: null,
-  title: '',
-  content: '',
-  tags: []
-})
-
-const postRules = {
-  title: [v => !!v || 'Title is required'],
-  content: [v => !!v || 'Content is required']
-}
-
-// ================= AVATAR =================
-// ================= LOAD PROFILE =================
-async function loadProfile() {
-  loading.value = true
-  errorMessage.value = ''
-
-  try {
-    const [profileRes, linksRes, postsRes] = await Promise.all([
-      api.get('/users/profile'),
-      api.get('/user-links'),
-      api.get('/posts')
-    ])
-
-    authStore.user = profileRes.data
-    links.value = linksRes.data
-    posts.value = normalizePosts(postsRes.data.posts || [])
-
-    editForm.value.name = profileRes.data.name
-    editForm.value.description = profileRes.data.description
-  } catch (e) {
-    errorMessage.value = 'Failed to load profile'
-  } finally {
-    loading.value = false
-  }
-}
-
-// ================= PROFILE SAVE =================
-async function saveProfile() {
-  const { valid } = await formRef.value.validate()
-  if (!valid) return
-
-  loading.value = true
-  errorMessage.value = ''
-
-  try {
-    await api.put('/users/profile', {
-      name: editForm.value.name,
-      description: editForm.value.description
-    })
-
-    if (editForm.value.avatarFile) {
-      const fd = new FormData()
-      fd.append('avatar', editForm.value.avatarFile)
-      await api.post('/users/me/avatar', fd)
-    }
-
-    editing.value = false
-    successMessage.value = 'Profile updated successfully'
-    await loadProfile()
-  } catch {
-    errorMessage.value = 'Failed to update profile'
-  } finally {
-    loading.value = false
-  }
-}
-
-function cancelEdit() {
-  editing.value = false
-}
-
-// ================= LINKS =================
-function openAddLink() {
-  editingLink.value = null
-  linkForm.value = { url: '', description: '' }
-  showLinkDialog.value = true
-}
-
-function openEditLink(link) {
-  editingLink.value = link
-  linkForm.value = { url: link.url, description: link.description }
-  showLinkDialog.value = true
-}
-
-async function saveLink() {
-  const { valid } = await linkFormRef.value.validate()
-  if (!valid) return
-
-  loading.value = true
-  errorMessage.value = ''
-
-  try {
-    if (editingLink.value) {
-      await api.put(`/user-links/${editingLink.value.id}`, linkForm.value)
-    } else {
-      await api.post('/user-links', linkForm.value)
-    }
-
-    const res = await api.get('/user-links')
-    links.value = res.data
-    showLinkDialog.value = false
-  } catch {
-    errorMessage.value = 'Failed to save link'
-  } finally {
-    loading.value = false
-  }
-}
-
-function openDeleteLink(id) {
-  linkToDelete.value = id
-  showDeleteLinkDialog.value = true
-}
-
-// Підтвердження видалення з діалогу
-async function deleteConfirmedLink() {
-  if (!linkToDelete.value) return
-
-  loading.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-
-  try {
-    await api.delete(`/user-links/${linkToDelete.value}`)
-    links.value = links.value.filter(l => l.id !== linkToDelete.value)
-    successMessage.value = 'Link deleted successfully'
-  } catch {
-    errorMessage.value = 'Failed to delete link'
-  } finally {
-    loading.value = false
-    showDeleteLinkDialog.value = false
-    linkToDelete.value = null
-  }
-}
-
-// ================= POSTS =================
-function isOwnPost(post) {
-  return post.user_id === user.value?.id
-}
-
-function startEditPost(post) {
-  editingPostDialog.value = true
-  editPostForm.value = {
-    id: post.id,
-    title: post.title,
-    content: post.content,
-    tags: [...(post.tags || [])]
-  }
-}
-
-function cancelEditPost() {
-  editingPostDialog.value = false
-}
-
-async function savePost() {
-  const { valid } = await postFormRef.value.validate()
-  if (!valid) return
-
-  loading.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-
-  try {
-    await api.put(`/posts/${editPostForm.value.id}`, {
-      title: editPostForm.value.title,
-      content: editPostForm.value.content,
-      tags: editPostForm.value.tags
-    })
-
-    const index = posts.value.findIndex(p => p.id === editPostForm.value.id)
-    if (index !== -1) {
-      posts.value[index] = {
-        ...posts.value[index],
-        title: editPostForm.value.title,
-        content: editPostForm.value.content,
-        tags: [...editPostForm.value.tags]
-      }
-    }
-
-    editingPostDialog.value = false
-    successMessage.value = 'Post updated'
-  } catch (err) {
-    errorMessage.value = 'Failed to update post'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function deleteConfirmedPost() {
-  if (!postToDelete.value) return
-  loading.value = true
-  errorMessage.value = ''
-  successMessage.value = ''
-  try {
-    await api.delete(`/posts/${postToDelete.value.id}`)
-    posts.value = posts.value.filter(p => p.id !== postToDelete.value.id)
-    successMessage.value = 'Post deleted'
-    showDeletePostDialog.value = false
-    postToDelete.value = null
-  } catch {
-    errorMessage.value = 'Failed to delete post'
-  } finally {
-    loading.value = false
-  }
-}
-
-
-function openDeletePost(post) {
-  postToDelete.value = post
-  showDeletePostDialog.value = true
-}
-
-// ================= UTILS =================
-onMounted(() => {
-  authStore.loadUserFromStorage()
-  loadProfile()
-})
+const {
+  cancelEdit,
+  cancelEditPost,
+  deleteConfirmedLink,
+  deleteConfirmedPost,
+  editForm,
+  editing,
+  editingLink,
+  editingPostDialog,
+  editPostForm,
+  errorMessage,
+  formRef,
+  getAvatarUrl,
+  isOwnPost,
+  linkForm,
+  linkFormRef,
+  links,
+  loading,
+  nameRules,
+  openAddLink,
+  openDeleteLink,
+  openDeletePost,
+  openEditLink,
+  postFormRef,
+  postRules,
+  posts,
+  saveLink,
+  savePost,
+  saveProfile,
+  showDeleteLinkDialog,
+  showDeletePostDialog,
+  showLinkDialog,
+  startEditPost,
+  successMessage,
+  urlRules,
+  user,
+} = useProfileMe()
 </script>
 
 
@@ -722,3 +486,4 @@ a:hover {
   background: #dc2626;
 }
 </style>
+
