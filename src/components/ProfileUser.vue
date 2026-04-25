@@ -7,7 +7,7 @@
     empty-info-text="User didn't provide information"
     empty-posts-text="User didn't provide posts"
   >
-    <template v-if="authUser && authUser.id !== user.id" #header-actions>
+    <template v-if="canManageFollow" #header-actions>
       <v-btn :loading="followLoading" :color="isFollowing ? 'grey' : 'primary'" @click="toggleFollow">
         {{ isFollowing ? 'Unfollow' : 'Follow' }}
       </v-btn>
@@ -37,10 +37,15 @@ const isFollowing = ref(false)
 const followLoading = ref(false)
 
 const userId = ref(route.params.id)
+const canManageFollow = computed(() => Boolean(authUser.value && user.value && authUser.value.id !== user.value.id))
 
 async function loadUserProfile() {
   loading.value = true
   errorMessage.value = ''
+  user.value = null
+  posts.value = []
+  links.value = []
+  isFollowing.value = false
 
   try {
     const res = await api.get(`/users/${userId.value}/profile`)
@@ -58,7 +63,7 @@ async function loadUserProfile() {
 }
 
 async function checkFollowStatus() {
-  if (!authUser.value || authUser.value.id === user.value.id) return
+  if (!canManageFollow.value) return
 
   const res = await api.get('/follows/status', {
     params: {
@@ -71,6 +76,8 @@ async function checkFollowStatus() {
 }
 
 async function toggleFollow() {
+  if (!user.value) return
+
   followLoading.value = true
 
   try {
