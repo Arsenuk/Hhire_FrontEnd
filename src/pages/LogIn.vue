@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="login-page pa-0">
-    <v-row justify="center" align="center" class="fill-height">
-      <v-col cols="12" md="6" class="login-form-col">
+  <v-container class="login-page pa-0" fluid>
+    <v-row align="center" class="fill-height" justify="center">
+      <v-col class="login-form-col" cols="12" md="6">
         <v-card class="login-card pa-8" elevation="8">
           <h2 class="login-title text-center">Welcome Back</h2>
           <p class="login-subtitle text-center mb-6">
@@ -11,17 +11,21 @@
           <!-- Email Field -->
           <p class="login-subtitle mb-2" style="padding-left: 10px;">Email Address</p>
           <div :class="['custom-input mb-4', { 'has-error': loginError }]">
-            <v-icon size="20" color="#97e5ee" class="input-icon">mdi-email-outline</v-icon>
-            <input v-model="email" type="email" placeholder="your@example.com" class="input-field" />
+            <v-icon class="input-icon" color="#97e5ee" size="20">mdi-email-outline</v-icon>
+            <input v-model="email" class="input-field" placeholder="your@example.com" type="email">
           </div>
 
           <!-- Password Field -->
           <p class="login-subtitle mb-2" style="padding-left: 10px;">Password</p>
           <div :class="['custom-input mb-2', { 'has-error': loginError }]">
-            <v-icon size="20" color="#97e5ee" class="input-icon">mdi-lock-outline</v-icon>
-            <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Enter password"
-              class="input-field" />
-            <v-icon size="20" class="eye-icon" @click="togglePassword" color="#97e5ee">
+            <v-icon class="input-icon" color="#97e5ee" size="20">mdi-lock-outline</v-icon>
+            <input
+              v-model="password"
+              class="input-field"
+              placeholder="Enter password"
+              :type="showPassword ? 'text' : 'password'"
+            >
+            <v-icon class="eye-icon" color="#97e5ee" size="20" @click="togglePassword">
               {{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}
             </v-icon>
           </div>
@@ -29,24 +33,23 @@
           <!-- Error Message -->
           <p v-if="loginError" class="login-error mb-4">{{ loginError }}</p>
 
-
           <!-- Remember me & Forgot Password -->
           <div class="d-flex justify-space-between align-center mb-6">
-            <v-checkbox v-model="rememberMe" label="Remember me" class="remember-checkbox" hide-details />
-            <RouterLink to="/forgot-password" class="forgot-link">
+            <v-checkbox v-model="rememberMe" class="remember-checkbox" hide-details label="Remember me" />
+            <RouterLink class="forgot-link" to="/forgot-password">
               Forgot Password?
             </RouterLink>
           </div>
 
           <!-- Login Button -->
-          <v-btn class="login-btn mb-4" large block @click="onLogin">
+          <v-btn block class="login-btn mb-4" large @click="onLogin">
             Log In
           </v-btn>
 
           <!-- Sign Up Link -->
           <p class="text-center">
             Don't have an account?
-            <RouterLink to="/signup" class="signup-link">Sign Up</RouterLink>
+            <RouterLink class="signup-link" to="/signup">Sign Up</RouterLink>
           </p>
         </v-card>
       </v-col>
@@ -54,34 +57,18 @@
   </v-container>
 </template>
 
-
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.js'
+  import { useLogin } from '@/composables/useLogin.js'
 
-const authStore = useAuthStore()
-const router = useRouter()
-
-const email = ref('')
-const password = ref('')
-const showPassword = ref(false)
-const rememberMe = ref(false)
-const loginError = ref('') // змінна для відображення помилки
-
-const togglePassword = () => {
-  showPassword.value = !showPassword.value
-}
-
-const onLogin = async () => {
-  loginError.value = '' // очищаємо помилку перед новим логіном
-  try {
-    await authStore.login(email.value, password.value)
-    router.push('/feed')
-  } catch (err) {
-    loginError.value = err.response?.data?.error || 'Login failed'
-  }
-}
+  const {
+    email,
+    loginError,
+    onLogin,
+    password,
+    rememberMe,
+    showPassword,
+    togglePassword,
+  } = useLogin()
 </script>
 
 <style scoped>
@@ -90,7 +77,7 @@ const onLogin = async () => {
   min-height: 100vh;
 }
 
-/* Ілюстрація */
+/* Р†Р»СЋСЃС‚СЂР°С†С–СЏ */
 .login-illustration {
   display: flex;
   justify-content: center;
@@ -100,7 +87,7 @@ const onLogin = async () => {
   border-bottom-right-radius: 16px;
 }
 
-/* Форма */
+/* Р¤РѕСЂРјР° */
 .login-form-col {
   display: flex;
   justify-content: center;
@@ -114,7 +101,7 @@ const onLogin = async () => {
   border-radius: 16px;
 }
 
-/* Заголовок та підзаголовок */
+/* Р—Р°РіРѕР»РѕРІРѕРє С‚Р° РїС–РґР·Р°РіРѕР»РѕРІРѕРє */
 .login-title {
   font-family: 'Junge', serif;
   font-size: 28px;
@@ -128,7 +115,7 @@ const onLogin = async () => {
   color: #555;
 }
 
-/* Кнопка логіну */
+/* РљРЅРѕРїРєР° Р»РѕРіС–РЅСѓ */
 .login-btn {
   background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
   color: #000;
@@ -139,19 +126,19 @@ const onLogin = async () => {
 
 .login-error {
   color: #dc2626;
-  /* червоний */
+  /* С‡РµСЂРІРѕРЅРёР№ */
   font-size: 14px;
   font-weight: 500;
   padding-left: 10px;
 }
 
-/* червона обводка при помилці */
+/* С‡РµСЂРІРѕРЅР° РѕР±РІРѕРґРєР° РїСЂРё РїРѕРјРёР»С†С– */
 .has-error {
   border-color: #dc2626 !important;
   box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
-/* Посилання */
+/* РџРѕСЃРёР»Р°РЅРЅСЏ */
 .forgot-link {
   font-size: 14px;
   color: #065e9f;
@@ -172,7 +159,7 @@ const onLogin = async () => {
   text-decoration: underline;
 }
 
-/* Кастомні поля вводу */
+/* РљР°СЃС‚РѕРјРЅС– РїРѕР»СЏ РІРІРѕРґСѓ */
 .custom-input {
   position: relative;
   display: flex;

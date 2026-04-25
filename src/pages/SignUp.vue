@@ -1,10 +1,10 @@
 <template>
-  <v-container fluid class="signup-page pa-0">
-    <v-row justify="center" align="center" class="fill-height">
+  <v-container class="signup-page pa-0" fluid>
+    <v-row align="center" class="fill-height" justify="center">
       <v-col cols="12" md="8">
-        <v-card :style="{ width: cardWidth }" class="signup-card pa-8" elevation="8">
+        <v-card class="signup-card pa-8" elevation="8" :style="{ width: cardWidth }">
 
-          <!-- Заголовок -->
+          <!-- Р—Р°РіРѕР»РѕРІРѕРє -->
           <div class="signup-header text-center mb-6">
             <h2 class="signup-main-title">Create Your Account</h2>
             <p class="signup-subtitle">Join our community and start building trust</p>
@@ -18,49 +18,56 @@
                   <div class="step-circle" :class="{ active: currentStep === step.id }">{{ step.id }}</div>
                   <p class="step-label">{{ step.id === 1 ? 'Account Creation' : 'Profile Information' }}</p>
                 </div>
-                <div class="progress-line-bg"></div>
-                <div class="progress-line-active" :style="{
-                  width: ((currentStep - 1) / (steps.length - 1) * 100) + '%',
-                  opacity: currentStep === 2 ? 0.3 : 1
-                }"></div>
+                <div class="progress-line-bg" />
+                <div
+                  class="progress-line-active"
+                  :style="{
+                    width: ((currentStep - 1) / (steps.length - 1) * 100) + '%',
+                    opacity: currentStep === 2 ? 0.3 : 1
+                  }"
+                />
               </div>
             </div>
           </div>
 
           <!-- Step Content -->
-          <transition name=" fade" mode="out-in">
+          <transition mode="out-in" name=" fade">
             <div :key="currentStep">
               <!-- Step 1: Account Creation -->
               <div v-if="currentStep === 1" class="step-content">
                 <h2 class="signup-title text-center mb-4">Account Information</h2>
 
                 <div class="custom-input mb-4" :class="{ 'input-error': firstNameError }">
-                  <v-icon size="20" color="#97e5ee" class="input-icon">mdi-account-outline</v-icon>
-                  <input v-model="firstName" type="text" placeholder="User Name" class="input-field" />
+                  <v-icon class="input-icon" color="#97e5ee" size="20">mdi-account-outline</v-icon>
+                  <input v-model="firstName" class="input-field" placeholder="User Name" type="text">
                 </div>
                 <p v-if="firstNameError" class="error-text">{{ firstNameError }}</p>
 
                 <div class="custom-input mb-4" :class="{ 'input-error': emailError }">
-                  <v-icon size="20" color="#97e5ee" class="input-icon">mdi-email-outline</v-icon>
-                  <input v-model="email" type="email" placeholder="your@example.com" class="input-field" />
+                  <v-icon class="input-icon" color="#97e5ee" size="20">mdi-email-outline</v-icon>
+                  <input v-model="email" class="input-field" placeholder="your@example.com" type="email">
                 </div>
                 <p v-if="emailError" class="error-text">{{ emailError }}</p>
 
                 <div class="custom-input mb-4" :class="{ 'input-error': passwordError }">
-                  <v-icon size="20" color="#97e5ee" class="input-icon">mdi-lock-outline</v-icon>
-                  <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Enter password"
-                    class="input-field" />
-                  <v-icon size="20" class="eye-icon" @click="togglePassword" color="#97e5ee">
+                  <v-icon class="input-icon" color="#97e5ee" size="20">mdi-lock-outline</v-icon>
+                  <input
+                    v-model="password"
+                    class="input-field"
+                    placeholder="Enter password"
+                    :type="showPassword ? 'text' : 'password'"
+                  >
+                  <v-icon class="eye-icon" color="#97e5ee" size="20" @click="togglePassword">
                     {{ showPassword ? 'mdi-eye-off-outline' : 'mdi-eye-outline' }}
                   </v-icon>
                 </div>
                 <p v-if="passwordError" class="error-text">{{ passwordError }}</p>
 
-                <v-btn class="next-btn mt-6" block @click="nextStep">Next →</v-btn>
+                <v-btn block class="next-btn mt-6" @click="nextStep">Next step</v-btn>
 
                 <p class="text-center mt-4">
                   Already have an account?
-                  <RouterLink to="/login" class="login-link">Log In</RouterLink>
+                  <RouterLink class="login-link" to="/login">Log In</RouterLink>
                 </p>
               </div>
 
@@ -70,48 +77,71 @@
 
                 <!-- Description -->
                 <div class="custom-input mb-4" :class="{ 'input-error': descriptionError }">
-                  <v-icon size="20" color="#97e5ee" class="input-icon">mdi-text-box-outline</v-icon>
-                  <textarea v-model="description" placeholder="Describe yourself, share your goals..."
-                    class="input-field textarea-field"></textarea>
+                  <v-icon class="input-icon" color="#97e5ee" size="20">mdi-text-box-outline</v-icon>
+                  <textarea
+                    v-model="description"
+                    class="input-field textarea-field"
+                    placeholder="Describe yourself, share your goals..."
+                  />
                 </div>
                 <p v-if="descriptionError" class="error-text">{{ descriptionError }}</p>
 
                 <!-- Avatar Upload -->
                 <div class="profile-image-upload mb-4">
                   <label class="image-input-wrapper">
-                    <v-icon size="24" color="#97e5ee">mdi-image-outline</v-icon>
+                    <v-icon color="#97e5ee" size="24">mdi-image-outline</v-icon>
                     <div class="image-text">
                       <p>Click to upload an image (optional)</p>
                       <p v-if="profileImageName">{{ profileImageName }}</p>
                     </div>
-                    <input ref="fileInput" type="file" accept="image/*" @change="handleFileUpload"
-                      style="display: none" />
+                    <input
+                      ref="fileInput"
+                      accept="image/*"
+                      style="display: none"
+                      type="file"
+                      @change="handleFileUpload"
+                    >
                   </label>
                 </div>
 
                 <!-- Links -->
                 <div v-for="(link, index) in links" :key="index" class="custom-input mb-3 link-row">
-                  <v-icon size="20" color="#97e5ee" class="input-icon">mdi-link-variant</v-icon>
+                  <v-icon class="input-icon" color="#97e5ee" size="20">mdi-link-variant</v-icon>
                   <div class="link-inputs">
-                    <input v-model="link.url" type="text" placeholder="Enter link URL" class="input-field"
-                      :class="{ 'input-error': link.error }" />
-                    <input v-model="link.description" type="text" placeholder="Enter description"
-                      class="input-field mt-2" :class="{ 'input-error': link.error }" />
+                    <input
+                      v-model="link.url"
+                      class="input-field"
+                      :class="{ 'input-error': link.error }"
+                      placeholder="Enter link URL"
+                      type="text"
+                    >
+                    <input
+                      v-model="link.description"
+                      class="input-field mt-2"
+                      :class="{ 'input-error': link.error }"
+                      placeholder="Enter description"
+                      type="text"
+                    >
                   </div>
-                  <v-btn class="remove-link-btn" v-if="links.length > 1" icon small @click="removeLink(index)">
+                  <v-btn
+                    v-if="links.length > 1"
+                    class="remove-link-btn"
+                    icon
+                    small
+                    @click="removeLink(index)"
+                  >
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
                   <p v-if="link.error" class="error-text">Both URL and description are required</p>
                 </div>
-                <v-btn class="add-link-btn" text small @click="addLink">+ Add another link</v-btn>
+                <v-btn class="add-link-btn" small text @click="addLink">+ Add another link</v-btn>
 
                 <!-- Navigation Buttons -->
                 <div class="d-flex justify-space-between mt-4">
-                  <v-btn class="back-btn" @click="prevStep">← Back</v-btn>
+                  <v-btn class="back-btn" @click="prevStep">Back to 1 Step</v-btn>
                   <v-btn class="next-btn" @click="submitForm">Submit</v-btn>
                 </div>
               </div>
-
 
             </div>
           </transition>
@@ -122,178 +152,33 @@
   </v-container>
 </template>
 
-
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import { register } from '@/services/authService'
-import { api } from '@/api/api'
+  import { useSignUp } from '@/composables/useSignUp.js'
 
-// ---------------- ROUTER / STORE ----------------
-const router = useRouter()
-const authStore = useAuthStore()
-
-// ---------------- STEPS ----------------
-const currentStep = ref(1)
-const steps = ref([
-  { id: 1, name: 'Account Creation' },
-  { id: 2, name: 'Profile Information' }
-])
-
-// ---------------- STEP 1 FIELDS ----------------
-const email = ref('')
-const password = ref('')
-const firstName = ref('')
-
-// ---------------- STEP 2 FIELDS ----------------
-const description = ref('')
-const profileImageFile = ref(null)
-const profileImageName = ref('')
-const links = ref([{ url: '', description: '' }])
-
-// ---------------- UI ----------------
-const showPassword = ref(false)
-const loading = ref(false)
-const error = ref('')
-
-// ---------------- Validation Errors ----------------
-const firstNameError = ref('')
-const emailError = ref('')
-const passwordError = ref('')
-const descriptionError = ref('')
-
-// ---------------- STEP NAVIGATION ----------------
-function nextStep() {
-  if (currentStep.value === 1) submitStepOne()
-  else currentStep.value++
-}
-
-function prevStep() {
-  if (currentStep.value > 1) currentStep.value--
-}
-
-// ---------------- PASSWORD TOGGLE ----------------
-function togglePassword() {
-  showPassword.value = !showPassword.value
-}
-
-// ---------------- STEP 1: REGISTER + LOGIN ----------------
-async function submitStepOne() {
-  // Скидаємо помилки
-  firstNameError.value = ''
-  emailError.value = ''
-  passwordError.value = ''
-  error.value = ''
-
-  if (!firstName.value.trim()) {
-    firstNameError.value = 'Please enter your name'
-    return
-  }
-  if (!email.value.trim()) {
-    emailError.value = 'Please enter your email'
-    return
-  }
-  if (!password.value.trim() || password.value.length < 6) {
-    passwordError.value = 'Password must be at least 6 characters'
-    return
-  }
-
-  loading.value = true
-  try {
-    await register(email.value.trim(), password.value.trim(), firstName.value.trim())
-    await authStore.login(email.value.trim(), password.value.trim())
-    currentStep.value = 2
-  } catch (err) {
-    console.error(err)
-    error.value = 'Registration failed'
-  } finally {
-    loading.value = false
-  }
-}
-
-// ---------------- AVATAR ----------------
-function triggerFileInput() {
-  document.querySelector('input[type="file"]').click()
-}
-
-function handleFileUpload(e) {
-  const file = e.target.files[0]
-  if (file) {
-    profileImageFile.value = file
-    profileImageName.value = file.name
-  }
-}
-
-// ---------------- LINKS ----------------
-function addLink() {
-  links.value.push({ url: '', description: '' })
-}
-
-function removeLink(index) {
-  if (links.value.length > 1) links.value.splice(index, 1)
-}
-
-// ---------------- STEP 2: SAVE PROFILE ----------------
-async function submitForm() {
-  descriptionError.value = ''
-  links.value.forEach(l => l.error = false)
-  error.value = ''
-
-  if (!description.value.trim()) {
-    descriptionError.value = 'Please add a description about yourself'
-    return
-  }
-
-  let hasInvalidLink = false
-  links.value.forEach(l => {
-    if (!l.url.trim() || !l.description.trim()) {
-      l.error = true
-      hasInvalidLink = true
-    }
-  })
-  if (hasInvalidLink) {
-    error.value = 'Please fill all link fields'
-    return
-  }
-
-  loading.value = true
-  try {
-    // ✅ 1. PROFILE
-    await api.put('/users/profile', {
-      name: firstName.value,
-      description: description.value
-    })
-
-    // ✅ 2. AVATAR
-    if (profileImageFile.value) {
-      const formData = new FormData()
-      formData.append('avatar', profileImageFile.value)
-
-      await api.post('/users/me/avatar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      })
-    }
-
-    // ✅ 3. LINKS
-    for (const link of links.value) {
-      await api.post('/user-links', {
-        url: link.url,
-        description: link.description
-      })
-    }
-
-    // ✅ 4. REDIRECT
-    router.push('/feed')
-  } catch (err) {
-    console.error(err)
-    error.value = 'Failed to save profile'
-  } finally {
-    loading.value = false
-  }
-}
+  const {
+    addLink,
+    cardWidth,
+    currentStep,
+    description,
+    descriptionError,
+    email,
+    emailError,
+    firstName,
+    firstNameError,
+    handleFileUpload,
+    links,
+    nextStep,
+    password,
+    passwordError,
+    prevStep,
+    profileImageName,
+    removeLink,
+    showPassword,
+    steps,
+    submitForm,
+    togglePassword,
+  } = useSignUp()
 </script>
-
 
 <style scoped>
 .signup-page {
@@ -414,7 +299,6 @@ async function submitForm() {
   font-family: 'Junge', serif;
 }
 
-
 .step-content {
   width: 100%;
 }
@@ -503,7 +387,7 @@ async function submitForm() {
   color: #555;
 }
 
-/* --- Додаткові стилі для кнопок лінків --- */
+/* --- Р”РѕРґР°С‚РєРѕРІС– СЃС‚РёР»С– РґР»СЏ РєРЅРѕРїРѕРє Р»С–РЅРєС–РІ --- */
 .add-link-btn {
   font-family: 'Junge', serif;
   font-size: 14px;
