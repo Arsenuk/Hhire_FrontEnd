@@ -15,6 +15,7 @@ declare module 'vue' {
     Follows: typeof import('./src/components/Follows.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    PostCard: typeof import('./src/components/posts/PostCard.vue')['default']
     ProfileUser: typeof import('./src/components/ProfileUser.vue')['default']
     RepliedSignals: typeof import('./src/components/RepliedSignals.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

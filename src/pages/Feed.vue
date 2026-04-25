@@ -38,54 +38,17 @@
                 </div>
 
                 <!-- POSTS -->
-                <v-card v-for="post in sortedPosts" :key="post.id" class="post-card mb-4">
-                    <!-- HEADER -->
-                    <v-card-title class="d-flex justify-space-between align-center">
-                        <div class="d-flex align-center gap-3">
-                            <v-avatar size="40" class="clickable-avatar" @click="goToProfile(post.owner.id)">
-                                <v-img :src="getAvatarUrl(post.owner.avatar)" lazy-src="./assets/default-avatar.png" />
-                            </v-avatar>
-                            <span class="post-title">{{ post.title }}</span>
-                        </div>
-                        <span class="post-type" :class="{ 'company-role': post.owner.role === 'company' }">
-                            {{ post.owner.role }}
-                        </span>
-                    </v-card-title>
+                <PostCard v-for="post in sortedPosts" :key="post.id" class="mb-4" :post="post" variant="feed"
+                    title-placement="header" :show-owner-role="true" :owner-clickable="true" :avatar-size="40"
+                    @owner-click="goToProfile">
 
-                    <!-- SUBTITLE -->
-                    <v-card-subtitle class="d-flex justify-space-between">
-                        <span>{{ post.owner.name }}</span>
-                        <span>{{ formatDate(post.created_at) }}</span>
-                    </v-card-subtitle>
-
-                    <!-- CONTENT + TAGS -->
-                    <v-card-text>
-                        {{ post.content }}
-
-                        <!-- INTENT (NEW) -->
-                        <div v-if="post.intent" class="post-intent mt-2">
-                            <v-chip small class="ma-1" color="secondary" variant="outlined">
-                                {{ post.intent }}
-                            </v-chip>
-                        </div>
-
-                        <!-- TAGS -->
-                        <div v-if="post.tags && post.tags.length" class="post-tags mt-2">
-                            <v-chip v-for="(tag, index) in post.tags" :key="index" small color="primary" class="ma-1"
-                                outlined>
-                                {{ tag }}
-                            </v-chip>
-                        </div>
-                    </v-card-text>
-
-                    <!-- ACTIONS -->
-                    <v-card-actions>
+                    <template #actions>
                         <v-btn icon @click="toggleComments(post.id)">
                             <v-icon>mdi-comment-outline</v-icon>
                         </v-btn>
-                    </v-card-actions>
+                    </template>
 
-                    <!-- COMMENTS -->
+                    <template #details>
                     <v-expand-transition>
                         <div v-if="expandedPosts.includes(post.id)" class="comments-section">
                             <v-list dense>
@@ -139,7 +102,8 @@
                             <v-btn small color="primary" class="mt-1" @click="confirmAddComment(post)">Post</v-btn>
                         </div>
                     </v-expand-transition>
-                </v-card>
+                    </template>
+                </PostCard>
 
                 <!-- LOAD MORE -->
                 <v-btn v-if="posts.length < allPosts.length" class="load-more-btn mt-4" @click="loadMorePosts">
@@ -186,6 +150,8 @@ import { ref, computed, onMounted } from 'vue'
 import { api } from '@/api/api.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useRouter } from 'vue-router'
+import PostCard from '@/components/posts/PostCard.vue'
+import { getAvatarUrl, normalizePosts } from '@/utils/postDisplay.js'
 
 const router = useRouter()
 
@@ -216,10 +182,6 @@ const editingCommentId = ref(null)
 const authStore = useAuthStore()
 const currentUser = computed(() => authStore.user)
 
-// --- UTILS ---
-const getAvatarUrl = (avatar) => avatar ? `http://localhost:3000${avatar}` : './assets/default-avatar.png'
-const formatDate = (dateStr) => new Date(dateStr).toLocaleString()
-
 // --- CONFIRM DIALOG ---
 const confirmDialog = ref(false)
 const confirmTitle = ref('')
@@ -244,27 +206,7 @@ async function loadPosts() {
         const res = await api.get('/posts/feed')
         const rawPosts = res.data.posts || res.data || []
 
-        allPosts.value = rawPosts.map(post => {
-            const owner = post.owner || {}
-
-            return {
-                ...post,
-                tags: Array.isArray(post.tags)
-                    ? post.tags.map(t => typeof t === 'string' ? t : t.name)
-                    : [],
-
-                comments: Array.isArray(post.comments)
-                    ? post.comments.filter(c => c.status !== 'deleted')
-                    : [],
-
-                owner: {
-                    id: owner.id ?? post.user_id ?? post.company_id ?? null,
-                    name: owner.name ?? 'Unknown',
-                    role: owner.role ?? (post.company_id ? 'company' : 'user'),
-                    avatar: owner.avatar ?? null
-                }
-            }
-        })
+        allPosts.value = normalizePosts(rawPosts)
 
 
         const tagsSet = new Set()

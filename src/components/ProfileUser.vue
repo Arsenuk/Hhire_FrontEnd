@@ -76,38 +76,7 @@
             <v-card-text>
               <v-row>
                 <v-col v-for="post in posts" :key="post.id" cols="12" md="6">
-                  <v-card class="post-card">
-                    <v-card-title class="post-header">
-                      <div class="post-user">
-                        <v-avatar size="36">
-                          <v-img :src="getAvatarUrl(post.owner?.avatar)" />
-                        </v-avatar>
-                        <div>
-                          <div class="post-username">
-                            {{ post.owner?.name || 'Unknown user' }}
-                          </div>
-                          <div class="post-meta">
-                            {{ formatDate(post.created_at) }}
-                          </div>
-                        </div>
-                      </div>
-                    </v-card-title>
-
-                    <v-card-text>
-                      <h4 class="mb-2">{{ post.title }}</h4>
-                      <p>{{ post.content }}</p>
-                      <div v-if="post.intent" class="post-intent mb-2">
-                        <v-chip size="small" variant="outlined" color="secondary">
-                          {{ post.intent }}
-                        </v-chip>
-                      </div>
-                      <div v-if="post.tags?.length" class="post-tags mt-3">
-                        <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined" class="ma-1">
-                          #{{ tag }}
-                        </v-chip>
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                  <PostCard :post="post" variant="profile" title-placement="body" tag-prefix="#" hoverable />
                 </v-col>
 
                 <v-col v-if="posts.length === 0" cols="12">
@@ -132,6 +101,8 @@ import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '@/api/api.js'
 import { useAuthStore } from '@/stores/auth'
+import PostCard from '@/components/posts/PostCard.vue'
+import { getAvatarUrl, normalizePosts } from '@/utils/postDisplay.js'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -148,9 +119,6 @@ const followLoading = ref(false)
 
 const userId = ref(route.params.id)
 
-const getAvatarUrl = (avatar) =>
-  avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
-
 async function loadUserProfile() {
   loading.value = true
   errorMessage.value = ''
@@ -158,7 +126,7 @@ async function loadUserProfile() {
   try {
     const res = await api.get(`/users/${userId.value}/profile`)
     user.value = res.data
-    posts.value = res.data.posts || []
+    posts.value = normalizePosts(res.data.posts || [])
     links.value = res.data.links || []
 
     await checkFollowStatus()
@@ -214,9 +182,6 @@ watch(() => route.params.id, (newId) => {
   loadUserProfile()
 })
 
-function formatDate(d) {
-  return new Date(d).toLocaleString()
-}
 </script>
 
 <style scoped>

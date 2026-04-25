@@ -95,25 +95,8 @@
             <v-card-text>
               <v-row>
                 <v-col v-for="post in posts" :key="post.id" cols="12" md="6">
-                  <v-card class="post-card">
-
-                    <!-- POST HEADER -->
-                    <v-card-title class="post-header">
-                      <div class="post-user">
-                        <v-avatar size="36">
-                          <v-img :src="getAvatarUrl(post.owner?.avatar)" />
-                        </v-avatar>
-
-                        <div>
-                          <div class="post-username">
-                            {{ post.owner?.name || 'Unknown user' }}
-                          </div>
-                          <div class="post-meta">
-                            {{ formatDate(post.created_at) }}
-                          </div>
-                        </div>
-                      </div>
-
+                  <PostCard :post="post" variant="profile" title-placement="body" tag-prefix="#" hoverable>
+                    <template #header-actions>
                       <div v-if="isOwnPost(post)" class="post-actions">
                         <v-btn icon size="x-small" @click="startEditPost(post)">
                           <v-icon>mdi-pencil</v-icon>
@@ -122,24 +105,8 @@
                           <v-icon color="red">mdi-delete</v-icon>
                         </v-btn>
                       </div>
-                    </v-card-title>
-
-                    <!-- POST BODY -->
-                    <v-card-text>
-                      <h4 class="mb-2">{{ post.title }}</h4>
-                      <p>{{ post.content }}</p>
-                      <div v-if="post.intent" class="post-intent mb-2">
-                        <v-chip size="small" variant="outlined" color="secondary">
-                          {{ post.intent }}
-                        </v-chip>
-                      </div>
-                      <div v-if="post.tags?.length" class="post-tags mt-3">
-                        <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined" class="ma-1">
-                          #{{ tag }}
-                        </v-chip>
-                      </div>
-                    </v-card-text>
-                  </v-card>
+                    </template>
+                  </PostCard>
                 </v-col>
 
                 <v-col v-if="posts.length === 0" cols="12">
@@ -279,6 +246,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { api } from '@/api/api.js'
+import PostCard from '@/components/posts/PostCard.vue'
+import { getAvatarUrl, normalizePosts } from '@/utils/postDisplay.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -345,12 +314,6 @@ const postRules = {
 }
 
 // ================= AVATAR =================
-const defaultAvatar = './assets/default-avatar.png'
-const getAvatarUrl = (avatar) => {
-  if (!avatar) return defaultAvatar
-  return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
-}
-
 // ================= LOAD PROFILE =================
 async function loadProfile() {
   loading.value = true
@@ -365,7 +328,7 @@ async function loadProfile() {
 
     authStore.user = profileRes.data
     links.value = linksRes.data
-    posts.value = postsRes.data.posts
+    posts.value = normalizePosts(postsRes.data.posts || [])
 
     editForm.value.name = profileRes.data.name
     editForm.value.description = profileRes.data.description
@@ -551,10 +514,6 @@ function openDeletePost(post) {
 }
 
 // ================= UTILS =================
-function formatDate(d) {
-  return new Date(d).toLocaleString()
-}
-
 onMounted(() => {
   authStore.loadUserFromStorage()
   loadProfile()

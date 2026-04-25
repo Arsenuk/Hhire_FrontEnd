@@ -1,0 +1,39 @@
+import defaultAvatar from '@/assets/default-avatar.png'
+
+const API_BASE_URL = 'http://localhost:3000'
+
+export function getAvatarUrl(avatar) {
+  if (!avatar) return defaultAvatar
+  return avatar.startsWith('http') ? avatar : `${API_BASE_URL}${avatar}`
+}
+
+export function formatPostDate(dateValue) {
+  if (!dateValue) return ''
+  return new Date(dateValue).toLocaleString()
+}
+
+export function normalizePost(post = {}) {
+  const owner = post.owner || {}
+
+  return {
+    ...post,
+    tags: Array.isArray(post.tags)
+      ? post.tags
+          .map(tag => (typeof tag === 'string' ? tag : tag?.name))
+          .filter(Boolean)
+      : [],
+    comments: Array.isArray(post.comments)
+      ? post.comments.filter(comment => comment?.status !== 'deleted')
+      : [],
+    owner: {
+      id: owner.id ?? post.user_id ?? post.company_id ?? null,
+      name: owner.name ?? 'Unknown user',
+      role: owner.role ?? (post.company_id ? 'company' : 'user'),
+      avatar: owner.avatar ?? null,
+    },
+  }
+}
+
+export function normalizePosts(posts = []) {
+  return posts.map(normalizePost)
+}
