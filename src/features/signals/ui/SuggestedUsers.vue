@@ -4,8 +4,12 @@
 
     <v-card-text class="card-body">
       <v-list class="list">
-        <v-list-item v-for="user in suggestedUsers" :key="user.id" class="user-item" :ripple="false">
-          <!-- LEFT -->
+        <v-list-item
+          v-for="user in suggestedUsers"
+          :key="user.id"
+          class="user-item"
+          :ripple="false"
+        >
           <div class="left" @click="goToProfile(user.id)">
             <v-avatar class="avatar" size="48">
               <v-img :src="getAvatarUrl(user.avatar)" />
@@ -19,7 +23,6 @@
             </div>
           </div>
 
-          <!-- RIGHT -->
           <div class="right">
             <v-btn class="connect-btn" variant="flat" @click.stop="openConnectDialog(user)">
               Connect
@@ -29,7 +32,6 @@
       </v-list>
     </v-card-text>
 
-    <!-- DIALOG -->
     <v-dialog v-model="dialog" max-width="520px" persistent>
       <v-card class="confirm-card">
         <v-card-title class="confirm-title">
@@ -63,7 +65,6 @@
       </v-card>
     </v-dialog>
 
-    <!-- 🔥 SNACKBAR NOTIFICATIONS -->
     <v-snackbar
       v-model="snackbar.show"
       :color="snackbar.color"
@@ -78,89 +79,23 @@
 </template>
 
 <script setup>
-  import { onMounted, ref } from 'vue'
-  import { useRouter } from 'vue-router'
-  import { api } from '@/api/api.js'
-  import { useAuthStore } from '@/features/auth/model/auth.store.js'
+  import { useSuggestedUsers } from '@/features/signals/model/useSuggestedUsers.js'
 
-  const auth = useAuthStore()
-  const router = useRouter()
-
-  const suggestedUsers = ref([])
-  const dialog = ref(false)
-  const selectedUser = ref(null)
-  const message = ref('')
-
-  // 🔥 SNACKBAR STATE
-  const snackbar = ref({
-    show: false,
-    text: '',
-    color: 'success',
-  })
-
-  function showToast (text, color = 'success') {
-    snackbar.value.text = text
-    snackbar.value.color = color
-    snackbar.value.show = true
-  }
-
-  function getAvatarUrl (a) {
-    return a ? `http://localhost:3000${a}` : '/assets/default-avatar.png'
-  }
-
-  // FETCH
-  async function fetchSuggestedUsers () {
-    try {
-      const res = await api.get('/users')
-      suggestedUsers.value = res.data.filter(u => u.id !== auth.user.id)
-    } catch (error) {
-      console.error(error)
-      showToast('Failed to load users', 'error')
-    }
-  }
-
-  // DIALOG
-  function openConnectDialog (user) {
-    selectedUser.value = user
-    message.value = ''
-    dialog.value = true
-  }
-
-  function closeDialog () {
-    dialog.value = false
-  }
-
-  // SEND SIGNAL
-  async function sendSignal () {
-    if (!message.value.trim()) {
-      showToast('Please enter a message', 'warning')
-      return
-    }
-
-    try {
-      await api.post('/signals', {
-        sender_type: 'user',
-        sender_id: auth.user.id,
-        receiver_type: 'user',
-        receiver_id: selectedUser.value.id,
-        message: message.value,
-      })
-
-      dialog.value = false
-      showToast('Signal sent successfully 🚀', 'success')
-    } catch (error) {
-      console.error(error)
-      showToast('Failed to send signal', 'error')
-    }
-  }
-
-  const goToProfile = userId => router.push(`/profile/${userId}`)
-
-  onMounted(fetchSuggestedUsers)
+  const {
+    closeDialog,
+    dialog,
+    getAvatarUrl,
+    goToProfile,
+    message,
+    openConnectDialog,
+    selectedUser,
+    sendSignal,
+    snackbar,
+    suggestedUsers,
+  } = useSuggestedUsers()
 </script>
 
 <style scoped>
-/* ===== CARD ===== */
 .post-card {
   border-radius: 22px;
   background: #ffffff;
@@ -173,7 +108,6 @@
   box-shadow: 0 16px 45px rgba(0, 0, 0, 0.08);
 }
 
-/* TITLE */
 .title {
   font-weight: 700;
   font-size: 16px;
@@ -181,21 +115,17 @@
   letter-spacing: 0.3px;
 }
 
-/* LIST */
 .list {
   padding: 0;
 }
 
-/* ===== USER ITEM ===== */
 .user-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   padding: 0;
   border-radius: 16px;
   margin-bottom: 10px;
-
   background: transparent;
   transition: all 0.25s ease;
 }
@@ -205,20 +135,16 @@
   transform: translateY(-1px);
 }
 
-/* LEFT SIDE */
 .left {
   display: flex;
   align-items: center;
   gap: 14px;
-
   flex: 1;
   padding: 12px 14px;
-
   cursor: pointer;
   min-width: 0;
 }
 
-/* AVATAR */
 .avatar {
   border-radius: 14px;
   border: 2px solid rgba(99, 102, 241, 0.2);
@@ -230,7 +156,6 @@
   transform: scale(1.03);
 }
 
-/* TEXT */
 .user-content {
   display: flex;
   flex-direction: column;
@@ -247,7 +172,6 @@
 .user-desc {
   font-size: 13px;
   color: #6b7280;
-
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -255,27 +179,21 @@
   margin-top: 2px;
 }
 
-/* RIGHT SIDE */
 .right {
   display: flex;
   align-items: center;
   padding-right: 14px;
 }
 
-/* CONNECT BUTTON */
 .connect-btn {
   height: 36px;
   padding: 0 18px;
-
   border-radius: 14px !important;
-
   background: linear-gradient(135deg, #6366f1, #22c55e);
   color: #ffffff;
-
   font-weight: 600;
   font-size: 13px;
   text-transform: none;
-
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.25);
   transition: all 0.25s ease;
 }
@@ -289,7 +207,6 @@
   transform: scale(0.97);
 }
 
-/* ===== DIALOG ===== */
 .confirm-card {
   border-radius: 20px;
   background: #ffffff;
@@ -301,7 +218,6 @@
   font-weight: 700;
   font-size: 16px;
   color: #111827;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -314,12 +230,10 @@
   margin-left: 6px;
 }
 
-/* TEXTAREA */
 :deep(.v-textarea) {
   border-radius: 14px;
 }
 
-/* ACTIONS */
 .confirm-actions {
   display: flex;
   justify-content: flex-end;
@@ -327,11 +241,9 @@
   padding: 12px 14px 14px;
 }
 
-/* CANCEL */
 .cancel-btn {
   background: #f3f4f6;
   color: #111827;
-
   border-radius: 12px;
   font-weight: 600;
   text-transform: none;
@@ -341,15 +253,12 @@
   background: #e5e7eb;
 }
 
-/* SEND */
 .send-btn {
   background: linear-gradient(135deg, #22c55e, #16a34a);
   color: #fff;
-
   border-radius: 12px;
   font-weight: 600;
   text-transform: none;
-
   box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
 }
 
@@ -358,7 +267,6 @@
   box-shadow: 0 10px 22px rgba(34, 197, 94, 0.35);
 }
 
-/* SNACKBAR (optional polish) */
 :deep(.v-snackbar) {
   border-radius: 12px;
   font-weight: 500;
