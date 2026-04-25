@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="create-post-page pa-0">
-    <v-row justify="center" align="center" class="fill-height">
-      <v-col cols="12" md="6" class="form-col">
+  <v-container class="create-post-page pa-0" fluid>
+    <v-row align="center" class="fill-height" justify="center">
+      <v-col class="form-col" cols="12" md="6">
         <v-card class="form-card pa-8" elevation="8">
 
           <h2 class="form-title text-center">Create a Post</h2>
@@ -14,44 +14,60 @@
             <!-- TITLE -->
             <div class="mb-5">
               <p class="form-label">Title</p>
-              <input v-model="title" class="input-field" placeholder="Post title" required />
+              <input v-model="title" class="input-field" placeholder="Post title" required>
             </div>
 
             <!-- CONTENT -->
             <div class="mb-6">
               <p class="form-label">Content</p>
-              <textarea v-model="content" rows="6" class="textarea" placeholder="Write your post..."
-                required></textarea>
+              <textarea
+                v-model="content"
+                class="textarea"
+                placeholder="Write your post..."
+                required
+                rows="6"
+              />
 
               <div class="char-count">
                 {{ content.length }} characters
               </div>
             </div>
 
-            <!-- INTENT (НОВЕ ПОЛЕ) -->
+            <!-- INTENT (РќРћР’Р• РџРћР›Р•) -->
             <div class="mb-6">
               <p class="form-label">Intent</p>
 
-              <v-select v-model="intent" :items="intentOptions" item-title="label" item-value="value"
-                placeholder="Select intent" density="comfortable" />
+              <v-select
+                v-model="intent"
+                density="comfortable"
+                item-title="label"
+                item-value="value"
+                :items="intentOptions"
+                placeholder="Select intent"
+              />
             </div>
 
             <!-- TAGS -->
             <div class="mb-6">
               <p class="form-label">Tags</p>
-              <input v-model="rawTags" class="input-field" placeholder="e.g. startup, tech, review" />
+              <input v-model="rawTags" class="input-field" placeholder="e.g. startup, tech, review">
               <div class="char-count">
                 Up to 10 tags, separated by commas
               </div>
             </div>
 
-          
-            <!-- IMAGES (НОВЕ ПОЛЕ) -->
+            <!-- IMAGES (РќРћР’Р• РџРћР›Р•) -->
             <div class="mb-6">
               <p class="form-label">Images</p>
 
-              <v-file-input v-model="images" multiple accept="image/*" show-size density="comfortable"
-                label="Upload images" />
+              <v-file-input
+                v-model="images"
+                accept="image/*"
+                density="comfortable"
+                label="Upload images"
+                multiple
+                show-size
+              />
             </div>
 
             <!-- ACTIONS -->
@@ -99,85 +115,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+  import { useCreatePost } from '@/composables/useCreatePost.js'
 
-const router = useRouter()
-
-const title = ref('')
-const content = ref('')
-const rawTags = ref('')
-const intent = ref('general')
-const images = ref([])
-
-
-const showConfirm = ref(false)
-const submitting = ref(false)
-
-// --- INTENTS (з беку) ---
-const intentOptions = [
-  { label: 'General', value: 'general' },
-  { label: 'Job', value: 'job' },
-  { label: 'Mentorship', value: 'mentorship' },
-  { label: 'Partnership', value: 'partnership' },
-  { label: 'Hire', value: 'hire' },
-  { label: 'Offer', value: 'offer' }
-]
-
-const openConfirm = () => {
-  showConfirm.value = true
-}
-
-const confirmSubmit = async () => {
-  showConfirm.value = false
-  await submitPost()
-}
-
-const submitPost = async () => {
-  if (submitting.value) return
-  submitting.value = true
-
-  try {
-    const tags = rawTags.value
-      .split(',')
-      .map(t => t.trim().toLowerCase())
-      .filter(Boolean)
-      .slice(0, 10)
-
-      
-    const formData = new FormData()
-
-    formData.append('title', title.value)
-    formData.append('content', content.value)
-    formData.append('intent', intent.value)
-
-    formData.append('sender_type', 'user')
-
-    tags.forEach(tag => formData.append('tags[]', tag))
-
-    images.value.forEach(file => {
-      formData.append('images', file)
-    })
-
-    await api.post('/posts/user', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    })
-
-    router.push('/feed')
-  } catch (err) {
-    console.error(err)
-    alert(err.response?.data?.message ||
-      err.response?.data?.error ||
-      'Failed to create post')
-  } finally {
-    submitting.value = false
-  }
-}
-
-const cancel = () => {
-  router.push('/feed')
-}
+  const {
+    cancel,
+    confirmSubmit,
+    content,
+    images,
+    intent,
+    intentOptions,
+    openConfirm,
+    rawTags,
+    showConfirm,
+    submitting,
+    title,
+  } = useCreatePost()
 </script>
 
 <style scoped>
