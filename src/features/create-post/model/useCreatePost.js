@@ -56,6 +56,7 @@ export function useCreatePost () {
       for (const tag of tags) {
         formData.append('tags[]', tag)
       }
+
       for (const file of images.value) {
         formData.append('images', file)
       }
