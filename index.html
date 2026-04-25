@@ -9,6 +9,53 @@
   </head>
   <body>
     <div id="app"></div>
+    <script>
+      (function () {
+        var reloadKey = 'vite:asset-reload'
+
+        function reloadOnce() {
+          if (sessionStorage.getItem(reloadKey)) {
+            return
+          }
+
+          sessionStorage.setItem(reloadKey, 'true')
+          window.location.reload()
+        }
+
+        window.addEventListener('vite:preloadError', function (event) {
+          if (event && typeof event.preventDefault === 'function') {
+            event.preventDefault()
+          }
+
+          reloadOnce()
+        })
+
+        window.addEventListener('error', function (event) {
+          var target = event.target
+          var source = ''
+
+          if (target && typeof target.href === 'string') {
+            source = target.href
+          } else if (target && typeof target.src === 'string') {
+            source = target.src
+          }
+
+          var isVuetifyStyleError = source.includes('vuetify') && (source.includes('.sass') || source.includes('.scss'))
+          var isDynamicImportError = typeof event.message === 'string'
+            && event.message.includes('Failed to fetch dynamically imported module')
+
+          if (!isVuetifyStyleError && !isDynamicImportError) {
+            return
+          }
+
+          reloadOnce()
+        }, true)
+
+        window.addEventListener('load', function () {
+          sessionStorage.removeItem(reloadKey)
+        })
+      })()
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

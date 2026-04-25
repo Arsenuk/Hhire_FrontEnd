@@ -5,20 +5,16 @@
  */
 
 // Plugins
+import { createPinia } from 'pinia'
+import { createApp } from 'vue'
 import { registerPlugins } from '@/plugins'
+import { useAuthStore } from '@/stores/auth'
 
 // Components
 import App from './App.vue'
-import { useAuthStore } from '@/stores/auth'
-
-// Composables
-import { createPinia } from 'pinia'
-import { createApp } from 'vue'
 
 // Styles
 import 'unfonts.css'
-
-import 'vuetify/styles' 
 
 const pinia = createPinia()
 const app = createApp(App)

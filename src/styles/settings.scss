@@ -4,9 +4,7 @@
  * Configures SASS variables and Vuetify overwrites
  */
 
-// 🔥 ОБОВ'ЯЗКОВО: імпорт базових налаштувань Vuetify
-@use 'vuetify/settings' with (
+@forward 'vuetify/settings' with (
   $body-font-family: ('Roboto', sans-serif),
   $color-pack: false
 );
-
