@@ -22,9 +22,6 @@ export function normalizePost(post = {}) {
           .map(tag => (typeof tag === 'string' ? tag : tag?.name))
           .filter(Boolean)
       : [],
-    comments: Array.isArray(post.comments)
-      ? post.comments.filter(comment => comment?.status !== 'deleted')
-      : [],
     owner: {
       id: owner.id ?? post.user_id ?? post.company_id ?? null,
       name: owner.name ?? 'Unknown user',
