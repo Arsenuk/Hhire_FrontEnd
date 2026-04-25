@@ -1,21 +1,21 @@
 <template>
-  <v-container fluid class="profile-page">
+  <v-container class="profile-page" fluid>
     <v-row justify="center">
       <v-col cols="12" md="8">
-        <v-alert v-if="errorMessage" type="error" variant="tonal" class="mb-4">
+        <v-alert v-if="errorMessage" class="mb-4" type="error" variant="tonal">
           {{ errorMessage }}
         </v-alert>
 
-        <v-alert v-if="successMessage" type="success" variant="tonal" class="mb-4">
+        <v-alert v-if="successMessage" class="mb-4" type="success" variant="tonal">
           {{ successMessage }}
         </v-alert>
       </v-col>
     </v-row>
 
     <template v-if="user">
-      <v-row class="profile-header mb-8" align="center">
-        <v-col cols="12" md="2" class="text-center">
-          <v-avatar size="120" class="avatar-border">
+      <v-row align="center" class="profile-header mb-8">
+        <v-col class="text-center" cols="12" md="2">
+          <v-avatar class="avatar-border" size="120">
             <v-img :src="getAvatarUrl(user.avatar)" />
           </v-avatar>
         </v-col>
@@ -26,7 +26,7 @@
           </h1>
         </v-col>
 
-        <v-col v-if="$slots['header-actions']" cols="12" md="3" class="text-md-right text-center">
+        <v-col v-if="$slots['header-actions']" class="text-md-right text-center" cols="12" md="3">
           <slot name="header-actions" />
         </v-col>
       </v-row>
@@ -58,7 +58,7 @@
                   </v-list-item-title>
 
                   <template v-if="$slots['link-append']" #append>
-                    <slot name="link-append" :link="link" />
+                    <slot :link="link" name="link-append" />
                   </template>
                 </v-list-item>
 
@@ -79,7 +79,13 @@
             <v-card-text>
               <v-row>
                 <v-col v-for="post in posts" :key="post.id" cols="12" md="6">
-                  <PostCard :post="post" variant="profile" title-placement="body" tag-prefix="#" hoverable>
+                  <PostCard
+                    hoverable
+                    :post="post"
+                    tag-prefix="#"
+                    title-placement="body"
+                    variant="profile"
+                  >
                     <template v-if="$slots['post-actions']" #header-actions>
                       <slot name="post-actions" :post="post" />
                     </template>
@@ -96,46 +102,46 @@
       </v-row>
     </template>
 
-    <v-row v-else justify="center" class="mt-10">
+    <v-row v-else class="mt-10" justify="center">
       <v-progress-circular indeterminate size="50" />
     </v-row>
   </v-container>
 </template>
 
 <script setup>
-import PostCard from '@/components/posts/PostCard.vue'
-import { getAvatarUrl } from '@/utils/postDisplay.js'
+  import PostCard from '@/components/posts/PostCard.vue'
+  import { getAvatarUrl } from '@/utils/postDisplay.js'
 
-defineProps({
-  user: {
-    type: Object,
-    default: null,
-  },
-  links: {
-    type: Array,
-    default: () => [],
-  },
-  posts: {
-    type: Array,
-    default: () => [],
-  },
-  errorMessage: {
-    type: String,
-    default: '',
-  },
-  successMessage: {
-    type: String,
-    default: '',
-  },
-  emptyInfoText: {
-    type: String,
-    default: 'User did not provide information',
-  },
-  emptyPostsText: {
-    type: String,
-    default: 'User did not provide posts',
-  },
-})
+  defineProps({
+    user: {
+      type: Object,
+      default: null,
+    },
+    links: {
+      type: Array,
+      default: () => [],
+    },
+    posts: {
+      type: Array,
+      default: () => [],
+    },
+    errorMessage: {
+      type: String,
+      default: '',
+    },
+    successMessage: {
+      type: String,
+      default: '',
+    },
+    emptyInfoText: {
+      type: String,
+      default: 'User did not provide information',
+    },
+    emptyPostsText: {
+      type: String,
+      default: 'User did not provide posts',
+    },
+  })
 </script>
 
 <style scoped>

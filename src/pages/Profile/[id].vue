@@ -1,10 +1,7 @@
 <template>
-  <ProfileUser />
+  <ProfileUserPage />
 </template>
 
 <script setup>
-import ProfileUser from '@/components/ProfileUser.vue'
+  import ProfileUserPage from '@/features/profile/ui/ProfileUserPage.vue'
 </script>
-
-<style scoped>
-</style>

@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { api } from '@/api/api.js'
 import { normalizePosts } from '@/utils/postDisplay.js'
 
-export function useProfilePosts({ user, loading, errorMessage, successMessage }) {
+export function useProfilePosts ({ user, loading, errorMessage, successMessage }) {
   const posts = ref([])
   const editingPostDialog = ref(false)
   const postFormRef = ref(null)
@@ -22,17 +22,17 @@ export function useProfilePosts({ user, loading, errorMessage, successMessage })
     content: [value => !!value || 'Content is required'],
   }
 
-  function setPosts(nextPosts = []) {
+  function setPosts (nextPosts = []) {
     posts.value = normalizePosts(nextPosts)
   }
 
   const userId = computed(() => user.value?.id)
 
-  function isOwnPost(post) {
+  function isOwnPost (post) {
     return post.user_id === userId.value
   }
 
-  function startEditPost(post) {
+  function startEditPost (post) {
     editingPostDialog.value = true
     editPostForm.value = {
       id: post.id,
@@ -42,13 +42,15 @@ export function useProfilePosts({ user, loading, errorMessage, successMessage })
     }
   }
 
-  function cancelEditPost() {
+  function cancelEditPost () {
     editingPostDialog.value = false
   }
 
-  async function savePost() {
+  async function savePost () {
     const { valid } = await postFormRef.value.validate()
-    if (!valid) return
+    if (!valid) {
+      return
+    }
 
     loading.value = true
     errorMessage.value = ''
@@ -80,13 +82,15 @@ export function useProfilePosts({ user, loading, errorMessage, successMessage })
     }
   }
 
-  function openDeletePost(post) {
+  function openDeletePost (post) {
     postToDelete.value = post
     showDeletePostDialog.value = true
   }
 
-  async function deleteConfirmedPost() {
-    if (!postToDelete.value) return
+  async function deleteConfirmedPost () {
+    if (!postToDelete.value) {
+      return
+    }
 
     loading.value = true
     errorMessage.value = ''

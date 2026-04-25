@@ -1,8 +1,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { api } from '@/api/api.js'
-import { useProfileLinks } from '@/composables/useProfileLinks.js'
-import { useProfilePosts } from '@/composables/useProfilePosts.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
+import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'
 
 export function useProfileMe () {
   const authStore = useAuthStore()
@@ -27,16 +27,16 @@ export function useProfileMe () {
   ]
 
   const profileLinks = useProfileLinks({
-    loading,
     errorMessage,
+    loading,
     successMessage,
   })
 
   const profilePosts = useProfilePosts({
-    user,
-    loading,
     errorMessage,
+    loading,
     successMessage,
+    user,
   })
 
   async function loadProfile () {
@@ -97,6 +97,7 @@ export function useProfileMe () {
   function cancelEdit () {
     editing.value = false
   }
+
   onMounted(() => {
     authStore.loadUserFromStorage()
     loadProfile()

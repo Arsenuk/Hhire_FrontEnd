@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { api } from '@/api/api.js'
 
-export function useProfileLinks({ loading, errorMessage, successMessage }) {
+export function useProfileLinks ({ loading, errorMessage, successMessage }) {
   const links = ref([])
   const showLinkDialog = ref(false)
   const linkFormRef = ref(null)
@@ -20,35 +20,33 @@ export function useProfileLinks({ loading, errorMessage, successMessage }) {
     value => /^https?:\/\//.test(value) || 'URL must start with http(s)',
   ]
 
-  function setLinks(nextLinks = []) {
+  function setLinks (nextLinks = []) {
     links.value = nextLinks
   }
 
-  function openAddLink() {
+  function openAddLink () {
     editingLink.value = null
     linkForm.value = { url: '', description: '' }
     showLinkDialog.value = true
   }
 
-  function openEditLink(link) {
+  function openEditLink (link) {
     editingLink.value = link
     linkForm.value = { url: link.url, description: link.description }
     showLinkDialog.value = true
   }
 
-  async function saveLink() {
+  async function saveLink () {
     const { valid } = await linkFormRef.value.validate()
-    if (!valid) return
+    if (!valid) {
+      return
+    }
 
     loading.value = true
     errorMessage.value = ''
 
     try {
-      if (editingLink.value) {
-        await api.put(`/user-links/${editingLink.value.id}`, linkForm.value)
-      } else {
-        await api.post('/user-links', linkForm.value)
-      }
+      await (editingLink.value ? api.put(`/user-links/${editingLink.value.id}`, linkForm.value) : api.post('/user-links', linkForm.value))
 
       const res = await api.get('/user-links')
       links.value = res.data
@@ -60,13 +58,15 @@ export function useProfileLinks({ loading, errorMessage, successMessage }) {
     }
   }
 
-  function openDeleteLink(id) {
+  function openDeleteLink (id) {
     linkToDelete.value = id
     showDeleteLinkDialog.value = true
   }
 
-  async function deleteConfirmedLink() {
-    if (!linkToDelete.value) return
+  async function deleteConfirmedLink () {
+    if (!linkToDelete.value) {
+      return
+    }
 
     loading.value = true
     errorMessage.value = ''

@@ -19,8 +19,8 @@
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRoute } from 'vue-router'
   import { api } from '@/api/api.js'
-  import ProfileView from '@/components/profile/ProfileView.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
+  import ProfileView from '@/features/profile/ui/ProfileView.vue'
   import { normalizePosts } from '@/utils/postDisplay.js'
 
   const route = useRoute()
@@ -63,7 +63,9 @@
   }
 
   async function checkFollowStatus () {
-    if (!canManageFollow.value) return
+    if (!canManageFollow.value) {
+      return
+    }
 
     const res = await api.get('/follows/status', {
       params: {
@@ -76,7 +78,9 @@
   }
 
   async function toggleFollow () {
-    if (!user.value) return
+    if (!user.value) {
+      return
+    }
 
     followLoading.value = true
 
@@ -107,8 +111,4 @@
     userId.value = newId
     loadUserProfile()
   })
-
 </script>
-
-<style scoped>
-</style>
