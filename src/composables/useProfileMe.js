@@ -1,10 +1,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { api } from '@/api/api.js'
-import { useAuthStore } from '@/stores/auth.js'
 import { useProfileLinks } from '@/composables/useProfileLinks.js'
 import { useProfilePosts } from '@/composables/useProfilePosts.js'
+import { useAuthStore } from '@/features/auth/model/auth.store.js'
 
-export function useProfileMe() {
+export function useProfileMe () {
   const authStore = useAuthStore()
   const user = computed(() => authStore.user)
 
@@ -39,7 +39,7 @@ export function useProfileMe() {
     successMessage,
   })
 
-  async function loadProfile() {
+  async function loadProfile () {
     loading.value = true
     errorMessage.value = ''
 
@@ -63,9 +63,11 @@ export function useProfileMe() {
     }
   }
 
-  async function saveProfile() {
+  async function saveProfile () {
     const { valid } = await formRef.value.validate()
-    if (!valid) return
+    if (!valid) {
+      return
+    }
 
     loading.value = true
     errorMessage.value = ''
@@ -92,7 +94,7 @@ export function useProfileMe() {
     }
   }
 
-  function cancelEdit() {
+  function cancelEdit () {
     editing.value = false
   }
   onMounted(() => {

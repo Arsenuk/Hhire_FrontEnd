@@ -1,15 +1,20 @@
 <template>
-  <v-app-bar height="auto" flat class="hhire-header">
+  <v-app-bar class="hhire-header" flat height="auto">
     <!-- Ліва частина: логотип + назва -->
     <div class="header-left">
-      <img src="@/assets/hhire-logo.png" alt="Hhire logo" class="logo" />
+      <img alt="Hhire logo" class="logo" src="@/assets/hhire-logo.png">
       <span class="brand-name">Hhire</span>
     </div>
 
     <!-- Центр: навігація -->
     <div class="header-center">
-      <RouterLink v-for="link in navLinks" :key="link.to" :to="link.to" class="nav-link"
-        :class="{ active: isActive(link.to) }">
+      <RouterLink
+        v-for="link in navLinks"
+        :key="link.to"
+        class="nav-link"
+        :class="{ active: isActive(link.to) }"
+        :to="link.to"
+      >
         {{ link.label }}
       </RouterLink>
     </div>
@@ -20,7 +25,7 @@
         <!-- Notify: кількість сигналів без відповіді -->
         <v-menu offset-y>
           <template #activator="{ props }">
-            <v-btn icon v-bind="props" class="position-relative">
+            <v-btn v-bind="props" class="position-relative" icon>
               <v-icon>mdi-bell</v-icon>
               <span v-if="unansweredSignals > 0" class="notif-count">{{ unansweredSignals }}</span>
             </v-btn>
@@ -43,7 +48,7 @@
         </v-menu>
 
         <RouterLink to="/createpost">
-          <v-btn rounded class="create-post-btn">
+          <v-btn class="create-post-btn" rounded>
             Create Post
           </v-btn>
         </RouterLink>
@@ -52,8 +57,11 @@
           <template #activator="{ props }">
             <v-btn icon v-bind="props">
               <v-avatar size="36">
-                <v-img :src="getAvatarUrl(user?.avatar)" lazy-src="./assets/default-avatar.png"
-                  :alt="user?.name || 'Avatar'" />
+                <v-img
+                  :alt="user?.name || 'Avatar'"
+                  lazy-src="./assets/default-avatar.png"
+                  :src="getAvatarUrl(user?.avatar)"
+                />
               </v-avatar>
             </v-btn>
           </template>
@@ -71,9 +79,9 @@
       </template>
 
       <template v-else>
-        <RouterLink to="/login" class="login-link">Log In</RouterLink>
+        <RouterLink class="login-link" to="/login">Log In</RouterLink>
         <RouterLink to="/signup">
-          <v-btn class="signup-btn" rounded elevation="0">Sign Up</v-btn>
+          <v-btn class="signup-btn" elevation="0" rounded>Sign Up</v-btn>
         </RouterLink>
       </template>
     </div>
@@ -81,74 +89,74 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth.js'
-import { api } from '@/api/api.js'
-import defaultAvatar from '@/assets/default-avatar.png'
+  import { computed, onMounted, onUnmounted, ref } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import { api } from '@/api/api.js'
+  import defaultAvatar from '@/assets/default-avatar.png'
+  import { useAuthStore } from '@/features/auth/model/auth.store.js'
 
-const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
+  const route = useRoute()
+  const router = useRouter()
+  const authStore = useAuthStore()
 
-const isLoggedIn = computed(() => authStore.isLoggedIn)
-const user = computed(() => authStore.user)
+  const isLoggedIn = computed(() => authStore.isLoggedIn)
+  const user = computed(() => authStore.user)
 
-const getAvatarUrl = (avatar) => {
-  if (!avatar) return defaultAvatar
-  return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
-}
+  function getAvatarUrl (avatar) {
+    if (!avatar) return defaultAvatar
+    return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
+  }
 
-const navLinks = computed(() =>
-  isLoggedIn.value
-    ? [
+  const navLinks = computed(() =>
+    isLoggedIn.value
+      ? [
         { label: 'Feed', to: '/feed' },
         { label: 'Contacts', to: '/contacts' },
       ]
-    : [
+      : [
         { label: 'Get Started', to: '/' },
         { label: 'Feed', to: '/feed' },
-      ]
-)
+      ],
+  )
 
-const isActive = path => route.path === path
+  const isActive = path => route.path === path
 
-async function logout() {
-  try {
-    await api.post('/auth/logout')
-  } finally {
-    authStore.user = null
-    authStore.accessToken = null
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('user')
-    router.push('/')
+  async function logout () {
+    try {
+      await api.post('/auth/logout')
+    } finally {
+      authStore.user = null
+      authStore.accessToken = null
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('user')
+      router.push('/')
+    }
   }
-}
 
-// --- Notifications: кількість сигналів без відповіді ---
-const unansweredSignals = ref(0)
+  // --- Notifications: кількість сигналів без відповіді ---
+  const unansweredSignals = ref(0)
 
-const fetchUnansweredSignals = async () => {
-  if (!isLoggedIn.value) return
-  try {
-    const res = await api.get('/signals/conversations/inbox')
-    unansweredSignals.value = res.data.signals.length
-  } catch (err) {
-    console.error('Failed to fetch signals', err)
+  async function fetchUnansweredSignals () {
+    if (!isLoggedIn.value) return
+    try {
+      const res = await api.get('/signals/conversations/inbox')
+      unansweredSignals.value = res.data.signals.length
+    } catch (error) {
+      console.error('Failed to fetch signals', error)
+    }
   }
-}
 
-// --- Автооновлення кожні 15 сек ---
-let intervalId = null
+  // --- Автооновлення кожні 15 сек ---
+  let intervalId = null
 
-onMounted(() => {
-  fetchUnansweredSignals()
-  intervalId = setInterval(fetchUnansweredSignals, 15000)
-})
+  onMounted(() => {
+    fetchUnansweredSignals()
+    intervalId = setInterval(fetchUnansweredSignals, 15_000)
+  })
 
-onUnmounted(() => {
-  if (intervalId) clearInterval(intervalId)
-})
+  onUnmounted(() => {
+    if (intervalId) clearInterval(intervalId)
+  })
 </script>
 
 <style scoped>

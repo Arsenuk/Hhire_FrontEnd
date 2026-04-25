@@ -7,7 +7,7 @@
         <v-list-item v-for="user in suggestedUsers" :key="user.id" class="user-item" :ripple="false">
           <!-- LEFT -->
           <div class="left" @click="goToProfile(user.id)">
-            <v-avatar size="48" class="avatar">
+            <v-avatar class="avatar" size="48">
               <v-img :src="getAvatarUrl(user.avatar)" />
             </v-avatar>
 
@@ -42,7 +42,13 @@
         </v-card-title>
 
         <v-card-text>
-          <v-textarea v-model="message" label="Write your message" rows="4" auto-grow variant="outlined" />
+          <v-textarea
+            v-model="message"
+            auto-grow
+            label="Write your message"
+            rows="4"
+            variant="outlined"
+          />
         </v-card-text>
 
         <v-card-actions class="confirm-actions">
@@ -58,93 +64,99 @@
     </v-dialog>
 
     <!-- 🔥 SNACKBAR NOTIFICATIONS -->
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2500" location="bottom" multi-line
-      rounded="pill">
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      location="bottom"
+      multi-line
+      rounded="pill"
+      timeout="2500"
+    >
       {{ snackbar.text }}
     </v-snackbar>
   </v-card>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { api } from '@/api/api.js'
-import { useAuthStore } from '@/stores/auth.js'
-import { useRouter } from 'vue-router'
+  import { onMounted, ref } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { api } from '@/api/api.js'
+  import { useAuthStore } from '@/features/auth/model/auth.store.js'
 
-const auth = useAuthStore()
-const router = useRouter()
+  const auth = useAuthStore()
+  const router = useRouter()
 
-const suggestedUsers = ref([])
-const dialog = ref(false)
-const selectedUser = ref(null)
-const message = ref('')
+  const suggestedUsers = ref([])
+  const dialog = ref(false)
+  const selectedUser = ref(null)
+  const message = ref('')
 
-// 🔥 SNACKBAR STATE
-const snackbar = ref({
-  show: false,
-  text: '',
-  color: 'success'
-})
+  // 🔥 SNACKBAR STATE
+  const snackbar = ref({
+    show: false,
+    text: '',
+    color: 'success',
+  })
 
-const showToast = (text, color = 'success') => {
-  snackbar.value.text = text
-  snackbar.value.color = color
-  snackbar.value.show = true
-}
-
-const getAvatarUrl = (a) =>
-  a ? `http://localhost:3000${a}` : '/assets/default-avatar.png'
-
-// FETCH
-const fetchSuggestedUsers = async () => {
-  try {
-    const res = await api.get('/users')
-    suggestedUsers.value = res.data.filter(u => u.id !== auth.user.id)
-  } catch (err) {
-    console.error(err)
-    showToast('Failed to load users', 'error')
-  }
-}
-
-// DIALOG
-const openConnectDialog = (user) => {
-  selectedUser.value = user
-  message.value = ''
-  dialog.value = true
-}
-
-const closeDialog = () => {
-  dialog.value = false
-}
-
-// SEND SIGNAL
-const sendSignal = async () => {
-  if (!message.value.trim()) {
-    showToast('Please enter a message', 'warning')
-    return
+  function showToast (text, color = 'success') {
+    snackbar.value.text = text
+    snackbar.value.color = color
+    snackbar.value.show = true
   }
 
-  try {
-    await api.post('/signals', {
-      sender_type: 'user',
-      sender_id: auth.user.id,
-      receiver_type: 'user',
-      receiver_id: selectedUser.value.id,
-      message: message.value
-    })
+  function getAvatarUrl (a) {
+    return a ? `http://localhost:3000${a}` : '/assets/default-avatar.png'
+  }
 
+  // FETCH
+  async function fetchSuggestedUsers () {
+    try {
+      const res = await api.get('/users')
+      suggestedUsers.value = res.data.filter(u => u.id !== auth.user.id)
+    } catch (error) {
+      console.error(error)
+      showToast('Failed to load users', 'error')
+    }
+  }
+
+  // DIALOG
+  function openConnectDialog (user) {
+    selectedUser.value = user
+    message.value = ''
+    dialog.value = true
+  }
+
+  function closeDialog () {
     dialog.value = false
-    showToast('Signal sent successfully 🚀', 'success')
-
-  } catch (err) {
-    console.error(err)
-    showToast('Failed to send signal', 'error')
   }
-}
 
-const goToProfile = (userId) => router.push(`/profile/${userId}`)
+  // SEND SIGNAL
+  async function sendSignal () {
+    if (!message.value.trim()) {
+      showToast('Please enter a message', 'warning')
+      return
+    }
 
-onMounted(fetchSuggestedUsers)
+    try {
+      await api.post('/signals', {
+        sender_type: 'user',
+        sender_id: auth.user.id,
+        receiver_type: 'user',
+        receiver_id: selectedUser.value.id,
+        message: message.value,
+      })
+
+      dialog.value = false
+      showToast('Signal sent successfully 🚀', 'success')
+    } catch (error) {
+      console.error(error)
+      showToast('Failed to send signal', 'error')
+    }
+  }
+
+  const goToProfile = userId => router.push(`/profile/${userId}`)
+
+  onMounted(fetchSuggestedUsers)
 </script>
 
 <style scoped>

@@ -1,10 +1,10 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/api/api.js'
-import { useAuthStore } from '@/stores/auth.js'
+import { useAuthStore } from '@/features/auth/model/auth.store.js'
 import { normalizePosts } from '@/utils/postDisplay.js'
 
-export function useFeed() {
+export function useFeed () {
   const router = useRouter()
   const authStore = useAuthStore()
 
@@ -19,7 +19,7 @@ export function useFeed() {
   const selectedTags = ref([])
   const currentUser = computed(() => authStore.user)
 
-  async function loadPosts() {
+  async function loadPosts () {
     try {
       const res = await api.get('/posts/feed')
       const rawPosts = res.data.posts || res.data || []
@@ -27,9 +27,13 @@ export function useFeed() {
       allPosts.value = normalizePosts(rawPosts)
 
       const tagsSet = new Set()
-      allPosts.value.forEach(post => {
-        post.tags?.forEach(tag => tagsSet.add(tag))
-      })
+      for (const post of allPosts.value) {
+        if (post.tags) {
+          for (const tag of post.tags) {
+            tagsSet.add(tag)
+          }
+        }
+      }
 
       allTags.value = Array.from(tagsSet)
       currentPage.value = 1
@@ -39,13 +43,13 @@ export function useFeed() {
     }
   }
 
-  function loadMorePosts() {
+  function loadMorePosts () {
     const nextPage = currentPage.value + 1
     posts.value = allPosts.value.slice(0, nextPage * pageSize)
     currentPage.value = nextPage
   }
 
-  function toggleTag(tag) {
+  function toggleTag (tag) {
     if (selectedTags.value.includes(tag)) {
       selectedTags.value = selectedTags.value.filter(item => item !== tag)
       return
@@ -54,7 +58,7 @@ export function useFeed() {
     selectedTags.value.push(tag)
   }
 
-  function clearFilters() {
+  function clearFilters () {
     selectedTags.value = []
   }
 
@@ -65,26 +69,27 @@ export function useFeed() {
           post.tags?.some(tag => selectedTags.value.includes(tag)),
         )
 
-    result.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-    return result
+    return result.toSorted((a, b) => new Date(b.created_at) - new Date(a.created_at))
   })
 
   const topTags = computed(() => {
     const tagCounts = {}
 
-    allPosts.value.forEach(post => {
-      post.tags?.forEach(tag => {
-        tagCounts[tag] = (tagCounts[tag] || 0) + 1
-      })
-    })
+    for (const post of allPosts.value) {
+      if (post.tags) {
+        for (const tag of post.tags) {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        }
+      }
+    }
 
     return Object.entries(tagCounts)
-      .sort((a, b) => b[1] - a[1])
+      .toSorted((a, b) => b[1] - a[1])
       .slice(0, 5)
       .map(([tag]) => tag)
   })
 
-  function goToProfile(userId) {
+  function goToProfile (userId) {
     if (userId === currentUser.value?.id) {
       router.push('/ProfileMe')
       return

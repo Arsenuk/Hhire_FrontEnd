@@ -7,8 +7,8 @@
 // Plugins
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
+import { useAuthStore } from '@/features/auth/model/auth.store.js'
 import { registerPlugins } from '@/plugins'
-import { useAuthStore } from '@/stores/auth'
 
 // Components
 import App from './App.vue'
