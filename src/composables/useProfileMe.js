@@ -1,7 +1,6 @@
 import { computed, onMounted, ref } from 'vue'
 import { api } from '@/api/api.js'
 import { useAuthStore } from '@/stores/auth.js'
-import { getAvatarUrl } from '@/utils/postDisplay.js'
 import { useProfileLinks } from '@/composables/useProfileLinks.js'
 import { useProfilePosts } from '@/composables/useProfilePosts.js'
 
@@ -103,14 +102,10 @@ export function useProfileMe() {
 
   return {
     cancelEdit,
-    cancelEditPost,
-    deleteConfirmedLink,
-    deleteConfirmedPost,
     editForm,
     editing,
     errorMessage,
     formRef,
-    getAvatarUrl,
     loading,
     nameRules,
     saveProfile,
