@@ -1,7 +1,7 @@
 import { onMounted, ref } from 'vue'
+import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
 import { api } from '@/shared/api/api.js'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
-import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
 export function useSendSignals () {
   const signals = ref([])
@@ -10,7 +10,14 @@ export function useSendSignals () {
   async function fetchSignals () {
     try {
       const res = await api.get('/signals/conversations/sent')
-      signals.value = res.data.conversations
+      signals.value = res.data.conversations.map(signal => ({
+        ...signal,
+        receiver: normalizeUser({
+          id: signal.receiver_id,
+          name: signal.receiver_name,
+          avatar: signal.receiver_avatar,
+        }),
+      }))
     } catch (error) {
       console.error(error)
       showToast('Failed to load signals', 'error')
@@ -31,7 +38,6 @@ export function useSendSignals () {
 
   return {
     deleteSignal,
-    getAvatarUrl,
     signals,
     snackbar,
   }

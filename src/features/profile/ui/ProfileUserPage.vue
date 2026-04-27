@@ -19,6 +19,7 @@
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRoute } from 'vue-router'
   import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
+  import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
   import { api } from '@/shared/api/api.js'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
@@ -49,7 +50,7 @@
 
     try {
       const res = await api.get(`/users/${userId.value}/profile`)
-      user.value = res.data
+      user.value = normalizeUser(res.data)
       posts.value = normalizePosts(res.data.posts || [])
       links.value = res.data.links || []
 

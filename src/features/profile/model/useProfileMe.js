@@ -1,4 +1,5 @@
 import { computed, onMounted, ref } from 'vue'
+import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
 import { api } from '@/shared/api/api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
@@ -50,12 +51,14 @@ export function useProfileMe () {
         api.get('/posts'),
       ])
 
-      authStore.user = profileRes.data
+      const normalizedUser = normalizeUser(profileRes.data)
+
+      authStore.user = normalizedUser
       profileLinks.setLinks(linksRes.data)
       profilePosts.setPosts(postsRes.data.posts || [])
 
-      editForm.value.name = profileRes.data.name
-      editForm.value.description = profileRes.data.description
+      editForm.value.name = normalizedUser.name
+      editForm.value.description = normalizedUser.description
     } catch {
       errorMessage.value = 'Failed to load profile'
     } finally {

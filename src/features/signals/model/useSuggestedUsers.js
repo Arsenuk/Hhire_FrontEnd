@@ -1,8 +1,8 @@
 import { onMounted, ref } from 'vue'
+import { normalizeUsers } from '@/entities/user/lib/normalizeUser.js'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api.js'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
-import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 
@@ -19,7 +19,7 @@ export function useSuggestedUsers () {
   async function fetchSuggestedUsers () {
     try {
       const res = await api.get('/users')
-      suggestedUsers.value = res.data.filter(user => user.id !== auth.user.id)
+      suggestedUsers.value = normalizeUsers(res.data).filter(user => user.id !== auth.user?.id)
     } catch (error) {
       console.error(error)
       showToast('Failed to load users', 'error')
@@ -68,7 +68,6 @@ export function useSuggestedUsers () {
   return {
     closeDialog,
     dialog,
-    getAvatarUrl,
     goToProfile,
     message,
     openConnectDialog,

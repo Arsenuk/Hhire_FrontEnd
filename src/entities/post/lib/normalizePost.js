@@ -1,5 +1,10 @@
+import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
+
 export function normalizePost(post = {}) {
-  const owner = post.owner || {}
+  const owner = normalizeUser(post.owner, {
+    id: post.owner?.id ?? post.user_id ?? post.company_id ?? null,
+    role: post.owner?.role ?? (post.company_id ? 'company' : 'user'),
+  })
 
   return {
     ...post,
@@ -8,12 +13,7 @@ export function normalizePost(post = {}) {
           .map(tag => (typeof tag === 'string' ? tag : tag?.name))
           .filter(Boolean)
       : [],
-    owner: {
-      id: owner.id ?? post.user_id ?? post.company_id ?? null,
-      name: owner.name ?? 'Unknown user',
-      role: owner.role ?? (post.company_id ? 'company' : 'user'),
-      avatar: owner.avatar ?? null,
-    },
+    owner,
   }
 }
 

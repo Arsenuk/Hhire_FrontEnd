@@ -52,13 +52,7 @@
         <v-menu offset-y>
           <template #activator="{ props }">
             <v-btn icon v-bind="props">
-              <v-avatar size="36">
-                <v-img
-                  :alt="user?.name || 'Avatar'"
-                  :lazy-src="defaultAvatar"
-                  :src="getAvatarUrl(user?.avatar)"
-                />
-              </v-avatar>
+              <UserAvatar :alt="`${getUserDisplayName(user)} avatar`" :size="36" :user="user" />
             </v-btn>
           </template>
           <v-list>
@@ -87,10 +81,10 @@
 <script setup>
   import { computed, onMounted, onUnmounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+  import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
   import { api } from '@/shared/api/api.js'
-  import defaultAvatar from '@/shared/assets/default-avatar.png'
-  import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
   const route = useRoute()
   const router = useRouter()

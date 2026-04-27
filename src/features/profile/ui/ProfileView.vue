@@ -15,14 +15,12 @@
     <template v-if="user">
       <v-row align="center" class="profile-header mb-8">
         <v-col class="text-center" cols="12" md="2">
-          <v-avatar class="avatar-border" size="120">
-            <v-img :src="getAvatarUrl(user.avatar)" />
-          </v-avatar>
+          <UserAvatar class="avatar-border" :size="120" :user="user" />
         </v-col>
 
         <v-col cols="12" md="7">
           <h1 class="profile-name">
-            {{ user.name || emptyInfoText }}
+            {{ getUserDisplayName(user, emptyInfoText) }}
           </h1>
         </v-col>
 
@@ -110,7 +108,8 @@
 
 <script setup>
   import PostCard from '@/entities/post/ui/PostCard.vue'
-  import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
+  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+  import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
 
   defineProps({
     user: {

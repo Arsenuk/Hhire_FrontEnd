@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
 import { loginRequest, logoutRequest } from '@/features/auth/api/auth.api.js'
 
 export const useAuthStore = defineStore('auth', {
@@ -14,7 +15,7 @@ export const useAuthStore = defineStore('auth', {
       try {
         const data = await loginRequest({ email, password })
 
-        this.user = data.user
+        this.user = normalizeUser(data.user)
         this.accessToken = data.accessToken
 
         localStorage.setItem('accessToken', this.accessToken)
@@ -43,7 +44,7 @@ export const useAuthStore = defineStore('auth', {
       const token = localStorage.getItem('accessToken')
 
       if (user && token) {
-        this.user = JSON.parse(user)
+        this.user = normalizeUser(JSON.parse(user))
         this.accessToken = token
         return
       }

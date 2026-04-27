@@ -10,18 +10,14 @@
           class="user-item"
           :ripple="false"
         >
-          <div class="left" @click="goToProfile(user.id)">
-            <v-avatar class="avatar" size="48">
-              <v-img :src="getAvatarUrl(user.avatar)" />
-            </v-avatar>
-
-            <div class="user-content">
-              <div class="user-name">{{ user.name }}</div>
-              <div class="user-desc">
-                {{ user.description || 'No description' }}
-              </div>
-            </div>
-          </div>
+          <UserPreview
+            class="left"
+            clickable
+            :avatar-size="48"
+            :subtitle="user.description || 'No description'"
+            :user="user"
+            @click="goToProfile(user.id)"
+          />
 
           <div class="right">
             <v-btn class="connect-btn" variant="flat" @click.stop="openConnectDialog(user)">
@@ -79,12 +75,12 @@
 </template>
 
 <script setup>
+  import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSuggestedUsers } from '@/features/signals/model/useSuggestedUsers.js'
 
   const {
     closeDialog,
     dialog,
-    getAvatarUrl,
     goToProfile,
     message,
     openConnectDialog,
@@ -145,38 +141,15 @@
   min-width: 0;
 }
 
-.avatar {
+:deep(.entity-user-preview__avatar) {
   border-radius: 14px;
   border: 2px solid rgba(99, 102, 241, 0.2);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
   transition: transform 0.2s ease;
 }
 
-.user-item:hover .avatar {
+.user-item:hover :deep(.entity-user-preview__avatar) {
   transform: scale(1.03);
-}
-
-.user-content {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.user-name {
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827;
-  letter-spacing: 0.2px;
-}
-
-.user-desc {
-  font-size: 13px;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 280px;
-  margin-top: 2px;
 }
 
 .right {

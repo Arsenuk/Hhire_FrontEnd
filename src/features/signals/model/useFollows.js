@@ -1,7 +1,7 @@
 import { onMounted, ref } from 'vue'
+import { normalizeUsers } from '@/entities/user/lib/normalizeUser.js'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api.js'
-import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 
 export function useFollows () {
@@ -11,7 +11,7 @@ export function useFollows () {
   async function fetchFollows () {
     try {
       const res = await api.get('/follows/following')
-      users.value = res.data
+      users.value = normalizeUsers(res.data)
     } catch (error) {
       console.error('Failed to load following users', error)
     }
@@ -29,7 +29,6 @@ export function useFollows () {
 
   return {
     formatDate,
-    getAvatarUrl,
     goToProfile,
     users,
   }

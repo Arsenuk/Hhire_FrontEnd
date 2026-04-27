@@ -1,8 +1,8 @@
 import { onMounted, onUnmounted, ref } from 'vue'
+import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api.js'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
-import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 
 export function useUnrepliedSignals (updateNotify) {
@@ -19,7 +19,14 @@ export function useUnrepliedSignals (updateNotify) {
   async function fetchSignals () {
     try {
       const res = await api.get('/signals/conversations/inbox')
-      signals.value = res.data.signals
+      signals.value = res.data.signals.map(signal => ({
+        ...signal,
+        sender: normalizeUser({
+          id: signal.sender_id,
+          name: signal.sender_name,
+          avatar: signal.sender_avatar,
+        }),
+      }))
 
       if (updateNotify) {
         updateNotify(signals.value.length)
@@ -54,7 +61,7 @@ export function useUnrepliedSignals (updateNotify) {
 
       if (type === 'sing') {
         await api.post('/follows', {
-          targetId: activeSignal.value.sender_id,
+          targetId: activeSignal.value.sender.id,
           targetType: 'user',
         })
       }
@@ -87,7 +94,6 @@ export function useUnrepliedSignals (updateNotify) {
     activeSignal,
     closeDialog,
     dialog,
-    getAvatarUrl,
     goToProfile,
     openDialog,
     replyMessage,

@@ -7,6 +7,7 @@
 
 <script setup>
   import { onMounted } from 'vue'
+  import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
   import { api } from '@/shared/api/api.js'
   import AppHeader from '@/widgets/header/ui/AppHeader.vue'
@@ -18,7 +19,7 @@
     if (authStore.accessToken && !authStore.user?.avatar) {
       try {
         const res = await api.get('/users/profile')
-        authStore.user = res.data
+        authStore.user = normalizeUser(res.data)
       } catch (error) {
         console.error('Failed to preload profile', error)
       }

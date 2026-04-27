@@ -12,21 +12,13 @@
           class="signal-item"
           :ripple="false"
         >
-          <template #prepend>
-            <v-avatar class="avatar" size="46" @click.stop="goToProfile(signal.sender_id)">
-              <v-img :src="getAvatarUrl(signal.sender_avatar)" />
-            </v-avatar>
-          </template>
-
-          <div class="signal-content">
-            <div class="signal-name">
-              {{ signal.sender_name }}
-            </div>
-
-            <div class="signal-message">
-              {{ signal.message }}
-            </div>
-          </div>
+          <UserPreview
+            clickable
+            :avatar-size="46"
+            :subtitle="signal.message"
+            :user="signal.sender"
+            @click="goToProfile(signal.sender.id)"
+          />
 
           <template #append>
             <v-btn class="reply-btn" @click.stop="openDialog(signal)">
@@ -44,7 +36,7 @@
     <v-dialog v-model="dialog" max-width="520px" persistent>
       <v-card class="modal-card">
         <v-card-title class="modal-title">
-          Signal from {{ activeSignal?.sender_name }}
+          Signal from {{ activeSignal?.sender?.name }}
 
           <v-btn icon class="close-btn" @click="closeDialog">
             <v-icon>mdi-close</v-icon>
@@ -91,6 +83,7 @@
 </template>
 
 <script setup>
+  import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useUnrepliedSignals } from '@/features/signals/model/useUnrepliedSignals.js'
 
   const props = defineProps({
@@ -104,7 +97,6 @@
     activeSignal,
     closeDialog,
     dialog,
-    getAvatarUrl,
     goToProfile,
     openDialog,
     replyMessage,
@@ -153,39 +145,15 @@
   transform: translateY(-1px);
 }
 
-.avatar {
+:deep(.entity-user-preview__avatar) {
   border-radius: 14px;
   border: 2px solid rgba(99, 102, 241, 0.2);
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
-  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
-.signal-item:hover .avatar {
+.signal-item:hover :deep(.entity-user-preview__avatar) {
   transform: scale(1.03);
-}
-
-.signal-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.signal-name {
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827;
-  margin-bottom: 2px;
-}
-
-.signal-message {
-  font-size: 13px;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
 }
 
 .reply-btn {

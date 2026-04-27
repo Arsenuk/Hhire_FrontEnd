@@ -13,25 +13,11 @@
           :ripple="false"
           @click="goToProfile(user.id)"
         >
-          <template #prepend>
-            <v-avatar class="avatar" size="42">
-              <v-img :src="getAvatarUrl(user.avatar)" />
-            </v-avatar>
-          </template>
-
-          <div class="follow-content">
-            <div class="follow-name">
-              {{ user.name }}
-            </div>
-
-            <div class="follow-meta">
-              Last post:
-              <span v-if="user.lastPost">
-                {{ formatDate(user.lastPost) }}
-              </span>
-              <span v-else>No posts</span>
-            </div>
-          </div>
+          <UserPreview
+            clickable
+            :subtitle="getLastPostSubtitle(user)"
+            :user="user"
+          />
         </v-list-item>
 
         <div v-if="users.length === 0" class="empty-state">
@@ -43,14 +29,18 @@
 </template>
 
 <script setup>
+  import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useFollows } from '@/features/signals/model/useFollows.js'
 
   const {
     formatDate,
-    getAvatarUrl,
     goToProfile,
     users,
   } = useFollows()
+
+  function getLastPostSubtitle(user) {
+    return user.lastPost ? `Last post: ${formatDate(user.lastPost)}` : 'Last post: No posts'
+  }
 </script>
 
 <style scoped>
@@ -87,31 +77,9 @@
   transform: translateY(-1px);
 }
 
-.avatar {
+:deep(.entity-user-preview__avatar) {
   border: 2px solid rgba(59, 130, 246, 0.18);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-
-.follow-content {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.follow-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: #111827;
-}
-
-.follow-meta {
-  font-size: 13px;
-  color: #6b7280;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .empty-state {

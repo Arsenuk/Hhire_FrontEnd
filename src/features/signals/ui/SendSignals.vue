@@ -10,16 +10,11 @@
           class="signal-item"
           :ripple="false"
         >
-          <template #prepend>
-            <v-avatar class="avatar" size="40">
-              <v-img :src="getAvatarUrl(signal.receiver_avatar)" />
-            </v-avatar>
-          </template>
-
-          <div class="signal-content">
-            <div class="signal-title">{{ signal.receiver_name }}</div>
-            <div class="signal-message">{{ signal.message }}</div>
-          </div>
+          <UserPreview
+            :avatar-size="40"
+            :subtitle="signal.message"
+            :user="signal.receiver"
+          />
 
           <template #append>
             <v-btn icon variant="text" class="delete-btn" @click="deleteSignal(signal)">
@@ -50,11 +45,11 @@
 </template>
 
 <script setup>
+  import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSendSignals } from '@/features/signals/model/useSendSignals.js'
 
   const {
     deleteSignal,
-    getAvatarUrl,
     signals,
     snackbar,
   } = useSendSignals()
@@ -82,30 +77,9 @@
   transform: translateY(-1px);
 }
 
-.avatar {
+:deep(.entity-user-preview__avatar) {
   border: 2px solid rgba(99, 102, 241, 0.2);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-}
-
-.signal-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.signal-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: #111827;
-}
-
-.signal-message {
-  font-size: 13px;
-  color: #6b7280;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .delete-btn {
