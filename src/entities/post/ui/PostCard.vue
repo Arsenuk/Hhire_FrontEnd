@@ -78,7 +78,8 @@
 
 <script setup>
 import { computed } from 'vue'
-import { formatPostDate, getAvatarUrl } from '@/utils/postDisplay.js'
+import { formatPostDate } from '@/shared/lib/date/formatPostDate.js'
+import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
 const props = defineProps({
   post: {
@@ -123,9 +124,9 @@ const ownerRole = computed(() => owner.value.role || '')
 const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value.avatar))
 const formattedDate = computed(() => formatPostDate(props.post?.created_at))
 const cardClasses = computed(() => [
-  'shared-post-card',
-  `shared-post-card--${props.variant}`,
-  { 'shared-post-card--hoverable': props.hoverable },
+  'entity-post-card',
+  `entity-post-card--${props.variant}`,
+  { 'entity-post-card--hoverable': props.hoverable },
 ])
 
 function handleOwnerClick() {
@@ -139,25 +140,25 @@ function tagLabel(tag) {
 </script>
 
 <style scoped>
-.shared-post-card {
+.entity-post-card {
   border-radius: 18px;
   background: #fff;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.shared-post-card--hoverable:hover {
+.entity-post-card--hoverable:hover {
   transform: translateY(-2px);
 }
 
-.shared-post-card--feed {
+.entity-post-card--feed {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-.shared-post-card--profile {
+.entity-post-card--profile {
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
 
-.shared-post-card--profile.shared-post-card--hoverable:hover {
+.entity-post-card--profile.entity-post-card--hoverable:hover {
   box-shadow: 0 12px 35px rgba(15, 23, 42, 0.16);
 }
 
@@ -249,7 +250,7 @@ function tagLabel(tag) {
   white-space: pre-line;
 }
 
-.shared-post-card--feed .post-card__content {
+.entity-post-card--feed .post-card__content {
   font-size: 15px;
   color: #374151;
 }

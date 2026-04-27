@@ -1,17 +1,3 @@
-import defaultAvatar from '@/assets/default-avatar.png'
-
-const API_BASE_URL = 'http://localhost:3000'
-
-export function getAvatarUrl(avatar) {
-  if (!avatar) return defaultAvatar
-  return avatar.startsWith('http') ? avatar : `${API_BASE_URL}${avatar}`
-}
-
-export function formatPostDate(dateValue) {
-  if (!dateValue) return ''
-  return new Date(dateValue).toLocaleString()
-}
-
 export function normalizePost(post = {}) {
   const owner = post.owner || {}
 

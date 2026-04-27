@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
 import { registerRequest } from '@/features/auth/api/auth.api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 

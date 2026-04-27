@@ -1,13 +1,12 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
+import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 
 export function useFollows () {
   const router = useRouter()
   const users = ref([])
-
-  const getAvatarUrl = avatar =>
-    avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
 
   async function fetchFollows () {
     try {
@@ -19,7 +18,7 @@ export function useFollows () {
   }
 
   function goToProfile (id) {
-    router.push(`/profile/${id}`)
+    navigateToProfile(router, id)
   }
 
   function formatDate (date) {

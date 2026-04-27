@@ -1,6 +1,9 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 
 export function useSuggestedUsers () {
@@ -11,21 +14,7 @@ export function useSuggestedUsers () {
   const dialog = ref(false)
   const selectedUser = ref(null)
   const message = ref('')
-  const snackbar = ref({
-    show: false,
-    text: '',
-    color: 'success',
-  })
-
-  function showToast (text, color = 'success') {
-    snackbar.value.text = text
-    snackbar.value.color = color
-    snackbar.value.show = true
-  }
-
-  function getAvatarUrl (avatar) {
-    return avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
-  }
+  const { showToast, snackbar } = useSnackbar()
 
   async function fetchSuggestedUsers () {
     try {
@@ -71,7 +60,7 @@ export function useSuggestedUsers () {
   }
 
   function goToProfile (userId) {
-    router.push(`/profile/${userId}`)
+    navigateToProfile(router, userId, auth.user?.id)
   }
 
   onMounted(fetchSuggestedUsers)

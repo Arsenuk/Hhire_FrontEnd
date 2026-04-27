@@ -1,4 +1,4 @@
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
 
 export async function loginRequest ({ email, password }) {
   const response = await api.post('/auth/login', {

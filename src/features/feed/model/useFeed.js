@@ -1,8 +1,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
+import { api } from '@/shared/api/api.js'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
-import { normalizePosts } from '@/utils/postDisplay.js'
 
 export function useFeed () {
   const router = useRouter()
@@ -90,14 +91,7 @@ export function useFeed () {
   })
 
   function goToProfile (userId) {
-    if (userId === currentUser.value?.id) {
-      router.push('/ProfileMe')
-      return
-    }
-
-    router.push({
-      path: `/profile/${userId}`,
-    })
+    navigateToProfile(router, userId, currentUser.value?.id)
   }
 
   onMounted(() => {

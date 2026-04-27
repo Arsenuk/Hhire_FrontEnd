@@ -1,6 +1,9 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
 
 export function useUnrepliedSignals (updateNotify) {
   const router = useRouter()
@@ -9,23 +12,9 @@ export function useUnrepliedSignals (updateNotify) {
   const dialog = ref(false)
   const activeSignal = ref(null)
   const replyMessage = ref('')
-  const snackbar = ref({
-    show: false,
-    text: '',
-    color: 'success',
-  })
+  const { showToast, snackbar } = useSnackbar()
 
   let intervalId = null
-
-  function showToast (text, color = 'success') {
-    snackbar.value.text = text
-    snackbar.value.color = color
-    snackbar.value.show = true
-  }
-
-  function getAvatarUrl (avatar) {
-    return avatar ? `http://localhost:3000${avatar}` : '/assets/default-avatar.png'
-  }
 
   async function fetchSignals () {
     try {
@@ -80,7 +69,7 @@ export function useUnrepliedSignals (updateNotify) {
   }
 
   function goToProfile (id) {
-    router.push(`/profile/${id}`)
+    navigateToProfile(router, id)
   }
 
   onMounted(() => {

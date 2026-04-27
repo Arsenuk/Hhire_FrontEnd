@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from 'vue'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'

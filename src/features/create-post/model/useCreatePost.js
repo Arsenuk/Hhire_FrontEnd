@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
 
 const intentOptions = [
   { label: 'General', value: 'general' },

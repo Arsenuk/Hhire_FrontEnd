@@ -1,12 +1,10 @@
 <template>
   <v-app-bar class="hhire-header" flat height="auto">
-    <!-- Ліва частина: логотип + назва -->
     <div class="header-left">
-      <img alt="Hhire logo" class="logo" src="@/assets/hhire-logo.png">
+      <img alt="Hhire logo" class="logo" src="@/shared/assets/hhire-logo.png">
       <span class="brand-name">Hhire</span>
     </div>
 
-    <!-- Центр: навігація -->
     <div class="header-center">
       <RouterLink
         v-for="link in navLinks"
@@ -19,10 +17,8 @@
       </RouterLink>
     </div>
 
-    <!-- Права частина -->
     <div class="header-right">
       <template v-if="isLoggedIn">
-        <!-- Notify: кількість сигналів без відповіді -->
         <v-menu offset-y>
           <template #activator="{ props }">
             <v-btn v-bind="props" class="position-relative" icon>
@@ -59,7 +55,7 @@
               <v-avatar size="36">
                 <v-img
                   :alt="user?.name || 'Avatar'"
-                  lazy-src="./assets/default-avatar.png"
+                  :lazy-src="defaultAvatar"
                   :src="getAvatarUrl(user?.avatar)"
                 />
               </v-avatar>
@@ -91,9 +87,10 @@
 <script setup>
   import { computed, onMounted, onUnmounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
-  import { api } from '@/api/api.js'
-  import defaultAvatar from '@/assets/default-avatar.png'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
+  import { api } from '@/shared/api/api.js'
+  import defaultAvatar from '@/shared/assets/default-avatar.png'
+  import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
   const route = useRoute()
   const router = useRouter()
@@ -101,11 +98,6 @@
 
   const isLoggedIn = computed(() => authStore.isLoggedIn)
   const user = computed(() => authStore.user)
-
-  function getAvatarUrl (avatar) {
-    if (!avatar) return defaultAvatar
-    return avatar.startsWith('http') ? avatar : `http://localhost:3000${avatar}`
-  }
 
   const navLinks = computed(() =>
     isLoggedIn.value
@@ -121,22 +113,14 @@
 
   const isActive = path => route.path === path
 
-  async function logout () {
-    try {
-      await api.post('/auth/logout')
-    } finally {
-      authStore.user = null
-      authStore.accessToken = null
-      localStorage.removeItem('accessToken')
-      localStorage.removeItem('user')
-      router.push('/')
-    }
+  async function logout() {
+    await authStore.logout()
+    router.push('/')
   }
 
-  // --- Notifications: кількість сигналів без відповіді ---
   const unansweredSignals = ref(0)
 
-  async function fetchUnansweredSignals () {
+  async function fetchUnansweredSignals() {
     if (!isLoggedIn.value) return
     try {
       const res = await api.get('/signals/conversations/inbox')
@@ -146,7 +130,6 @@
     }
   }
 
-  // --- Автооновлення кожні 15 сек ---
   let intervalId = null
 
   onMounted(() => {
@@ -171,7 +154,6 @@
   gap: 10px;
 }
 
-/* LEFT */
 .header-left {
   display: flex;
   align-items: center;
@@ -189,7 +171,6 @@
   font-weight: 400;
 }
 
-/* CENTER */
 .header-center {
   display: flex;
   flex-wrap: wrap;
@@ -215,7 +196,6 @@
   font-weight: 500;
 }
 
-/* RIGHT */
 .header-right {
   display: flex;
   flex-wrap: wrap;
@@ -232,14 +212,13 @@
 
 .signup-btn,
 .create-post-btn {
-  background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
   color: #000;
   font-weight: 500;
   text-transform: none;
   min-width: 120px;
 }
 
-/* Notif count */
 .position-relative {
   margin-top: 12px;
   position: relative;
@@ -256,7 +235,6 @@
   right: -4px;
 }
 
-/* Media queries для мобільних */
 @media (max-width: 768px) {
   .header-left,
   .header-center,

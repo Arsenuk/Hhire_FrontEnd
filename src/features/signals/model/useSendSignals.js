@@ -1,19 +1,11 @@
 import { onMounted, ref } from 'vue'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
 export function useSendSignals () {
   const signals = ref([])
-  const snackbar = ref({
-    show: false,
-    text: '',
-    color: 'success',
-  })
-
-  function showToast (text, color = 'success') {
-    snackbar.value.text = text
-    snackbar.value.color = color
-    snackbar.value.show = true
-  }
+  const { showToast, snackbar } = useSnackbar()
 
   async function fetchSignals () {
     try {
@@ -35,11 +27,6 @@ export function useSendSignals () {
       showToast('Delete failed', 'error')
     }
   }
-
-  function getAvatarUrl (avatar) {
-    return avatar || '/assets/default-avatar.png'
-  }
-
   onMounted(fetchSignals)
 
   return {

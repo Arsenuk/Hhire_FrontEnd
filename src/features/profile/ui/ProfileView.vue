@@ -109,8 +109,8 @@
 </template>
 
 <script setup>
-  import PostCard from '@/components/posts/PostCard.vue'
-  import { getAvatarUrl } from '@/utils/postDisplay.js'
+  import PostCard from '@/entities/post/ui/PostCard.vue'
+  import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
   defineProps({
     user: {

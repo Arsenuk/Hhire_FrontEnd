@@ -1,8 +1,9 @@
 import axios from 'axios'
+import { API_BASE_URL } from '@/shared/config/api.js'
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
-  withCredentials: true
+  baseURL: API_BASE_URL,
+  withCredentials: true,
 })
 
 api.interceptors.request.use(config => {

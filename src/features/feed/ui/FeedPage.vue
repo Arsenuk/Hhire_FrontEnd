@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-  import PostCard from '@/components/posts/PostCard.vue'
+  import PostCard from '@/entities/post/ui/PostCard.vue'
   import { useFeed } from '@/features/feed/model/useFeed.js'
 
   const {

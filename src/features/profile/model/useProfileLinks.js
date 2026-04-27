@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { api } from '@/api/api.js'
+import { api } from '@/shared/api/api.js'
 
 export function useProfileLinks ({ loading, errorMessage, successMessage }) {
   const links = ref([])

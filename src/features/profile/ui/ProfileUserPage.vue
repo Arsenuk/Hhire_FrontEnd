@@ -18,10 +18,10 @@
 <script setup>
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRoute } from 'vue-router'
-  import { api } from '@/api/api.js'
+  import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
+  import { api } from '@/shared/api/api.js'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
-  import { normalizePosts } from '@/utils/postDisplay.js'
 
   const route = useRoute()
   const authStore = useAuthStore()

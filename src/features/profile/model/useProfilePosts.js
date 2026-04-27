@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
-import { api } from '@/api/api.js'
-import { normalizePosts } from '@/utils/postDisplay.js'
+import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
+import { api } from '@/shared/api/api.js'
 
 export function useProfilePosts ({ user, loading, errorMessage, successMessage }) {
   const posts = ref([])
