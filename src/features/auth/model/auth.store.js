@@ -11,6 +11,14 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: state => !!state.accessToken,
   },
   actions: {
+    clearSession () {
+      this.user = null
+      this.accessToken = null
+
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('user')
+    },
+
     async login (email, password) {
       try {
         const data = await loginRequest({ email, password })
@@ -28,14 +36,10 @@ export const useAuthStore = defineStore('auth', {
     async logout () {
       try {
         await logoutRequest()
-
-        this.user = null
-        this.accessToken = null
-
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('user')
       } catch (error) {
         console.error('Logout failed', error)
+      } finally {
+        this.clearSession()
       }
     },
 
@@ -49,8 +53,7 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      this.user = null
-      this.accessToken = null
+      this.clearSession()
     },
   },
 })

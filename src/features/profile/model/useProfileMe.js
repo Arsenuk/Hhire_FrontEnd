@@ -2,6 +2,7 @@ import { computed, onMounted, ref } from 'vue'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
 import { api } from '@/shared/api/api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'
 
@@ -45,17 +46,13 @@ export function useProfileMe () {
     errorMessage.value = ''
 
     try {
-      const [profileRes, linksRes, postsRes] = await Promise.all([
-        api.get('/users/profile'),
-        api.get('/user-links'),
-        api.get('/posts'),
-      ])
+      const { data } = await api.get('/users/profile')
 
-      const normalizedUser = normalizeUser(profileRes.data)
+      const normalizedUser = normalizeUser(data)
 
       authStore.user = normalizedUser
-      profileLinks.setLinks(linksRes.data)
-      profilePosts.setPosts(postsRes.data.posts || [])
+      profileLinks.setLinks(normalizeContactsToLinks(data.contacts || []))
+      profilePosts.setPosts(data.posts || [])
 
       editForm.value.name = normalizedUser.name
       editForm.value.description = normalizedUser.description
@@ -81,9 +78,13 @@ export function useProfileMe () {
         description: editForm.value.description,
       })
 
-      if (editForm.value.avatarFile) {
+      const avatarFile = Array.isArray(editForm.value.avatarFile)
+        ? editForm.value.avatarFile[0]
+        : editForm.value.avatarFile
+
+      if (avatarFile) {
         const formData = new FormData()
-        formData.append('avatar', editForm.value.avatarFile)
+        formData.append('avatar', avatarFile)
         await api.post('/users/me/avatar', formData)
       }
 

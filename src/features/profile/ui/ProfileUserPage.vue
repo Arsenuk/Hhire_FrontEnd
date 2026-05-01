@@ -22,6 +22,7 @@
   import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
   import { api } from '@/shared/api/api.js'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
+  import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
 
   const route = useRoute()
@@ -52,7 +53,7 @@
       const res = await api.get(`/users/${userId.value}/profile`)
       user.value = normalizeUser(res.data)
       posts.value = normalizePosts(res.data.posts || [])
-      links.value = res.data.links || []
+      links.value = normalizeContactsToLinks(res.data.contacts || [])
 
       await checkFollowStatus()
     } catch (error) {

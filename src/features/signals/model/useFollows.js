@@ -11,7 +11,7 @@ export function useFollows () {
   async function fetchFollows () {
     try {
       const res = await api.get('/follows/following')
-      users.value = normalizeUsers(res.data)
+      users.value = normalizeUsers(res.data.following || [])
     } catch (error) {
       console.error('Failed to load following users', error)
     }

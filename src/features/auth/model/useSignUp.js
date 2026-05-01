@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api.js'
 import { registerRequest } from '@/features/auth/api/auth.api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { parseContactLink } from '@/features/profile/lib/contactLinks.js'
 
 function createEmptyLink () {
   return {
@@ -160,9 +161,13 @@ export function useSignUp () {
         name: firstName.value,
       })
 
-      if (profileImageFile.value) {
+      const avatarFile = Array.isArray(profileImageFile.value)
+        ? profileImageFile.value[0]
+        : profileImageFile.value
+
+      if (avatarFile) {
         const formData = new FormData()
-        formData.append('avatar', profileImageFile.value)
+        formData.append('avatar', avatarFile)
 
         await api.post('/users/me/avatar', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -170,10 +175,7 @@ export function useSignUp () {
       }
 
       for (const link of links.value) {
-        await api.post('/user-links', {
-          description: link.description,
-          url: link.url,
-        })
+        await api.post('/contacts', parseContactLink(link))
       }
 
       router.push('/feed')

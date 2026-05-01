@@ -117,7 +117,7 @@
   async function fetchUnansweredSignals() {
     if (!isLoggedIn.value) return
     try {
-      const res = await api.get('/signals/conversations/inbox')
+      const res = await api.get('/conversations/inbox')
       unansweredSignals.value = res.data.signals.length
     } catch (error) {
       console.error('Failed to fetch signals', error)

@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks.js'
 import { api } from '@/shared/api/api.js'
 
 export function useProfileLinks ({ loading, errorMessage, successMessage }) {
@@ -16,8 +17,8 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
   })
 
   const urlRules = [
-    value => !!value || 'URL is required',
-    value => /^https?:\/\//.test(value) || 'URL must start with http(s)',
+    value => !!value || 'Contact is required',
+    value => isSupportedContactLink(value) || 'Use email, phone, LinkedIn, or Telegram',
   ]
 
   function setLinks (nextLinks = []) {
@@ -32,7 +33,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
 
   function openEditLink (link) {
     editingLink.value = link
-    linkForm.value = { url: link.url, description: link.description }
+    linkForm.value = { url: link.value || link.url, description: link.description }
     showLinkDialog.value = true
   }
 
@@ -46,13 +47,19 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
     errorMessage.value = ''
 
     try {
-      await (editingLink.value ? api.put(`/user-links/${editingLink.value.id}`, linkForm.value) : api.post('/user-links', linkForm.value))
+      const payload = parseContactLink(linkForm.value)
 
-      const res = await api.get('/user-links')
-      links.value = res.data
+      await (
+        editingLink.value
+          ? api.put(`/contacts/${editingLink.value.id}`, payload)
+          : api.post('/contacts', payload)
+      )
+
+      const res = await api.get('/contacts')
+      links.value = normalizeContactsToLinks(res.data)
       showLinkDialog.value = false
-    } catch {
-      errorMessage.value = 'Failed to save link'
+    } catch (error) {
+      errorMessage.value = error.response?.data?.error || error.message || 'Failed to save link'
     } finally {
       loading.value = false
     }
@@ -73,7 +80,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
     successMessage.value = ''
 
     try {
-      await api.delete(`/user-links/${linkToDelete.value}`)
+      await api.delete(`/contacts/${linkToDelete.value}`)
       links.value = links.value.filter(link => link.id !== linkToDelete.value)
       successMessage.value = 'Link deleted successfully'
     } catch {

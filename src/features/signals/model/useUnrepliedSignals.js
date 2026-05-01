@@ -18,7 +18,7 @@ export function useUnrepliedSignals (updateNotify) {
 
   async function fetchSignals () {
     try {
-      const res = await api.get('/signals/conversations/inbox')
+      const res = await api.get('/conversations/inbox')
       signals.value = res.data.signals.map(signal => ({
         ...signal,
         sender: normalizeUser({

@@ -9,7 +9,7 @@ export function useSendSignals () {
 
   async function fetchSignals () {
     try {
-      const res = await api.get('/signals/conversations/sent')
+      const res = await api.get('/conversations/sent')
       signals.value = res.data.conversations.map(signal => ({
         ...signal,
         receiver: normalizeUser({
