@@ -33,6 +33,10 @@
           </v-btn>
         </div>
 
+        <div v-if="isLoading" class="feed-loader">
+          <v-progress-circular color="primary" indeterminate />
+        </div>
+
         <PostCard
           v-for="post in sortedPosts"
           :key="post.id"
@@ -46,9 +50,17 @@
           @owner-click="goToProfile"
         />
 
-        <v-btn v-if="posts.length < allPosts.length" class="load-more-btn mt-4" @click="loadMorePosts">
-          Load More Posts
-        </v-btn>
+        <div ref="loadMoreTrigger" class="load-more-trigger">
+          <v-progress-circular
+            v-if="isLoadingMore"
+            color="primary"
+            indeterminate
+            size="28"
+          />
+          <span v-else-if="!hasMorePosts && posts.length" class="feed-end-text">
+            No more posts
+          </span>
+        </div>
       </v-col>
 
       <v-col cols="12" md="4">
@@ -81,11 +93,13 @@
   import { useFeed } from '@/features/feed/model/useFeed.js'
 
   const {
-    allPosts,
     allTags,
     clearFilters,
     goToProfile,
-    loadMorePosts,
+    hasMorePosts,
+    isLoading,
+    isLoadingMore,
+    loadMoreTrigger,
     posts,
     selectedTags,
     sortType,
@@ -180,13 +194,17 @@
   font-weight: 600;
 }
 
-.load-more-btn {
-  width: 100%;
-  border-radius: 14px;
-  height: 48px;
-  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
-  color: #000;
-  font-weight: 600;
-  text-transform: none;
+.feed-loader,
+.load-more-trigger {
+  display: flex;
+  justify-content: center;
+  min-height: 64px;
+  padding: 16px 0;
+}
+
+.feed-end-text {
+  color: #687385;
+  font-size: 14px;
+  font-weight: 500;
 }
 </style>
