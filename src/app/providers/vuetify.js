@@ -1,5 +1,5 @@
 /**
- * plugins/vuetify.js
+ * app/providers/vuetify.js
  *
  * Framework documentation: https://vuetifyjs.com`
  */

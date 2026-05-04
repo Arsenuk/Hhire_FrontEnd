@@ -20,7 +20,7 @@ export default defineConfig({
     Vuetify({
       autoImport: true,
       styles: {
-        configFile: 'src/styles/settings.scss',
+        configFile: 'src/app/styles/settings.scss',
       },
     }),
     Components(),
