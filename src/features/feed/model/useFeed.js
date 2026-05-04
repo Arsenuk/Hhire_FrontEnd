@@ -102,13 +102,21 @@ export function useFeed () {
       allPosts.value = [...allPosts.value, ...uniquePosts]
       posts.value = allPosts.value
       nextCursor.value = res.data.nextCursor || null
-      hasMorePosts.value = Boolean(nextCursor.value) && rawPosts.length === pageSize
+      hasMorePosts.value = Boolean(nextCursor.value) && rawPosts.length === pageSize && uniquePosts.length > 0
 
       updateTags()
     } catch (error) {
       console.error('Failed to load more feed posts', error)
     } finally {
       isLoadingMore.value = false
+
+      if (hasMorePosts.value) {
+        await nextTick()
+
+        if (isNearPageBottom()) {
+          loadMorePosts()
+        }
+      }
     }
   }
 
