@@ -2,8 +2,8 @@
   <ProfileView
     empty-info-text="User didn't provide information"
     empty-posts-text="User didn't provide posts"
+    :contact-info="links"
     :error-message="errorMessage"
-    :links="links"
     :posts="posts"
     :user="user"
   >

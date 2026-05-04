@@ -30,11 +30,40 @@
       </v-row>
 
       <v-row class="mb-8">
-        <v-col cols="12" md="8">
+        <v-col cols="12" md="4">
           <v-card class="profile-card">
             <v-card-title>Description</v-card-title>
             <v-card-text>
               {{ user.description || emptyInfoText }}
+            </v-card-text>
+          </v-card>
+        </v-col>
+
+        <v-col cols="12" md="4">
+          <v-card class="profile-card">
+            <v-card-title class="d-flex justify-space-between align-center">
+              Contact Info
+              <slot name="contact-title-actions" />
+            </v-card-title>
+
+            <v-card-text>
+              <v-list density="compact">
+                <v-list-item v-for="contact in contactInfo" :key="contact.id">
+                  <v-list-item-title>
+                    <a :href="contact.url" target="_blank">
+                      {{ contact.description || contact.url }}
+                    </a>
+                  </v-list-item-title>
+
+                  <template v-if="$slots['contact-append']" #append>
+                    <slot :contact="contact" name="contact-append" />
+                  </template>
+                </v-list-item>
+
+                <v-list-item v-if="contactInfo.length === 0">
+                  <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
             </v-card-text>
           </v-card>
         </v-col>
@@ -117,6 +146,10 @@
       default: null,
     },
     links: {
+      type: Array,
+      default: () => [],
+    },
+    contactInfo: {
       type: Array,
       default: () => [],
     },

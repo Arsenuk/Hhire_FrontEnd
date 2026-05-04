@@ -59,7 +59,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
       links.value = normalizeContactsToLinks(res.data)
       showLinkDialog.value = false
     } catch (error) {
-      errorMessage.value = error.response?.data?.error || error.message || 'Failed to save link'
+      errorMessage.value = error.response?.data?.error || error.message || 'Failed to save contact'
     } finally {
       loading.value = false
     }
@@ -82,9 +82,9 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
     try {
       await api.delete(`/contacts/${linkToDelete.value}`)
       links.value = links.value.filter(link => link.id !== linkToDelete.value)
-      successMessage.value = 'Link deleted successfully'
+      successMessage.value = 'Contact deleted successfully'
     } catch {
-      errorMessage.value = 'Failed to delete link'
+      errorMessage.value = 'Failed to delete contact'
     } finally {
       loading.value = false
       showDeleteLinkDialog.value = false
