@@ -13,11 +13,13 @@ export async function logoutRequest () {
   await api.post('/auth/logout')
 }
 
-export async function registerRequest ({ email, name, password }) {
+export async function registerRequest ({ contacts = [], email, name, password, profile = {} }) {
   const response = await api.post('/auth/register', {
+    contacts,
     email,
     name,
     password,
+    profile,
   })
 
   return response.data

@@ -79,6 +79,25 @@
                 </div>
                 <p v-if="descriptionError" class="error-text">{{ descriptionError }}</p>
 
+                <div class="custom-input mb-3 link-row" :class="{ 'input-error': contactInfo.error }">
+                  <v-icon class="input-icon" color="#97e5ee" size="20">mdi-card-account-phone-outline</v-icon>
+                  <div class="link-inputs">
+                    <input
+                      v-model="contactInfo.url"
+                      class="input-field"
+                      placeholder="Enter contact info"
+                      type="text"
+                    >
+                    <input
+                      v-model="contactInfo.description"
+                      class="input-field mt-2"
+                      placeholder="Enter description"
+                      type="text"
+                    >
+                  </div>
+                </div>
+                <p v-if="contactInfo.error" class="error-text">{{ contactInfo.error }}</p>
+
                 <div class="profile-image-upload mb-4">
                   <label class="image-input-wrapper">
                     <v-icon color="#97e5ee" size="24">mdi-image-outline</v-icon>
@@ -123,7 +142,7 @@
                   >
                     <v-icon>mdi-close</v-icon>
                   </v-btn>
-                  <p v-if="link.error" class="error-text">Both URL and description are required</p>
+                  <p v-if="link.error" class="error-text">{{ link.error }}</p>
                 </div>
                 <v-btn class="add-link-btn" small text @click="addLink">+ Add another link</v-btn>
 
@@ -146,6 +165,7 @@
   const {
     addLink,
     cardWidth,
+    contactInfo,
     currentStep,
     description,
     descriptionError,

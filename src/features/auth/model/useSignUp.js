@@ -3,7 +3,44 @@ import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api.js'
 import { registerRequest } from '@/features/auth/api/auth.api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
-import { parseContactLink } from '@/features/profile/lib/contactLinks.js'
+import { isSupportedContactLink, parseContactLink } from '@/features/profile/lib/contactLinks.js'
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function normalizeUsefulUrl (value = '') {
+  const normalized = value.trim()
+
+  if (!normalized) {
+    return ''
+  }
+
+  return /^https?:\/\//i.test(normalized)
+    ? normalized
+    : `https://${normalized}`
+}
+
+function isSupportedUsefulUrl (value = '') {
+  const normalized = normalizeUsefulUrl(value)
+
+  if (/\s/.test(value.trim())) {
+    return false
+  }
+
+  try {
+    const url = new URL(normalized)
+    const hostname = url.hostname.toLowerCase()
+    const hasDomainLikeHostname = hostname.includes('.') || hostname === 'localhost'
+    const isIpAddress = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')
+
+    return (
+      ['http:', 'https:'].includes(url.protocol) &&
+      Boolean(hostname) &&
+      (hasDomainLikeHostname || isIpAddress)
+    )
+  } catch {
+    return false
+  }
+}
 
 function createEmptyLink () {
   return {
@@ -30,6 +67,7 @@ export function useSignUp () {
   const firstName = ref('')
 
   const description = ref('')
+  const contactInfo = ref(createEmptyLink())
   const profileImageFile = ref(null)
   const profileImageName = ref('')
   const links = ref([createEmptyLink()])
@@ -50,6 +88,7 @@ export function useSignUp () {
 
   function resetStepTwoErrors () {
     descriptionError.value = ''
+    contactInfo.value.error = false
 
     for (const link of links.value) {
       link.error = false
@@ -75,39 +114,50 @@ export function useSignUp () {
     }
   }
 
-  async function submitStepOne () {
+  function validateStepOne () {
     resetStepOneErrors()
 
-    if (!firstName.value.trim()) {
+    const normalizedName = firstName.value.trim()
+    const normalizedEmail = email.value.trim()
+    const hasPasswordWhitespace = /\s/.test(password.value)
+    let hasError = false
+
+    if (!normalizedName) {
       firstNameError.value = 'Please enter your name'
-      return
+      hasError = true
+    } else if (normalizedName.length < 2) {
+      firstNameError.value = 'Name must be at least 2 characters'
+      hasError = true
+    } else if (normalizedName.length > 50) {
+      firstNameError.value = 'Name must be 50 characters or less'
+      hasError = true
     }
 
-    if (!email.value.trim()) {
+    if (!normalizedEmail) {
       emailError.value = 'Please enter your email'
-      return
+      hasError = true
+    } else if (!emailPattern.test(normalizedEmail)) {
+      emailError.value = 'Please enter a valid email'
+      hasError = true
     }
 
-    if (!password.value.trim() || password.value.length < 6) {
+    if (!password.value) {
+      passwordError.value = 'Please enter your password'
+      hasError = true
+    } else if (password.value.length < 6) {
       passwordError.value = 'Password must be at least 6 characters'
-      return
+      hasError = true
+    } else if (hasPasswordWhitespace) {
+      passwordError.value = 'Password cannot contain spaces'
+      hasError = true
     }
 
-    loading.value = true
+    return !hasError
+  }
 
-    try {
-      await registerRequest({
-        email: email.value.trim(),
-        name: firstName.value.trim(),
-        password: password.value.trim(),
-      })
-      await authStore.login(email.value.trim(), password.value.trim())
+  function submitStepOne () {
+    if (validateStepOne()) {
       currentStep.value = 2
-    } catch (error) {
-      console.error(error)
-      emailError.value = error.response?.data?.error || error.message || 'Registration failed'
-    } finally {
-      loading.value = false
     }
   }
 
@@ -133,6 +183,11 @@ export function useSignUp () {
   }
 
   async function submitForm () {
+    if (!validateStepOne()) {
+      currentStep.value = 1
+      return
+    }
+
     resetStepTwoErrors()
 
     if (!description.value.trim()) {
@@ -140,11 +195,26 @@ export function useSignUp () {
       return
     }
 
+    if (!contactInfo.value.url.trim() || !contactInfo.value.description.trim()) {
+      contactInfo.value.error = 'Contact info and description are required'
+      return
+    }
+
+    if (!isSupportedContactLink(contactInfo.value.url)) {
+      contactInfo.value.error = 'Use email, phone, LinkedIn, or Telegram'
+      return
+    }
+
     let hasInvalidLink = false
 
     for (const link of links.value) {
-      if (!link.url.trim() || !link.description.trim()) {
-        link.error = true
+      const hasAnyLinkValue = link.url.trim() || link.description.trim()
+
+      if (hasAnyLinkValue && (!link.url.trim() || !link.description.trim())) {
+        link.error = 'Both URL and description are required'
+        hasInvalidLink = true
+      } else if (hasAnyLinkValue && !isSupportedUsefulUrl(link.url)) {
+        link.error = 'Please enter a valid URL'
         hasInvalidLink = true
       }
     }
@@ -156,10 +226,21 @@ export function useSignUp () {
     loading.value = true
 
     try {
-      await api.put('/users/profile', {
-        description: description.value,
+      const contacts = [
+        parseContactLink(contactInfo.value),
+      ]
+
+      await registerRequest({
+        contacts,
+        email: email.value.trim(),
         name: firstName.value,
+        password: password.value.trim(),
+        profile: {
+          description: description.value.trim(),
+        },
       })
+
+      await authStore.login(email.value.trim(), password.value.trim())
 
       const avatarFile = Array.isArray(profileImageFile.value)
         ? profileImageFile.value[0]
@@ -174,14 +255,10 @@ export function useSignUp () {
         })
       }
 
-      for (const link of links.value) {
-        await api.post('/contacts', parseContactLink(link))
-      }
-
       router.push('/feed')
     } catch (error) {
       console.error(error)
-      descriptionError.value = 'Failed to save profile'
+      descriptionError.value = error.response?.data?.error || error.message || 'Registration failed'
     } finally {
       loading.value = false
     }
@@ -190,6 +267,7 @@ export function useSignUp () {
   return {
     addLink,
     cardWidth,
+    contactInfo,
     currentStep,
     description,
     descriptionError,
