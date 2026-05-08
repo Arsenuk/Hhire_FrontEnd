@@ -18,7 +18,7 @@
     // якщо є токен, але профіль ще не підтягнутий
     if (authStore.accessToken && !authStore.user?.avatar) {
       try {
-        const res = await api.get('/users/profile')
+        const res = await api.get('/me')
         authStore.user = normalizeUser(res.data)
       } catch (error) {
         console.error('Failed to preload profile', error)

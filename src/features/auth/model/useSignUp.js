@@ -242,6 +242,8 @@ export function useSignUp () {
 
       await authStore.login(email.value.trim(), password.value.trim())
 
+      await Promise.all(contacts.map(contact => api.post('/contacts', contact)))
+
       const avatarFile = Array.isArray(profileImageFile.value)
         ? profileImageFile.value[0]
         : profileImageFile.value
@@ -250,7 +252,7 @@ export function useSignUp () {
         const formData = new FormData()
         formData.append('avatar', avatarFile)
 
-        await api.post('/users/me/avatar', formData, {
+        await api.post('/me/avatar', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
       }

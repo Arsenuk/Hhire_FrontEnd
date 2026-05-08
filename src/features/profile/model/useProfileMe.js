@@ -46,13 +46,17 @@ export function useProfileMe () {
     errorMessage.value = ''
 
     try {
-      const { data } = await api.get('/users/profile')
+      const [{ data }, contactsResponse, postsResponse] = await Promise.all([
+        api.get('/me'),
+        api.get('/contacts'),
+        api.get('/posts'),
+      ])
 
       const normalizedUser = normalizeUser(data)
 
       authStore.user = normalizedUser
-      profileLinks.setLinks(normalizeContactsToLinks(data.contacts || []))
-      profilePosts.setPosts(data.posts || [])
+      profileLinks.setLinks(normalizeContactsToLinks(contactsResponse.data || []))
+      profilePosts.setPosts(postsResponse.data?.posts || [])
 
       editForm.value.name = normalizedUser.name
       editForm.value.description = normalizedUser.description
@@ -73,7 +77,7 @@ export function useProfileMe () {
     errorMessage.value = ''
 
     try {
-      await api.put('/users/profile', {
+      await api.put('/me', {
         name: editForm.value.name,
         description: editForm.value.description,
       })
@@ -85,7 +89,7 @@ export function useProfileMe () {
       if (avatarFile) {
         const formData = new FormData()
         formData.append('avatar', avatarFile)
-        await api.post('/users/me/avatar', formData)
+        await api.post('/me/avatar', formData)
       }
 
       editing.value = false
