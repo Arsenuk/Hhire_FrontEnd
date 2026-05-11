@@ -63,7 +63,7 @@ export function useProfileMe () {
 
       const normalizedUser = normalizeUser(data)
 
-      authStore.user = normalizedUser
+      authStore.setUser(normalizedUser)
       profileContacts.setContacts(normalizeContactsToLinks(contactsResponse.data || []))
       profileLinks.setLinks(normalizeUsefulLinks(linksResponse.data || []))
       profilePosts.setPosts(postsResponse.data?.posts || [])

@@ -1,36 +1,57 @@
 import { defineStore } from 'pinia'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
-import { loginRequest, logoutRequest } from '@/features/auth/api/auth.api.js'
+import { loginRequest, logoutRequest, meRequest } from '@/features/auth/api/auth.api.js'
+import { clearAuthStorage, getAccessToken, setAccessToken as saveAccessToken } from '@/shared/api/tokenStorage.js'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null,
-    accessToken: localStorage.getItem('accessToken') || null,
+    accessToken: getAccessToken(),
   }),
   getters: {
     isLoggedIn: state => !!state.accessToken,
   },
   actions: {
-    clearSession () {
-      this.user = null
-      this.accessToken = null
+    setAccessToken (token) {
+      this.accessToken = token || null
+      saveAccessToken(token)
+    },
 
-      localStorage.removeItem('accessToken')
+    setUser (user) {
+      this.user = user ? normalizeUser(user) : null
+
+      if (this.user) {
+        localStorage.setItem('user', JSON.stringify(this.user))
+        return
+      }
+
       localStorage.removeItem('user')
+    },
+
+    clearSession () {
+      this.setUser(null)
+      this.setAccessToken(null)
+      clearAuthStorage()
     },
 
     async login (email, password) {
       try {
         const data = await loginRequest({ email, password })
 
-        this.user = normalizeUser(data.user)
-        this.accessToken = data.accessToken
+        this.setUser(data.user)
+        this.setAccessToken(data.accessToken)
 
-        localStorage.setItem('accessToken', this.accessToken)
-        localStorage.setItem('user', JSON.stringify(this.user))
+        await this.fetchMe()
       } catch (error) {
         throw new Error(error.response?.data?.error || 'Login failed')
       }
+    },
+
+    async fetchMe () {
+      const user = await meRequest()
+      this.setUser(user)
+
+      return this.user
     },
 
     async logout () {
@@ -45,11 +66,11 @@ export const useAuthStore = defineStore('auth', {
 
     loadUserFromStorage () {
       const user = localStorage.getItem('user')
-      const token = localStorage.getItem('accessToken')
+      const token = getAccessToken()
 
       if (user && token) {
-        this.user = normalizeUser(JSON.parse(user))
-        this.accessToken = token
+        this.setUser(JSON.parse(user))
+        this.setAccessToken(token)
         return
       }
 

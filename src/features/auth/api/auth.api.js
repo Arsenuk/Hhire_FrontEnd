@@ -9,8 +9,20 @@ export async function loginRequest ({ email, password }) {
   return response.data
 }
 
+export async function meRequest () {
+  const response = await api.get('/me')
+
+  return response.data
+}
+
 export async function logoutRequest () {
   await api.post('/auth/logout')
+}
+
+export async function refreshRequest () {
+  const response = await api.post('/auth/refresh')
+
+  return response.data
 }
 
 export async function registerRequest ({ contacts = [], email, name, password, profile = {} }) {

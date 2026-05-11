@@ -7,9 +7,7 @@
 
 <script setup>
   import { onMounted } from 'vue'
-  import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
-  import { api } from '@/shared/api/api.js'
   import AppHeader from '@/widgets/header/ui/AppHeader.vue'
 
   const authStore = useAuthStore()
@@ -18,8 +16,7 @@
     // якщо є токен, але профіль ще не підтягнутий
     if (authStore.accessToken && !authStore.user?.avatar) {
       try {
-        const res = await api.get('/me')
-        authStore.user = normalizeUser(res.data)
+        await authStore.fetchMe()
       } catch (error) {
         console.error('Failed to preload profile', error)
       }
