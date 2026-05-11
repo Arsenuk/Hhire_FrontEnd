@@ -1,5 +1,95 @@
 <template>
-  <v-card :class="cardClasses">
+  <v-card v-if="variant === 'feed'" :class="cardClasses">
+    <v-card-title class="post-card__feed-header">
+      <div class="post-card__feed-owner">
+        <v-avatar
+          :size="avatarSize"
+          :class="['post-card__avatar', { 'post-card__avatar--clickable': ownerClickable }]"
+          @click="handleOwnerClick"
+        >
+          <v-img :src="ownerAvatarUrl" />
+        </v-avatar>
+
+        <div class="post-card__feed-owner-copy">
+          <div class="post-card__owner-name">
+            {{ ownerName }}
+          </div>
+
+          <div class="post-card__feed-date">
+            {{ formattedDate }}
+          </div>
+
+          <div v-if="post.tags?.length" class="post-card__tags post-card__tags--feed">
+            <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined">
+              {{ tagLabel(tag) }}
+            </v-chip>
+          </div>
+        </div>
+      </div>
+
+      <div class="post-card__feed-badges">
+        <span
+          v-if="showOwnerRole && ownerRole"
+          class="post-card__role"
+          :class="{ 'post-card__role--company': ownerRole === 'company' }"
+        >
+          {{ ownerRole }}
+        </span>
+
+        <v-chip v-if="post.intent" size="small" variant="outlined" class="post-card__intent-chip">
+          {{ post.intent }}
+        </v-chip>
+
+        <slot name="header-actions" />
+      </div>
+    </v-card-title>
+
+    <v-card-text class="post-card__feed-body">
+      <div v-if="post.title" class="post-card__title post-card__title--feed">
+        {{ post.title }}
+      </div>
+
+      <div v-if="post.content" class="post-card__content-box">
+        {{ post.content }}
+      </div>
+
+      <div
+        v-if="firstImageUrl"
+        class="post-card__image-box"
+        role="button"
+        tabindex="0"
+        @click="isImageDialogOpen = true"
+        @keydown.enter.prevent="isImageDialogOpen = true"
+        @keydown.space.prevent="isImageDialogOpen = true"
+      >
+        <v-img :src="firstImageUrl" :alt="post.title || 'Post image'" cover />
+      </div>
+
+      <slot />
+    </v-card-text>
+
+    <v-card-actions v-if="$slots.actions" class="post-card__actions">
+      <slot name="actions" />
+    </v-card-actions>
+
+    <slot name="details" />
+
+    <v-dialog v-model="isImageDialogOpen" class="post-card__image-dialog" max-width="980">
+      <v-card class="post-card__image-dialog-card">
+        <v-btn
+          class="post-card__image-dialog-close"
+          icon="mdi-close"
+          size="small"
+          variant="flat"
+          @click="isImageDialogOpen = false"
+        />
+
+        <v-img :src="firstImageUrl" :alt="post.title || 'Post image'" class="post-card__image-dialog-img" />
+      </v-card>
+    </v-dialog>
+  </v-card>
+
+  <v-card v-else :class="cardClasses">
     <v-card-title class="post-card__header">
       <div class="post-card__owner">
         <v-avatar
@@ -77,8 +167,9 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { formatPostDate } from '@/shared/lib/date/formatPostDate.js'
+import { API_ORIGIN } from '@/shared/config/api.js'
 import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
 
 const props = defineProps({
@@ -117,12 +208,20 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['owner-click'])
+const isImageDialogOpen = ref(false)
 
 const owner = computed(() => props.post?.owner || {})
 const ownerName = computed(() => owner.value.name || 'Unknown user')
 const ownerRole = computed(() => owner.value.role || '')
 const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value.avatar))
 const formattedDate = computed(() => formatPostDate(props.post?.created_at))
+const firstImageUrl = computed(() => {
+  const [image] = Array.isArray(props.post?.images) ? props.post.images : []
+  const imageUrl = typeof image === 'string' ? image : image?.url
+
+  if (!imageUrl) return ''
+  return imageUrl.startsWith('http') ? imageUrl : `${API_ORIGIN}${imageUrl}`
+})
 const cardClasses = computed(() => [
   'entity-post-card',
   `entity-post-card--${props.variant}`,
@@ -141,9 +240,10 @@ function tagLabel(tag) {
 
 <style scoped>
 .entity-post-card {
-  border-radius: 18px;
+  border-radius: 8px;
   background: #fff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .entity-post-card--hoverable:hover {
@@ -151,7 +251,14 @@ function tagLabel(tag) {
 }
 
 .entity-post-card--feed {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+}
+
+.entity-post-card--feed.entity-post-card--hoverable:hover,
+.entity-post-card--feed:hover {
+  border-color: #b9dce1;
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.1);
 }
 
 .entity-post-card--profile {
@@ -198,6 +305,56 @@ function tagLabel(tag) {
   font-weight: 600;
 }
 
+.post-card__feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 26px 32px 18px;
+  background: linear-gradient(180deg, #fbfdff 0%, #fff 100%);
+  border-bottom: 1px solid #eef3f7;
+}
+
+.post-card__feed-owner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.post-card__feed-owner .post-card__avatar {
+  box-shadow: 0 0 0 3px #fff, 0 8px 18px rgba(15, 23, 42, 0.12);
+}
+
+.post-card__feed-owner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.post-card__feed-header .post-card__owner-name {
+  font-size: 23px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.post-card__feed-date {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.post-card__feed-badges {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
 .post-card__title--header {
   font-size: 16px;
   line-height: 1.35;
@@ -228,19 +385,45 @@ function tagLabel(tag) {
 }
 
 .post-card__role {
-  font-size: 12px;
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 16px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
-  color: #000;
+  background: #e9fbef;
+  border: 1px solid #b7edc7;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.1;
+  text-transform: capitalize;
 }
 
 .post-card__role--company {
-  background: linear-gradient(90deg, #fde68a 0%, #f59e0b 100%);
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
 }
 
 .post-card__body {
   padding-top: 0;
+}
+
+.post-card__feed-body {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px 32px;
+}
+
+.post-card__title--feed {
+  align-self: flex-start;
+  max-width: 100%;
+  margin: 0 0 16px;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .post-card__content {
@@ -255,8 +438,83 @@ function tagLabel(tag) {
   color: #374151;
 }
 
+.post-card__content-box {
+  width: 100%;
+  min-height: 120px;
+  margin: 0 auto;
+  padding: 22px 24px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border-left: 4px solid #97e5ee;
+  color: #1f2937;
+  font-size: 16px;
+  line-height: 1.65;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.post-card__image-box {
+  width: min(78%, 600px);
+  margin: 26px auto 0;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  aspect-ratio: 16 / 9;
+  background: #f8fafc;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  cursor: zoom-in;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.post-card__image-box:hover,
+.post-card__image-box:focus-visible {
+  border-color: #97e5ee;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.13);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.post-card__image-box :deep(.v-img) {
+  width: 100%;
+  height: 100%;
+}
+
+.post-card__image-dialog :deep(.v-overlay__content) {
+  width: min(92vw, 980px);
+}
+
+.post-card__image-dialog-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0f172a;
+}
+
+.post-card__image-dialog-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+}
+
+.post-card__image-dialog-img {
+  width: 100%;
+  max-height: 82vh;
+}
+
 .post-card__intent {
   margin-top: 12px;
+}
+
+.post-card__intent-chip {
+  min-height: 30px;
+  padding-inline: 13px;
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+  font-weight: 600;
 }
 
 .post-card__intent :deep(.v-chip) {
@@ -270,6 +528,14 @@ function tagLabel(tag) {
   margin-top: 12px;
 }
 
+.post-card__tags--feed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  max-width: 420px;
+  margin-top: 0;
+}
+
 .post-card__tags :deep(.v-chip) {
   border-radius: 12px;
   border: 1px solid #97e5ee;
@@ -278,11 +544,51 @@ function tagLabel(tag) {
   font-weight: 500;
 }
 
+.post-card__tags--feed :deep(.v-chip) {
+  margin: 0;
+  border-radius: 999px;
+  border-color: #bde8ed;
+  background: #f5fdfe;
+  color: #155e75;
+  font-weight: 600;
+}
+
 .post-card__actions {
   padding-top: 0;
 }
 
 @media (max-width: 960px) {
+  .post-card__feed-header {
+    flex-direction: column;
+    gap: 16px;
+    padding: 22px 20px 16px;
+  }
+
+  .post-card__feed-badges {
+    flex-direction: row;
+    align-items: center;
+    align-self: stretch;
+    flex-wrap: wrap;
+  }
+
+  .post-card__feed-body {
+    padding: 20px 20px 24px;
+  }
+
+  .post-card__title--feed {
+    margin-left: 0;
+  }
+
+  .post-card__content-box,
+  .post-card__image-box {
+    width: 100%;
+  }
+
+  .post-card__content-box {
+    min-height: 150px;
+    padding: 20px;
+  }
+
   .post-card__header {
     flex-direction: column;
     align-items: flex-start;
@@ -295,6 +601,25 @@ function tagLabel(tag) {
   .post-card__meta--split {
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .post-card__feed-owner {
+    width: 100%;
+  }
+
+  .post-card__feed-header .post-card__owner-name {
+    font-size: 20px;
+  }
+
+  .post-card__feed-date {
+    font-size: 12px;
+  }
+
+  .post-card__role {
+    min-height: 32px;
+    font-size: 14px;
   }
 }
 </style>
