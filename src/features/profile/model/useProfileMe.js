@@ -3,6 +3,8 @@ import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
 import { api } from '@/shared/api/api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
+import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'
+import { useProfileContacts } from '@/features/profile/model/useProfileContacts.js'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'
 
@@ -34,6 +36,12 @@ export function useProfileMe () {
     successMessage,
   })
 
+  const profileContacts = useProfileContacts({
+    errorMessage,
+    loading,
+    successMessage,
+  })
+
   const profilePosts = useProfilePosts({
     errorMessage,
     loading,
@@ -46,16 +54,18 @@ export function useProfileMe () {
     errorMessage.value = ''
 
     try {
-      const [{ data }, contactsResponse, postsResponse] = await Promise.all([
+      const [{ data }, contactsResponse, linksResponse, postsResponse] = await Promise.all([
         api.get('/me'),
         api.get('/contacts'),
+        api.get('/me/links'),
         api.get('/posts'),
       ])
 
       const normalizedUser = normalizeUser(data)
 
       authStore.user = normalizedUser
-      profileLinks.setLinks(normalizeContactsToLinks(contactsResponse.data || []))
+      profileContacts.setContacts(normalizeContactsToLinks(contactsResponse.data || []))
+      profileLinks.setLinks(normalizeUsefulLinks(linksResponse.data || []))
       profilePosts.setPosts(postsResponse.data?.posts || [])
 
       editForm.value.name = normalizedUser.name
@@ -122,6 +132,7 @@ export function useProfileMe () {
     saveProfile,
     successMessage,
     user,
+    ...profileContacts,
     ...profileLinks,
     ...profilePosts,
   }

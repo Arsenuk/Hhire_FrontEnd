@@ -4,43 +4,9 @@ import { api } from '@/shared/api/api.js'
 import { registerRequest } from '@/features/auth/api/auth.api.js'
 import { useAuthStore } from '@/features/auth/model/auth.store.js'
 import { isSupportedContactLink, parseContactLink } from '@/features/profile/lib/contactLinks.js'
+import { isSupportedUsefulUrl, parseUsefulLink } from '@/features/profile/lib/usefulLinks.js'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-
-function normalizeUsefulUrl (value = '') {
-  const normalized = value.trim()
-
-  if (!normalized) {
-    return ''
-  }
-
-  return /^https?:\/\//i.test(normalized)
-    ? normalized
-    : `https://${normalized}`
-}
-
-function isSupportedUsefulUrl (value = '') {
-  const normalized = normalizeUsefulUrl(value)
-
-  if (/\s/.test(value.trim())) {
-    return false
-  }
-
-  try {
-    const url = new URL(normalized)
-    const hostname = url.hostname.toLowerCase()
-    const hasDomainLikeHostname = hostname.includes('.') || hostname === 'localhost'
-    const isIpAddress = /^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname) || hostname.includes(':')
-
-    return (
-      ['http:', 'https:'].includes(url.protocol) &&
-      Boolean(hostname) &&
-      (hasDomainLikeHostname || isIpAddress)
-    )
-  } catch {
-    return false
-  }
-}
 
 function createEmptyLink () {
   return {
@@ -229,6 +195,9 @@ export function useSignUp () {
       const contacts = [
         parseContactLink(contactInfo.value),
       ]
+      const usefulLinks = links.value
+        .filter(link => link.url.trim() || link.description.trim())
+        .map(parseUsefulLink)
 
       await registerRequest({
         contacts,
@@ -243,6 +212,7 @@ export function useSignUp () {
       await authStore.login(email.value.trim(), password.value.trim())
 
       await Promise.all(contacts.map(contact => api.post('/contacts', contact)))
+      await Promise.all(usefulLinks.map(link => api.post('/me/links', link)))
 
       const avatarFile = Array.isArray(profileImageFile.value)
         ? profileImageFile.value[0]

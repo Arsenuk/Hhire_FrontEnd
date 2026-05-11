@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks.js'
+import { isSupportedUsefulUrl, normalizeUsefulLinks, parseUsefulLink } from '@/features/profile/lib/usefulLinks.js'
 import { api } from '@/shared/api/api.js'
 
 export function useProfileLinks ({ loading, errorMessage, successMessage }) {
@@ -17,8 +17,8 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
   })
 
   const urlRules = [
-    value => !!value || 'Contact is required',
-    value => isSupportedContactLink(value) || 'Use email, phone, LinkedIn, or Telegram',
+    value => !!value || 'URL is required',
+    value => isSupportedUsefulUrl(value) || 'Please enter a valid URL',
   ]
 
   function setLinks (nextLinks = []) {
@@ -33,7 +33,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
 
   function openEditLink (link) {
     editingLink.value = link
-    linkForm.value = { url: link.value || link.url, description: link.description }
+    linkForm.value = { url: link.url, description: link.description }
     showLinkDialog.value = true
   }
 
@@ -47,19 +47,19 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
     errorMessage.value = ''
 
     try {
-      const payload = parseContactLink(linkForm.value)
+      const payload = parseUsefulLink(linkForm.value)
 
       await (
         editingLink.value
-          ? api.put(`/contacts/${editingLink.value.id}`, payload)
-          : api.post('/contacts', payload)
+          ? api.put(`/me/links/${editingLink.value.id}`, payload)
+          : api.post('/me/links', payload)
       )
 
-      const res = await api.get('/contacts')
-      links.value = normalizeContactsToLinks(res.data)
+      const res = await api.get('/me/links')
+      links.value = normalizeUsefulLinks(res.data)
       showLinkDialog.value = false
     } catch (error) {
-      errorMessage.value = error.response?.data?.error || error.message || 'Failed to save contact'
+      errorMessage.value = error.response?.data?.error || error.message || 'Failed to save link'
     } finally {
       loading.value = false
     }
@@ -80,11 +80,11 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }) {
     successMessage.value = ''
 
     try {
-      await api.delete(`/contacts/${linkToDelete.value}`)
+      await api.delete(`/me/links/${linkToDelete.value}`)
       links.value = links.value.filter(link => link.id !== linkToDelete.value)
-      successMessage.value = 'Contact deleted successfully'
+      successMessage.value = 'Link deleted successfully'
     } catch {
-      errorMessage.value = 'Failed to delete contact'
+      errorMessage.value = 'Failed to delete link'
     } finally {
       loading.value = false
       showDeleteLinkDialog.value = false

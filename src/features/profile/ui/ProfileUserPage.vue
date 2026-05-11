@@ -2,8 +2,9 @@
   <ProfileView
     empty-info-text="User didn't provide information"
     empty-posts-text="User didn't provide posts"
-    :contact-info="links"
+    :contact-info="contacts"
     :error-message="errorMessage"
+    :links="links"
     :posts="posts"
     :user="user"
   >
@@ -74,6 +75,7 @@
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
   import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
+  import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
 
   const route = useRoute()
@@ -82,6 +84,7 @@
 
   const user = ref(null)
   const posts = ref([])
+  const contacts = ref([])
   const links = ref([])
   const errorMessage = ref('')
   const loading = ref(true)
@@ -101,6 +104,7 @@
     errorMessage.value = ''
     user.value = null
     posts.value = []
+    contacts.value = []
     links.value = []
     isFollowing.value = false
 
@@ -108,7 +112,8 @@
       const res = await api.get(`/users/${userId.value}/profile`)
       user.value = normalizeUser(res.data)
       posts.value = normalizePosts(res.data.posts || [])
-      links.value = normalizeContactsToLinks(res.data.contacts || [])
+      contacts.value = normalizeContactsToLinks(res.data.contacts || [])
+      links.value = normalizeUsefulLinks(res.data.links || [])
 
       await checkFollowStatus()
     } catch (error) {
