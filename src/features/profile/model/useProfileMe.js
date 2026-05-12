@@ -16,7 +16,8 @@ export function useProfileMe () {
   const errorMessage = ref('')
   const successMessage = ref('')
 
-  const editing = ref(false)
+  const editMode = ref(false)
+  const profileEditorOpen = ref(false)
   const formRef = ref(null)
 
   const editForm = ref({
@@ -102,7 +103,7 @@ export function useProfileMe () {
         await api.post('/me/avatar', formData)
       }
 
-      editing.value = false
+      profileEditorOpen.value = false
       successMessage.value = 'Profile updated successfully'
       await loadProfile()
     } catch {
@@ -113,7 +114,20 @@ export function useProfileMe () {
   }
 
   function cancelEdit () {
-    editing.value = false
+    profileEditorOpen.value = false
+  }
+
+  function openEditMode () {
+    editMode.value = true
+  }
+
+  function closeEditMode () {
+    editMode.value = false
+    profileEditorOpen.value = false
+  }
+
+  function openProfileEditor () {
+    profileEditorOpen.value = true
   }
 
   onMounted(() => {
@@ -123,12 +137,16 @@ export function useProfileMe () {
 
   return {
     cancelEdit,
+    closeEditMode,
     editForm,
-    editing,
+    editMode,
     errorMessage,
     formRef,
     loading,
     nameRules,
+    openEditMode,
+    openProfileEditor,
+    profileEditorOpen,
     saveProfile,
     successMessage,
     user,

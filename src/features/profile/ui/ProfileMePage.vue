@@ -10,39 +10,54 @@
     :user="user"
   >
     <template #header-actions>
-      <v-btn class="edit-btn" @click="editing = true">
-        Edit Profile
-      </v-btn>
+      <div class="profile-edit-actions">
+        <template v-if="editMode">
+          <v-btn class="edit-btn" variant="tonal" @click="openProfileEditor">
+            Edit Info
+          </v-btn>
+          <v-btn class="done-btn" variant="text" @click="closeEditMode">
+            Done
+          </v-btn>
+        </template>
+
+        <v-btn v-else class="edit-btn" @click="openEditMode">
+          Edit Profile
+        </v-btn>
+      </div>
     </template>
 
     <template #links-title-actions>
-      <v-btn icon="mdi-plus" size="small" @click="openAddLink" />
+      <v-btn v-if="editMode" icon="mdi-plus" size="small" @click="openAddLink" />
     </template>
 
     <template #contact-title-actions>
-      <v-btn icon="mdi-plus" size="small" @click="openAddContact" />
+      <v-btn v-if="editMode" icon="mdi-plus" size="small" @click="openAddContact" />
     </template>
 
     <template #contact-append="{ contact }">
-      <v-btn icon size="x-small" @click="openEditContact(contact)">
-        <v-icon>mdi-pencil</v-icon>
-      </v-btn>
-      <v-btn icon size="x-small" @click="openDeleteContact(contact.id)">
-        <v-icon color="red">mdi-delete</v-icon>
-      </v-btn>
+      <template v-if="editMode">
+        <v-btn icon size="x-small" @click="openEditContact(contact)">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn icon size="x-small" @click="openDeleteContact(contact.id)">
+          <v-icon color="red">mdi-delete</v-icon>
+        </v-btn>
+      </template>
     </template>
 
     <template #link-append="{ link }">
-      <v-btn icon size="x-small" @click="openEditLink(link)">
-        <v-icon>mdi-pencil</v-icon>
-      </v-btn>
-      <v-btn icon size="x-small" @click="openDeleteLink(link.id)">
-        <v-icon color="red">mdi-delete</v-icon>
-      </v-btn>
+      <template v-if="editMode">
+        <v-btn icon size="x-small" @click="openEditLink(link)">
+          <v-icon>mdi-pencil</v-icon>
+        </v-btn>
+        <v-btn icon size="x-small" @click="openDeleteLink(link.id)">
+          <v-icon color="red">mdi-delete</v-icon>
+        </v-btn>
+      </template>
     </template>
 
     <template #post-actions="{ post }">
-      <div v-if="isOwnPost(post)" class="post-actions">
+      <div v-if="editMode && isOwnPost(post)" class="post-actions">
         <v-btn icon size="x-small" @click="startEditPost(post)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
@@ -53,7 +68,7 @@
     </template>
   </ProfileView>
 
-  <v-dialog v-model="editing" max-width="600">
+  <v-dialog v-model="profileEditorOpen" max-width="600">
     <v-card>
       <v-card-title>Edit Profile</v-card-title>
 
@@ -222,11 +237,12 @@
     contactFormRef,
     contactRules,
     contacts,
+    closeEditMode,
     deleteConfirmedContact,
     deleteConfirmedLink,
     deleteConfirmedPost,
     editForm,
-    editing,
+    editMode,
     editingContact,
     editingLink,
     editingPostDialog,
@@ -244,11 +260,14 @@
     openDeleteContact,
     openDeleteLink,
     openDeletePost,
+    openEditMode,
     openEditContact,
     openEditLink,
+    openProfileEditor,
     postFormRef,
     postRules,
     posts,
+    profileEditorOpen,
     saveLink,
     savePost,
     saveContact,
@@ -271,6 +290,18 @@
   color: #020617;
   font-weight: 600;
   border-radius: 12px;
+}
+
+.profile-edit-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.done-btn {
+  color: #020617;
+  font-weight: 600;
 }
 
 .post-actions {
