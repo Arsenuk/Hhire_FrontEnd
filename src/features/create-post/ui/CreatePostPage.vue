@@ -45,9 +45,17 @@
 
             <div class="mb-6">
               <p class="form-label">Tags</p>
-              <input v-model="rawTags" class="input-field" placeholder="e.g. startup, tech, review">
+              <v-combobox
+                v-model="tags"
+                chips
+                clearable
+                hide-selected
+                label="Tags"
+                multiple
+                :rules="tagRules"
+              />
               <div class="char-count">
-                Up to 10 tags, separated by commas
+                Up to 10 tags
               </div>
             </div>
 
@@ -115,9 +123,10 @@
     intent,
     intentOptions,
     openConfirm,
-    rawTags,
     showConfirm,
     submitting,
+    tagRules,
+    tags,
     title,
   } = useCreatePost()
 </script>

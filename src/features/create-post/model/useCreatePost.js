@@ -16,14 +16,21 @@ export function useCreatePost () {
 
   const title = ref('')
   const content = ref('')
-  const rawTags = ref('')
+  const tags = ref([])
   const intent = ref('general')
   const images = ref([])
 
   const showConfirm = ref(false)
   const submitting = ref(false)
+  const tagRules = [
+    value => Boolean(value?.length) || 'Add at least one tag',
+  ]
 
   function openConfirm () {
+    if (!tags.value.length) {
+      return
+    }
+
     showConfirm.value = true
   }
 
@@ -40,8 +47,7 @@ export function useCreatePost () {
     submitting.value = true
 
     try {
-      const tags = rawTags.value
-        .split(',')
+      const normalizedTags = tags.value
         .map(tag => tag.trim().toLowerCase())
         .filter(Boolean)
         .slice(0, 10)
@@ -53,7 +59,7 @@ export function useCreatePost () {
       formData.append('intent', intent.value)
       formData.append('sender_type', 'user')
 
-      for (const tag of tags) {
+      for (const tag of normalizedTags) {
         formData.append('tags', tag)
       }
 
@@ -90,9 +96,10 @@ export function useCreatePost () {
     intent,
     intentOptions,
     openConfirm,
-    rawTags,
     showConfirm,
     submitting,
+    tagRules,
+    tags,
     title,
   }
 }
