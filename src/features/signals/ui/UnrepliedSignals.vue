@@ -33,37 +33,87 @@
       </v-list>
     </v-card-text>
 
-    <v-dialog v-model="dialog" max-width="520px" persistent>
-      <v-card class="modal-card">
-        <v-card-title class="modal-title">
-          Signal from {{ activeSignal?.sender?.name }}
+    <v-dialog v-model="dialog" max-width="540px" persistent>
+      <v-card class="reply-modal">
+        <div class="reply-modal__toolbar">
+          <div class="reply-modal__title">
+            Reply to signal
+          </div>
 
-          <v-btn icon class="close-btn" @click="closeDialog">
+          <v-btn
+            icon
+            :ripple="false"
+            class="toolbar-btn toolbar-btn--danger"
+            title="Report"
+            @click="reportSignal"
+          >
+            <v-icon>mdi-flag-outline</v-icon>
+          </v-btn>
+
+          <v-btn
+            icon
+            :ripple="false"
+            class="toolbar-btn"
+            title="Share contact info"
+            @click="shareContactInfo"
+          >
+            <v-icon>mdi-account-box-outline</v-icon>
+          </v-btn>
+
+          <v-btn
+            icon
+            :ripple="false"
+            class="toolbar-btn"
+            title="Close window"
+            @click="closeDialog"
+          >
             <v-icon>mdi-close</v-icon>
           </v-btn>
-        </v-card-title>
+        </div>
 
-        <v-card-text class="modal-body">
-          <div class="message-box">
+        <v-card-text class="reply-modal__body">
+          <div class="sender-row">
+            <UserAvatar
+              class="sender-avatar"
+              :size="64"
+              :user="activeSignal?.sender"
+            />
+
+            <div class="sender-name">
+              {{ activeSignal?.sender?.name || 'User name' }}
+            </div>
+          </div>
+
+          <div class="signal-content">
             {{ activeSignal?.message }}
           </div>
 
           <v-textarea
             v-model="replyMessage"
+            class="reply-field"
             auto-grow
-            label="Write your reply"
+            hide-details
+            label="Reply"
             rows="3"
             variant="outlined"
           />
         </v-card-text>
 
-        <v-card-actions class="modal-actions">
-          <v-btn class="btn-refuse" @click="closeDialog">
+        <v-card-actions class="reply-modal__actions">
+          <v-btn
+            class="btn-refuse"
+            prepend-icon="mdi-close-circle-outline"
+            @click="respond('refuse')"
+          >
             Refuse
           </v-btn>
 
-          <v-btn class="btn-send" @click="respond('sing')">
-            Send & Follow
+          <v-btn
+            class="btn-accept"
+            prepend-icon="mdi-check-circle-outline"
+            @click="respond('accept')"
+          >
+            Accept the offer
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -83,6 +133,7 @@
 </template>
 
 <script setup>
+  import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useUnrepliedSignals } from '@/features/signals/model/useUnrepliedSignals.js'
 
@@ -100,7 +151,9 @@
     goToProfile,
     openDialog,
     replyMessage,
+    reportSignal,
     respond,
+    shareContactInfo,
     signals,
     snackbar,
   } = useUnrepliedSignals(props.updateNotify)
@@ -186,77 +239,203 @@
   font-size: 13px;
 }
 
-.modal-card {
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
-  padding: 8px;
+.reply-modal {
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  border-radius: 24px !important;
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.94), #ffffff 38%),
+    #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
 }
 
-.modal-title {
+.reply-modal__toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 800;
-  font-size: 16px;
-  color: #111827;
-  padding: 10px 14px;
+  gap: 10px;
+  min-height: 68px;
+  padding: 16px 18px 12px 24px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
 }
 
-.close-btn {
-  color: #6b7280;
+.reply-modal__title {
+  min-width: 0;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.reply-modal__toolbar .toolbar-btn:first-of-type {
+  margin-left: auto;
+}
+
+.toolbar-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px !important;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.26);
   transition: all 0.2s ease;
 }
 
-.close-btn:hover {
-  color: #111827;
-  transform: rotate(90deg);
+.toolbar-btn:hover {
+  color: #0f172a;
+  background: #ffffff;
+  box-shadow:
+    inset 0 0 0 1px rgba(99, 102, 241, 0.24),
+    0 8px 20px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 
-.message-box {
-  background: #eef2ff;
-  border: 1px solid #c7d2fe;
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: #111827;
+.toolbar-btn--danger:hover {
+  color: #dc2626;
+  box-shadow:
+    inset 0 0 0 1px rgba(220, 38, 38, 0.22),
+    0 8px 20px rgba(220, 38, 38, 0.08);
 }
 
-:deep(.v-textarea) {
-  border-radius: 14px;
+.reply-modal__body {
+  padding: 24px;
 }
 
-.modal-actions {
+.sender-row {
   display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 12px 14px 14px;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.sender-avatar {
+  flex: 0 0 auto;
+  border: 3px solid #ffffff;
+  background: #f8fafc;
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(148, 163, 184, 0.22);
+}
+
+.sender-name {
+  min-width: 0;
+  color: #0f172a;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.signal-content {
+  display: flex;
+  align-items: center;
+  min-height: 124px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 18px;
+  color: #1f2937;
+  background:
+    linear-gradient(135deg, rgba(238, 242, 255, 0.72), rgba(240, 253, 250, 0.72)),
+    #f8fafc;
+  font-size: 15px;
+  line-height: 1.55;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.reply-field {
+  width: 100%;
+  margin: 0 auto;
+}
+
+.reply-field :deep(.v-field) {
+  min-height: 118px;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+}
+
+.reply-field :deep(.v-field__outline) {
+  --v-field-border-width: 1px;
+  color: rgba(99, 102, 241, 0.42);
+}
+
+.reply-field :deep(textarea) {
+  color: #111827;
+  line-height: 1.5;
+}
+
+.reply-modal__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px 24px;
+}
+
+.btn-refuse,
+.btn-accept {
+  min-width: 148px;
+  height: 44px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: none;
+  transition: all 0.2s ease;
 }
 
 .btn-refuse {
-  background: #f3f4f6;
-  color: #111827;
-  font-weight: 600;
-  border-radius: 12px;
-  text-transform: none;
+  color: #dc2626;
+  background: #f8fafc;
+  box-shadow: inset 0 0 0 1px rgba(220, 38, 38, 0.5);
+}
+
+.btn-accept {
+  color: #ffffff;
+  background: linear-gradient(135deg, #10b981, #2563eb);
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
 }
 
 .btn-refuse:hover {
-  background: #e5e7eb;
+  color: #b91c1c;
+  background: #fef2f2;
+  box-shadow:
+    inset 0 0 0 1px rgba(220, 38, 38, 0.72),
+    0 10px 22px rgba(220, 38, 38, 0.1);
+  transform: translateY(-1px);
 }
 
-.btn-send {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #ffffff;
-  font-weight: 600;
-  border-radius: 12px;
-  text-transform: none;
-  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
+.btn-accept:hover {
+  box-shadow: 0 16px 32px rgba(37, 99, 235, 0.28);
+  transform: translateY(-1px);
 }
 
-.btn-send:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(34, 197, 94, 0.35);
+@media (max-width: 520px) {
+  .reply-modal__toolbar {
+    padding: 14px;
+  }
+
+  .reply-modal__title {
+    font-size: 16px;
+  }
+
+  .reply-modal__body {
+    padding: 18px;
+  }
+
+  .sender-name {
+    font-size: 20px;
+  }
+
+  .reply-modal__actions {
+    flex-direction: column-reverse;
+    padding: 0 18px 18px;
+  }
+
+  .btn-refuse,
+  .btn-accept {
+    width: 100%;
+  }
 }
 </style>

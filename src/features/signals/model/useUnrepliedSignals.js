@@ -48,7 +48,7 @@ export function useUnrepliedSignals (updateNotify) {
     activeSignal.value = null
   }
 
-  async function respond (type) {
+  async function respond (action) {
     if (!replyMessage.value.trim()) {
       showToast('Please enter a reply message', 'warning')
       return
@@ -59,7 +59,7 @@ export function useUnrepliedSignals (updateNotify) {
         message: replyMessage.value,
       })
 
-      if (type === 'sing') {
+      if (action === 'accept') {
         await api.post('/follows', {
           targetId: activeSignal.value.sender.id,
           targetType: 'user',
@@ -73,6 +73,14 @@ export function useUnrepliedSignals (updateNotify) {
       console.error(error)
       showToast('Failed to send reply', 'error')
     }
+  }
+
+  function reportSignal () {
+    showToast('Report will be available soon', 'info')
+  }
+
+  function shareContactInfo () {
+    showToast('Sharing contact info will be available soon', 'info')
   }
 
   function goToProfile (id) {
@@ -97,7 +105,9 @@ export function useUnrepliedSignals (updateNotify) {
     goToProfile,
     openDialog,
     replyMessage,
+    reportSignal,
     respond,
+    shareContactInfo,
     signals,
     snackbar,
   }
