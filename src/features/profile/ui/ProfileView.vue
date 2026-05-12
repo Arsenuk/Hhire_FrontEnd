@@ -100,29 +100,29 @@
 
       <v-row>
         <v-col cols="12">
-          <v-card class="profile-card">
+          <v-card class="profile-card profile-posts-card">
             <v-card-title>Posts</v-card-title>
 
             <v-card-text>
-              <v-row>
-                <v-col v-for="post in posts" :key="post.id" cols="12" md="6">
-                  <PostCard
-                    hoverable
-                    :post="post"
-                    tag-prefix="#"
-                    title-placement="body"
-                    variant="profile"
-                  >
-                    <template v-if="$slots['post-actions']" #header-actions>
-                      <slot name="post-actions" :post="post" />
-                    </template>
-                  </PostCard>
-                </v-col>
+              <div v-if="posts.length" class="profile-posts-list">
+                <PostCard
+                  v-for="post in posts"
+                  :key="post.id"
+                  :avatar-size="40"
+                  hoverable
+                  :post="post"
+                  :show-owner-role="true"
+                  variant="feed"
+                >
+                  <template v-if="$slots['post-actions']" #header-actions>
+                    <slot name="post-actions" :post="post" />
+                  </template>
+                </PostCard>
+              </div>
 
-                <v-col v-if="posts.length === 0" cols="12">
-                  <p>{{ emptyPostsText }}</p>
-                </v-col>
-              </v-row>
+              <p v-else class="profile-posts-empty">
+                {{ emptyPostsText }}
+              </p>
             </v-card-text>
           </v-card>
         </v-col>
@@ -202,6 +202,23 @@
 .profile-card {
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.profile-posts-card {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.profile-posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.profile-posts-empty {
+  color: #64748b;
+  font-size: 15px;
+  margin: 0;
 }
 
 a {
