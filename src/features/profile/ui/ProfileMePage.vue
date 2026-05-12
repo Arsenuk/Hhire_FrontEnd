@@ -134,6 +134,13 @@
         <v-form ref="postFormRef">
           <v-text-field v-model="editPostForm.title" label="Title" :rules="postRules.title" />
           <v-textarea v-model="editPostForm.content" label="Content" :rules="postRules.content" />
+          <v-select
+            v-model="editPostForm.intent"
+            item-title="label"
+            item-value="value"
+            :items="intentOptions"
+            label="Intent"
+          />
           <v-combobox
             v-model="editPostForm.tags"
             chips
@@ -141,6 +148,20 @@
             hide-selected
             label="Tags"
             multiple
+            :rules="postRules.tags"
+          />
+          <v-checkbox
+            v-model="editPostForm.removeImages"
+            density="compact"
+            hide-details
+            label="Remove current images"
+          />
+          <v-file-input
+            v-model="editPostForm.imageFiles"
+            accept="image/*"
+            label="Replace images"
+            multiple
+            show-size
           />
         </v-form>
       </v-card-text>
@@ -249,6 +270,7 @@
     editPostForm,
     errorMessage,
     formRef,
+    intentOptions,
     isOwnPost,
     linkForm,
     linkFormRef,

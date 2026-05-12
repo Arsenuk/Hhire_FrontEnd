@@ -2,6 +2,15 @@ import { computed, ref } from 'vue'
 import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
 import { api } from '@/shared/api/api.js'
 
+const intentOptions = [
+  { label: 'General', value: 'general' },
+  { label: 'Job', value: 'job' },
+  { label: 'Mentorship', value: 'mentorship' },
+  { label: 'Partnership', value: 'partnership' },
+  { label: 'Hire', value: 'hire' },
+  { label: 'Offer', value: 'offer' },
+]
+
 export function useProfilePosts ({ user, loading, errorMessage, successMessage }) {
   const posts = ref([])
   const editingPostDialog = ref(false)
@@ -14,12 +23,16 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
     id: null,
     title: '',
     content: '',
+    intent: 'general',
     tags: [],
+    imageFiles: [],
+    removeImages: false,
   })
 
   const postRules = {
     title: [value => !!value || 'Title is required'],
     content: [value => !!value || 'Content is required'],
+    tags: [value => Boolean(value?.length) || 'Add at least one tag'],
   }
 
   function setPosts (nextPosts = []) {
@@ -38,7 +51,10 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
       id: post.id,
       title: post.title,
       content: post.content,
+      intent: post.intent || 'general',
       tags: [...(post.tags || [])],
+      imageFiles: [],
+      removeImages: false,
     }
   }
 
@@ -57,19 +73,37 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
     successMessage.value = ''
 
     try {
-      await api.put(`/posts/${editPostForm.value.id}`, {
-        title: editPostForm.value.title,
-        content: editPostForm.value.content,
-        tags: editPostForm.value.tags,
+      const formData = new FormData()
+      const imageFiles = Array.isArray(editPostForm.value.imageFiles)
+        ? editPostForm.value.imageFiles
+        : [editPostForm.value.imageFiles].filter(Boolean)
+
+      formData.append('title', editPostForm.value.title)
+      formData.append('content', editPostForm.value.content)
+      formData.append('intent', editPostForm.value.intent)
+      formData.append('removeImages', editPostForm.value.removeImages ? 'true' : 'false')
+
+      const tags = editPostForm.value.tags || []
+
+      for (const tag of tags) {
+        formData.append('tags', tag)
+      }
+
+      for (const file of imageFiles) {
+        formData.append('images', file)
+      }
+
+      const { data } = await api.put(`/posts/${editPostForm.value.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       })
 
       const index = posts.value.findIndex(post => post.id === editPostForm.value.id)
       if (index !== -1) {
+        const updatedPost = data?.post || {}
         posts.value[index] = {
           ...posts.value[index],
-          title: editPostForm.value.title,
-          content: editPostForm.value.content,
-          tags: [...editPostForm.value.tags],
+          ...updatedPost,
+          owner: posts.value[index].owner,
         }
       }
 
@@ -114,6 +148,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
     deleteConfirmedPost,
     editingPostDialog,
     editPostForm,
+    intentOptions,
     isOwnPost,
     openDeletePost,
     postFormRef,
