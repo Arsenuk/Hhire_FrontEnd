@@ -1,8 +1,8 @@
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks.js'
 import { api } from '@/shared/api/api.js'
 
-export function useProfileContacts ({ loading, errorMessage, successMessage }) {
+export function useProfileContacts ({ loading, errorMessage, successMessage, showToast }) {
   const contacts = ref([])
   const showContactDialog = ref(false)
   const contactFormRef = ref(null)
@@ -10,6 +10,8 @@ export function useProfileContacts ({ loading, errorMessage, successMessage }) {
 
   const showDeleteContactDialog = ref(false)
   const contactToDelete = ref(null)
+  const contactInfoVisible = ref(false)
+  const showContactVisibilityDialog = ref(false)
 
   const contactForm = ref({
     url: '',
@@ -21,8 +23,16 @@ export function useProfileContacts ({ loading, errorMessage, successMessage }) {
     value => isSupportedContactLink(value) || 'Use email, phone, LinkedIn, or Telegram',
   ]
 
+  const nextContactInfoVisible = computed(() => !contactInfoVisible.value)
+  const contactVisibilityAction = computed(() => nextContactInfoVisible.value ? 'show' : 'hide')
+  const contactVisibilityIcon = computed(() => contactInfoVisible.value ? 'mdi-eye' : 'mdi-eye-off')
+
   function setContacts (nextContacts = []) {
     contacts.value = nextContacts
+  }
+
+  function setContactInfoVisible (visible = false) {
+    contactInfoVisible.value = Boolean(visible)
   }
 
   function openAddContact () {
@@ -92,19 +102,55 @@ export function useProfileContacts ({ loading, errorMessage, successMessage }) {
     }
   }
 
+  function openContactVisibilityDialog () {
+    showContactVisibilityDialog.value = true
+  }
+
+  async function confirmContactVisibilityChange () {
+    const nextVisible = nextContactInfoVisible.value
+
+    loading.value = true
+    errorMessage.value = ''
+    successMessage.value = ''
+
+    try {
+      const res = await api.put('/me/contact-visibility', {
+        visible: nextVisible,
+      })
+
+      contactInfoVisible.value = Boolean(res.data?.contactInfoVisible)
+      const message = contactInfoVisible.value
+        ? 'Contact info is now visible to other users'
+        : 'Contact info is now hidden from other users'
+      showToast?.(message, 'success')
+    } catch (error) {
+      errorMessage.value = error.response?.data?.error || error.message || 'Failed to update contact visibility'
+    } finally {
+      loading.value = false
+      showContactVisibilityDialog.value = false
+    }
+  }
+
   return {
+    confirmContactVisibilityChange,
     contactForm,
     contactFormRef,
+    contactInfoVisible,
     contactRules,
+    contactVisibilityAction,
+    contactVisibilityIcon,
     contacts,
     deleteConfirmedContact,
     editingContact,
     openAddContact,
+    openContactVisibilityDialog,
     openDeleteContact,
     openEditContact,
     saveContact,
+    setContactInfoVisible,
     setContacts,
     showContactDialog,
+    showContactVisibilityDialog,
     showDeleteContactDialog,
   }
 }

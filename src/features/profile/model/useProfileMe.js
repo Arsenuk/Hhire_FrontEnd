@@ -7,6 +7,7 @@ import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'
 import { useProfileContacts } from '@/features/profile/model/useProfileContacts.js'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
 
 export function useProfileMe () {
   const authStore = useAuthStore()
@@ -15,6 +16,7 @@ export function useProfileMe () {
   const loading = ref(false)
   const errorMessage = ref('')
   const successMessage = ref('')
+  const { showToast, snackbar } = useSnackbar()
 
   const editMode = ref(false)
   const profileEditorOpen = ref(false)
@@ -40,6 +42,7 @@ export function useProfileMe () {
   const profileContacts = useProfileContacts({
     errorMessage,
     loading,
+    showToast,
     successMessage,
   })
 
@@ -66,6 +69,7 @@ export function useProfileMe () {
 
       authStore.setUser(normalizedUser)
       profileContacts.setContacts(normalizeContactsToLinks(contactsResponse.data || []))
+      profileContacts.setContactInfoVisible(normalizedUser.contactInfoVisible)
       profileLinks.setLinks(normalizeUsefulLinks(linksResponse.data || []))
       profilePosts.setPosts(postsResponse.data?.posts || [])
 
@@ -148,6 +152,7 @@ export function useProfileMe () {
     openProfileEditor,
     profileEditorOpen,
     saveProfile,
+    snackbar,
     successMessage,
     user,
     ...profileContacts,

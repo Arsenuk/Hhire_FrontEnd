@@ -31,7 +31,10 @@
     </template>
 
     <template #contact-title-actions>
-      <v-btn v-if="editMode" icon="mdi-plus" size="small" @click="openAddContact" />
+      <div v-if="editMode" class="contact-title-actions">
+        <v-btn :icon="contactVisibilityIcon" size="small" @click="openContactVisibilityDialog" />
+        <v-btn icon="mdi-plus" size="small" @click="openAddContact" />
+      </div>
     </template>
 
     <template #contact-append="{ contact }">
@@ -245,6 +248,41 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <v-dialog v-model="showContactVisibilityDialog" max-width="440">
+    <v-card class="confirm-card">
+      <v-card-title class="confirm-title">
+        Change contact visibility
+      </v-card-title>
+
+      <v-card-text class="confirm-text">
+        You are about to {{ contactVisibilityAction }} your contact info for other users.
+        <br>
+        Please confirm this change.
+      </v-card-text>
+
+      <v-card-actions class="confirm-actions">
+        <v-spacer />
+        <v-btn class="confirm-cancel" variant="text" @click="showContactVisibilityDialog = false">
+          Cancel
+        </v-btn>
+        <v-btn class="confirm-save" :loading="loading" @click="confirmContactVisibilityChange">
+          Confirm
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
+  <v-snackbar
+    v-model="snackbar.show"
+    :color="snackbar.color"
+    location="bottom"
+    multi-line
+    rounded="pill"
+    timeout="2500"
+  >
+    {{ snackbar.text }}
+  </v-snackbar>
 </template>
 
 <script setup>
@@ -257,8 +295,11 @@
     contactForm,
     contactFormRef,
     contactRules,
+    contactVisibilityAction,
+    contactVisibilityIcon,
     contacts,
     closeEditMode,
+    confirmContactVisibilityChange,
     deleteConfirmedContact,
     deleteConfirmedLink,
     deleteConfirmedPost,
@@ -279,6 +320,7 @@
     nameRules,
     openAddContact,
     openAddLink,
+    openContactVisibilityDialog,
     openDeleteContact,
     openDeleteLink,
     openDeletePost,
@@ -295,11 +337,13 @@
     saveContact,
     saveProfile,
     showContactDialog,
+    showContactVisibilityDialog,
     showDeleteContactDialog,
     showDeleteLinkDialog,
     showDeletePostDialog,
     showLinkDialog,
     startEditPost,
+    snackbar,
     successMessage,
     urlRules,
     user,
@@ -328,6 +372,11 @@
 
 .post-actions {
   display: flex;
+  gap: 6px;
+}
+
+.contact-title-actions {
+  display: inline-flex;
   gap: 6px;
 }
 
@@ -367,5 +416,18 @@
 
 .confirm-delete:hover {
   background: #dc2626;
+}
+
+.confirm-save {
+  background: #14b8a6;
+  color: #020617;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 6px 18px;
+}
+
+.confirm-save:hover {
+  background: #0f766e;
+  color: #fff;
 }
 </style>
