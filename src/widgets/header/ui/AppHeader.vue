@@ -85,6 +85,7 @@
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
   import { api } from '@/shared/api/api.js'
+  import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess.js'
 
   const route = useRoute()
   const router = useRouter()
@@ -92,29 +93,38 @@
 
   const isLoggedIn = computed(() => authStore.isLoggedIn)
   const user = computed(() => authStore.user)
+  const hasAdminPanelAccess = computed(() => canAccessAdminPanel(user.value))
 
-  const navLinks = computed(() =>
-    isLoggedIn.value
-      ? [
+  const navLinks = computed(() => {
+    if (isLoggedIn.value) {
+      const links = [
         { label: 'Feed', to: '/feed' },
         { label: 'Contacts', to: '/contacts' },
       ]
-      : [
-        { label: 'Get Started', to: '/' },
-        { label: 'Feed', to: '/feed' },
-      ],
-  )
 
-  const isActive = path => route.path === path
+      if (hasAdminPanelAccess.value) {
+        links.push({ label: 'Admin Panel', to: '/AdminPanel' })
+      }
 
-  async function logout() {
+      return links
+    }
+
+    return [
+      { label: 'Get Started', to: '/' },
+      { label: 'Feed', to: '/feed' },
+    ]
+  })
+
+  const isActive = path => route.path.toLowerCase() === path.toLowerCase()
+
+  async function logout () {
     await authStore.logout()
     router.push('/')
   }
 
   const unansweredSignals = ref(0)
 
-  async function fetchUnansweredSignals() {
+  async function fetchUnansweredSignals () {
     if (!isLoggedIn.value) return
     try {
       const res = await api.get('/conversations/inbox')

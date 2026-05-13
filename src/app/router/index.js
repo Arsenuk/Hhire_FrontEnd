@@ -7,6 +7,8 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
+import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess.js'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,6 +28,32 @@ router.onError((err, to) => {
   } else {
     console.error(err)
   }
+})
+
+router.beforeEach(async to => {
+  if (to.path.toLowerCase() !== '/adminpanel') {
+    return true
+  }
+
+  const authStore = useAuthStore()
+
+  if (authStore.accessToken && !authStore.user) {
+    try {
+      await authStore.fetchMe()
+    } catch (error) {
+      console.error('Failed to verify admin panel access', error)
+    }
+  }
+
+  if (!authStore.isLoggedIn) {
+    return '/login'
+  }
+
+  if (!canAccessAdminPanel(authStore.user)) {
+    return '/feed'
+  }
+
+  return true
 })
 
 router.isReady().then(() => {
