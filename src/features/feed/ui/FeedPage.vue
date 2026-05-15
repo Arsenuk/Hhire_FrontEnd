@@ -3,26 +3,61 @@
     <v-row>
       <v-col cols="12" md="2">
         <v-card class="filter-card">
-          <v-card-title>Filters</v-card-title>
-          <v-card-text>
-            <v-row dense>
-              <v-list-item
-                v-for="tag in allTags"
-                :key="tag"
-                class="filter-list-item"
-                dense
-                @click="toggleTag(tag)"
-              >
-                <v-chip class="filter-chip" :class="{ 'filter-chip-selected': selectedTags.includes(tag) }" outlined small>
-                  {{ tag }}
-                </v-chip>
-              </v-list-item>
-            </v-row>
+          <section class="filter-section">
+            <h2 class="filter-title">Intent</h2>
 
-            <v-btn class="mt-4 clear-btn" small @click="clearFilters">
-              Clear
-            </v-btn>
-          </v-card-text>
+            <button
+              v-for="intent in intentOptions"
+              :key="intent.value"
+              class="filter-option"
+              type="button"
+              @click="toggleIntent(intent.value)"
+            >
+              <span
+                class="filter-box"
+                :class="{ 'filter-box--active': selectedIntents.includes(intent.value) }"
+              />
+              <span class="filter-label">{{ intent.label }}</span>
+              <span class="filter-count">{{ intentCounts[intent.value] || 0 }}</span>
+            </button>
+
+            <button
+              v-if="selectedIntents.length"
+              class="clear-section-btn"
+              type="button"
+              @click="clearIntentFilters"
+            >
+              All intents
+            </button>
+          </section>
+
+          <section class="filter-section filter-section--separated">
+            <h2 class="filter-title">User Types</h2>
+
+            <button
+              v-for="type in userTypeOptions"
+              :key="type.value"
+              class="filter-option"
+              type="button"
+              @click="selectUserType(type.value)"
+            >
+              <span
+                class="filter-radio"
+                :class="{ 'filter-radio--active': selectedUserType === type.value }"
+              />
+              <span class="filter-label">{{ type.label }}</span>
+              <span class="filter-count">{{ userTypeCounts[type.value] || 0 }}</span>
+            </button>
+          </section>
+
+          <button
+            v-if="selectedIntents.length || selectedTags.length || selectedUserType !== 'all'"
+            class="clear-btn"
+            type="button"
+            @click="clearFilters"
+          >
+            Clear
+          </button>
         </v-card>
       </v-col>
 
@@ -93,19 +128,27 @@
   import { useFeed } from '@/features/feed/model/useFeed.js'
 
   const {
-    allTags,
+    clearIntentFilters,
     clearFilters,
     goToProfile,
     hasMorePosts,
+    intentCounts,
+    intentOptions,
     isLoading,
     isLoadingMore,
     loadMoreTrigger,
     posts,
+    selectUserType,
+    selectedIntents,
     selectedTags,
+    selectedUserType,
     sortType,
     sortedPosts,
+    toggleIntent,
     toggleTag,
     topTags,
+    userTypeCounts,
+    userTypeOptions,
   } = useFeed()
 </script>
 
@@ -119,53 +162,134 @@
 }
 
 .filter-card {
-  border-radius: 16px;
-  padding: 16px;
+  border: 1px solid #dfe3ea;
+  border-radius: 8px;
+  padding: 18px 16px;
   background-color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: none;
 }
 
-.filter-card .v-card-title {
+.filter-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-section--separated {
+  border-top: 1px solid #edf0f4;
+  margin-top: 14px;
+  padding-top: 14px;
+}
+
+.filter-title {
+  color: #111827;
   font-weight: 700;
-  font-size: 18px;
-  padding-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.3;
+  margin: 0 0 4px;
 }
 
-.filter-chip {
-  border-radius: 999px;
-  border: 1px solid #97e5ee;
-  background-color: #fff;
-  color: #000;
-  transition: all 0.2s;
+.filter-option {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #1f2937;
   cursor: pointer;
+  display: grid;
+  font-family: inherit;
   font-size: 14px;
+  font-weight: 500;
+  gap: 10px;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  min-height: 16px;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.filter-option:hover .filter-label {
+  color: #0f62fe;
+}
+
+.filter-box,
+.filter-radio {
+  border: 1px solid #9ca3af;
+  display: inline-flex;
+  height: 14px;
+  width: 14px;
+}
+
+.filter-box--active {
+  align-items: center;
+  background: #0f6fff;
+  border-color: #0f6fff;
+  justify-content: center;
+}
+
+.filter-box--active::after {
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  content: "";
+  height: 7px;
+  transform: rotate(45deg) translate(-1px, -1px);
+  width: 4px;
+}
+
+.filter-radio {
+  border-radius: 50%;
+}
+
+.filter-radio--active {
+  border-color: #111827;
+  box-shadow: inset 0 0 0 3px #fff;
+  background: #111827;
+}
+
+.filter-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-count {
+  color: #64748b;
+  font-size: 12px;
   font-weight: 500;
 }
 
-.filter-chip-selected {
-  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
-  color: #000;
-  font-weight: 600;
-  border: none;
-}
-
-.filter-chip:hover {
-  background: rgba(151, 229, 238, 0.2);
-}
-
 .clear-btn {
-  width: 100%;
-  border-radius: 14px;
-  height: 40px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #edf0f4;
+  color: #64748b;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
   font-weight: 600;
-  text-transform: none;
-  background: #f0f0f0;
-  color: #333;
-  margin-top: 20px;
+  margin-top: 14px;
+  padding: 12px 0 0;
+  text-align: left;
+  width: 100%;
+}
+
+.clear-section-btn {
+  background: transparent;
+  border: 0;
+  color: #64748b;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 0 0 24px;
+  text-align: left;
+}
+
+.clear-section-btn:hover {
+  color: #0f62fe;
 }
 
 .clear-btn:hover {
-  background: #e0e0e0;
+  color: #0f62fe;
 }
 
 .active-sort-btn {
@@ -191,6 +315,12 @@
   background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
   color: #000;
   text-transform: none;
+  font-weight: 600;
+}
+
+.filter-chip-selected {
+  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  color: #000;
   font-weight: 600;
 }
 

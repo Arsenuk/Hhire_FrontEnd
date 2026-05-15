@@ -1,4 +1,4 @@
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
 import { api } from '@/shared/api/api.js'
@@ -22,9 +22,25 @@ export function useFeed () {
 
   const sortType = ref('latest')
 
-  const allTags = ref([])
+  const selectedIntents = ref([])
   const selectedTags = ref([])
+  const selectedUserType = ref('all')
   const currentUser = computed(() => authStore.user)
+
+  const intentOptions = [
+    { label: 'General', value: 'general' },
+    { label: 'Jobs', value: 'job' },
+    { label: 'Mentorship', value: 'mentorship' },
+    { label: 'Partnership', value: 'partnership' },
+    { label: 'Hiring', value: 'hire' },
+    { label: 'Offers', value: 'offer' },
+  ]
+
+  const userTypeOptions = [
+    { label: 'All', value: 'all' },
+    { label: 'User', value: 'user' },
+    { label: 'Company', value: 'company' },
+  ]
 
   function isNearPageBottom () {
     const scrollTop = window.scrollY || document.documentElement.scrollTop
@@ -40,18 +56,15 @@ export function useFeed () {
     }
   }
 
-  function updateTags () {
-    const tagsSet = new Set()
-
-    for (const post of allPosts.value) {
-      if (post.tags) {
-        for (const tag of post.tags) {
-          tagsSet.add(tag)
-        }
-      }
+  function buildFeedParams (params = {}) {
+    return {
+      limit: pageSize,
+      sort: 'new',
+      ...(selectedIntents.value.length ? { intents: selectedIntents.value.join(',') } : {}),
+      ...(selectedTags.value.length ? { tags: selectedTags.value.join(',') } : {}),
+      ...(selectedUserType.value !== 'all' ? { type: selectedUserType.value } : {}),
+      ...params,
     }
-
-    allTags.value = Array.from(tagsSet)
   }
 
   async function loadPosts () {
@@ -61,10 +74,7 @@ export function useFeed () {
 
     try {
       const res = await api.get('/posts/feed', {
-        params: {
-          limit: pageSize,
-          sort: 'new',
-        },
+        params: buildFeedParams(),
       })
       const rawPosts = res.data.posts || res.data || []
 
@@ -73,7 +83,6 @@ export function useFeed () {
       nextCursor.value = res.data.nextCursor || null
       hasMorePosts.value = Boolean(nextCursor.value) && rawPosts.length === pageSize
 
-      updateTags()
     } catch (error) {
       console.error('Failed to load feed', error)
     } finally {
@@ -82,17 +91,16 @@ export function useFeed () {
   }
 
   async function loadMorePosts () {
-    if (isLoading.value || isLoadingMore.value || !hasMorePosts.value) return
+    if (isLoading.value || isLoadingMore.value || !hasMorePosts.value || !nextCursor.value) return
 
     isLoadingMore.value = true
+    let loadedSuccessfully = false
 
     try {
       const res = await api.get('/posts/feed', {
-        params: {
+        params: buildFeedParams({
           cursor: nextCursor.value,
-          limit: pageSize,
-          sort: 'new',
-        },
+        }),
       })
       const rawPosts = res.data.posts || []
       const nextPosts = normalizePosts(rawPosts)
@@ -104,17 +112,18 @@ export function useFeed () {
       nextCursor.value = res.data.nextCursor || null
       hasMorePosts.value = Boolean(nextCursor.value) && rawPosts.length === pageSize && uniquePosts.length > 0
 
-      updateTags()
+      loadedSuccessfully = true
     } catch (error) {
       console.error('Failed to load more feed posts', error)
+      hasMorePosts.value = false
     } finally {
       isLoadingMore.value = false
 
-      if (hasMorePosts.value) {
+      if (loadedSuccessfully && hasMorePosts.value) {
         await nextTick()
 
         if (isNearPageBottom()) {
-          loadMorePosts()
+          await loadMorePosts()
         }
       }
     }
@@ -135,27 +144,73 @@ export function useFeed () {
     observer.observe(loadMoreTrigger.value)
   }
 
+  function toggleIntent (intent) {
+    if (selectedIntents.value.includes(intent)) {
+      selectedIntents.value = selectedIntents.value.filter(item => item !== intent)
+      return
+    }
+
+    selectedIntents.value = [...selectedIntents.value, intent]
+  }
+
+  function clearIntentFilters () {
+    selectedIntents.value = []
+  }
+
   function toggleTag (tag) {
     if (selectedTags.value.includes(tag)) {
       selectedTags.value = selectedTags.value.filter(item => item !== tag)
       return
     }
 
-    selectedTags.value.push(tag)
+    selectedTags.value = [...selectedTags.value, tag]
+  }
+
+  function selectUserType (type) {
+    selectedUserType.value = type
   }
 
   function clearFilters () {
+    selectedIntents.value = []
     selectedTags.value = []
+    selectedUserType.value = 'all'
   }
 
   const sortedPosts = computed(() => {
-    const result = selectedTags.value.length === 0
-      ? posts.value.slice()
-      : posts.value.filter(post =>
-          post.tags?.some(tag => selectedTags.value.includes(tag)),
-        )
+    const result = posts.value.slice()
 
     return result.toSorted((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  })
+
+  const intentCounts = computed(() => {
+    const counts = {
+      all: allPosts.value.length,
+    }
+
+    for (const post of allPosts.value) {
+      const intent = post.intent || 'general'
+      counts[intent] = (counts[intent] || 0) + 1
+    }
+
+    return counts
+  })
+
+  const userTypeCounts = computed(() => {
+    const counts = {
+      all: allPosts.value.length,
+      user: 0,
+      company: 0,
+    }
+
+    for (const post of allPosts.value) {
+      if (post.company_id || post.owner?.role === 'company') {
+        counts.company += 1
+      } else {
+        counts.user += 1
+      }
+    }
+
+    return counts
   })
 
   const topTags = computed(() => {
@@ -193,21 +248,41 @@ export function useFeed () {
     window.removeEventListener('scroll', handleScroll)
   })
 
+  watch(
+    [() => selectedIntents.value.join('|'), () => selectedTags.value.join('|'), selectedUserType],
+    async () => {
+      await loadPosts()
+      await nextTick()
+
+      if (isNearPageBottom()) {
+        loadMorePosts()
+      }
+    },
+  )
+
   return {
     allPosts,
-    allTags,
+    clearIntentFilters,
     clearFilters,
     goToProfile,
     hasMorePosts,
+    intentCounts,
+    intentOptions,
     isLoading,
     isLoadingMore,
     loadMoreTrigger,
     loadMorePosts,
     posts,
+    selectedIntents,
     selectedTags,
+    selectedUserType,
+    selectUserType,
     sortType,
     sortedPosts,
+    toggleIntent,
     toggleTag,
     topTags,
+    userTypeCounts,
+    userTypeOptions,
   }
 }
