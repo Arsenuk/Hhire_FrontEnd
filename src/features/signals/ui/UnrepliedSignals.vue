@@ -213,8 +213,8 @@
   height: 34px;
   padding: 0 14px;
   border-radius: 12px !important;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: #ffffff;
+  background: linear-gradient(90deg, #D3FFAD, #97E5EE);
+  color: #000000;
   font-weight: 600;
   font-size: 12px;
   text-transform: none;
@@ -392,8 +392,8 @@
 }
 
 .btn-accept {
-  color: #ffffff;
-  background: linear-gradient(135deg, #10b981, #2563eb);
+  color: #000000;
+  background: linear-gradient(135deg, #9BFF43, #31EAFF);
   box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
 }
 

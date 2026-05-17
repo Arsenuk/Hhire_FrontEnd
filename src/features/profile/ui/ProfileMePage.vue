@@ -352,10 +352,12 @@
 
 <style scoped>
 .edit-btn {
-  background: #14b8a6;
+  background: linear-gradient(90deg, #D3FFAD, #97E5EE);
   color: #020617;
   font-weight: 600;
-  border-radius: 12px;
+  border-radius: 20px;
+  border-color: black;
+  border-width: 1pt;
 }
 
 .profile-edit-actions {

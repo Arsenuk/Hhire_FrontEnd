@@ -391,8 +391,8 @@ function tagLabel(tag) {
   padding: 6px 16px;
   border-radius: 999px;
   background: #e9fbef;
-  border: 1px solid #b7edc7;
-  color: #166534;
+  border: 1px solid #D3FFAD;
+  color: #73AA43;
   font-size: 14px;
   font-weight: 700;
   line-height: 1.1;
@@ -400,9 +400,9 @@ function tagLabel(tag) {
 }
 
 .post-card__role--company {
-  background: #fff7ed;
-  border-color: #fed7aa;
-  color: #9a3412;
+  background: #edfbfd;
+  border-color: #97E5EE;
+  color: #63B5BE;
 }
 
 .post-card__body {
@@ -511,9 +511,9 @@ function tagLabel(tag) {
 .post-card__intent-chip {
   min-height: 30px;
   padding-inline: 13px;
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  border-color: #cfcfcf;
+  background: transparent;
+  color: #3B6DBF;
   font-weight: 600;
 }
 
@@ -547,9 +547,9 @@ function tagLabel(tag) {
 .post-card__tags--feed :deep(.v-chip) {
   margin: 0;
   border-radius: 999px;
-  border-color: #bde8ed;
-  background: #f5fdfe;
-  color: #155e75;
+  border-color: #DBE7FF;
+  background: #E5E7EB;
+  color: #374151;
   font-weight: 600;
 }
 

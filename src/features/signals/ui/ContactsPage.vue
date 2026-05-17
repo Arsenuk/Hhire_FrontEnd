@@ -104,12 +104,13 @@
 }
 
 .nav-item:hover {
-  background: rgba(140, 240, 178, 0.207);
+  background: #e3fdff;
   transform: translateX(2px);
 }
 
 .nav-item.v-list-item--active {
-  background: rgba(119, 225, 110, 0.346);
+   background: linear-gradient(135deg, #9BFF43, #31EAFF);
+    color: #ffffff;
 }
 
 .nav-title {
@@ -122,7 +123,6 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #b3bced;
   box-shadow: 0 0 10px rgb(255, 255, 255);
 }
 

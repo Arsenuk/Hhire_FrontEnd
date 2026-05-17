@@ -208,7 +208,7 @@
 }
 
 .filter-option:hover .filter-label {
-  color: #0f62fe;
+  color: #73AA43;
 }
 
 .filter-box,
@@ -221,8 +221,8 @@
 
 .filter-box--active {
   align-items: center;
-  background: #0f6fff;
-  border-color: #0f6fff;
+  background: #73AA43;
+  border-color: #73AA43;
   justify-content: center;
 }
 
@@ -285,11 +285,11 @@
 }
 
 .clear-section-btn:hover {
-  color: #0f62fe;
+  color: #F50206;
 }
 
 .clear-btn:hover {
-  color: #0f62fe;
+  color: #F50206;
 }
 
 .active-sort-btn {

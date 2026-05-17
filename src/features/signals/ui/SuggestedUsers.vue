@@ -162,8 +162,8 @@
   height: 36px;
   padding: 0 18px;
   border-radius: 14px !important;
-  background: linear-gradient(135deg, #6366f1, #22c55e);
-  color: #ffffff;
+  background: linear-gradient(135deg, #9BFF43, #31EAFF);
+  color: #000000;
   font-weight: 600;
   font-size: 13px;
   text-transform: none;

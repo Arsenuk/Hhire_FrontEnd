@@ -185,7 +185,7 @@
 }
 
 .profile-header {
-  background: linear-gradient(135deg, #baf2b3, #7b91f2cc);
+  background: linear-gradient(170deg, #73AA43 20%, #63B5BE 50%);
   border-radius: 18px;
   padding: 24px;
 }
