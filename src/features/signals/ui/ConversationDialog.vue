@@ -22,7 +22,7 @@
           :ripple="false"
           class="toolbar-btn toolbar-btn--danger"
           title="Report"
-          @click="$emit('report')"
+          @click="reportDialog = true"
         >
           <v-icon>mdi-flag-outline</v-icon>
         </v-btn>
@@ -199,6 +199,54 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-dialog v-model="reportDialog" max-width="520px">
+      <v-card class="report-dialog">
+        <v-card-title class="report-dialog__title">
+          Report signal
+        </v-card-title>
+
+        <v-card-text class="report-dialog__body">
+          <p class="report-dialog__copy">
+            Tell us what is wrong with this signal. The report will be sent to moderation.
+          </p>
+
+          <v-select
+            v-model="reportTag"
+            :items="reportReasons"
+            item-title="label"
+            item-value="value"
+            label="Reason"
+            variant="outlined"
+          />
+
+          <v-textarea
+            v-model="reportComment"
+            auto-grow
+            label="Comment"
+            placeholder="Add context for moderators"
+            rows="4"
+            variant="outlined"
+          />
+        </v-card-text>
+
+        <v-card-actions class="report-dialog__actions">
+          <v-btn class="btn-secondary" :disabled="reportLoading" @click="closeReportDialog">
+            Cancel
+          </v-btn>
+
+          <v-btn
+            class="btn-report"
+            :disabled="!reportTag"
+            :loading="reportLoading"
+            prepend-icon="mdi-flag-outline"
+            @click="submitReport"
+          >
+            Send report
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-dialog>
 </template>
 
@@ -213,7 +261,7 @@
     'hide-conversation',
     'load-contacts',
     'reply',
-    'report',
+    'report-submit',
     'toggle-share',
     'update:modelValue',
   ])
@@ -287,10 +335,25 @@
       type: Boolean,
       default: false,
     },
+    reportLoading: {
+      type: Boolean,
+      default: false,
+    },
   })
 
   const replyMessage = ref('')
   const contactsDialog = ref(false)
+  const reportDialog = ref(false)
+  const reportTag = ref('other')
+  const reportComment = ref('')
+  const reportReasons = [
+    { label: 'Spam', value: 'spam' },
+    { label: 'Harassment', value: 'harassment' },
+    { label: 'Scam or fraud', value: 'scam' },
+    { label: 'Privacy violation', value: 'privacy_violation' },
+    { label: 'Impersonation', value: 'impersonation' },
+    { label: 'Other', value: 'other' },
+  ]
 
   function handleDialogToggle (value) {
     emit('update:modelValue', value)
@@ -308,16 +371,36 @@
     emit('load-contacts')
   }
 
+  function closeReportDialog () {
+    if (props.reportLoading) {
+      return
+    }
+
+    reportDialog.value = false
+    reportTag.value = 'other'
+    reportComment.value = ''
+  }
+
+  function submitReport () {
+    emit('report-submit', {
+      tag: reportTag.value,
+      comment: reportComment.value.trim(),
+      onDone: closeReportDialog,
+    })
+  }
+
   watch(() => props.modelValue, value => {
     if (!value) {
       replyMessage.value = ''
       contactsDialog.value = false
+      closeReportDialog()
     }
   })
 
   watch(() => props.conversation?.id, () => {
     replyMessage.value = ''
     contactsDialog.value = false
+    closeReportDialog()
   })
 </script>
 
@@ -527,6 +610,34 @@
 .contacts-dialog__actions {
   justify-content: flex-end;
   padding: 0 16px 16px;
+}
+
+.report-dialog {
+  border-radius: 20px !important;
+}
+
+.report-dialog__title {
+  font-weight: 800;
+}
+
+.report-dialog__body {
+  display: grid;
+  gap: 14px;
+}
+
+.report-dialog__copy {
+  color: #64748b;
+  margin: 0;
+}
+
+.report-dialog__actions {
+  justify-content: flex-end;
+  padding: 0 16px 16px;
+}
+
+.btn-report {
+  color: #ffffff;
+  background: linear-gradient(135deg, #dc2626, #f97316);
 }
 
 @media (max-width: 640px) {

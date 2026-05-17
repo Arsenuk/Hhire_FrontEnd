@@ -22,6 +22,7 @@ export function useSendSignals () {
   const shareLoading = ref(false)
   const hideLoading = ref(false)
   const closeLoading = ref(false)
+  const reportLoading = ref(false)
   const sharedContacts = ref([])
   const sharedContactsLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
@@ -184,8 +185,30 @@ export function useSendSignals () {
     navigateToProfile(router, id)
   }
 
-  function reportSignal () {
-    showToast('Report will be available soon', 'info')
+  async function reportSignal ({ tag, comment, onDone } = {}) {
+    if (!activeSignal.value?.messageId) {
+      showToast('Failed to prepare report', 'error')
+      return
+    }
+
+    reportLoading.value = true
+
+    try {
+      await api.post('/reports', {
+        targetType: 'message',
+        targetId: activeSignal.value.messageId,
+        tags: [tag || 'other'],
+        comment: comment || '',
+      })
+
+      onDone?.()
+      showToast('Report sent to moderation', 'success')
+    } catch (error) {
+      console.error(error)
+      showToast('Failed to send report', 'error')
+    } finally {
+      reportLoading.value = false
+    }
   }
 
   onMounted(fetchSignals)
@@ -207,6 +230,7 @@ export function useSendSignals () {
     loadingConversation,
     messages,
     openDialog,
+    reportLoading,
     reportSignal,
     shareContactInfo,
     shareLoading,

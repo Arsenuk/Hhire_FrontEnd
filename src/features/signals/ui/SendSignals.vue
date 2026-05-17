@@ -46,6 +46,7 @@
       :loading="loadingConversation"
       :messages="messages"
       :own-contacts-shared="activeSignal?.ownContactsShared"
+      :report-loading="reportLoading"
       :share-loading="shareLoading"
       :shared-contacts="sharedContacts"
       :shared-contacts-loading="sharedContactsLoading"
@@ -54,7 +55,7 @@
       @go-profile="goToProfile"
       @hide-conversation="hideConversation"
       @load-contacts="fetchSharedContacts"
-      @report="reportSignal"
+      @report-submit="reportSignal"
       @toggle-share="shareContactInfo"
     />
 
@@ -93,6 +94,7 @@
     loadingConversation,
     messages,
     openDialog,
+    reportLoading,
     reportSignal,
     shareContactInfo,
     shareLoading,

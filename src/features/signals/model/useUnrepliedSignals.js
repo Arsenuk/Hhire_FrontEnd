@@ -23,6 +23,7 @@ export function useUnrepliedSignals (updateNotify) {
   const shareLoading = ref(false)
   const hideLoading = ref(false)
   const closeLoading = ref(false)
+  const reportLoading = ref(false)
   const sharedContacts = ref([])
   const sharedContactsLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
@@ -225,8 +226,30 @@ export function useUnrepliedSignals (updateNotify) {
     }
   }
 
-  function reportSignal () {
-    showToast('Report will be available soon', 'info')
+  async function reportSignal ({ tag, comment, onDone } = {}) {
+    if (!activeSignal.value?.messageId) {
+      showToast('Failed to prepare report', 'error')
+      return
+    }
+
+    reportLoading.value = true
+
+    try {
+      await api.post('/reports', {
+        targetType: 'message',
+        targetId: activeSignal.value.messageId,
+        tags: [tag || 'other'],
+        comment: comment || '',
+      })
+
+      onDone?.()
+      showToast('Report sent to moderation', 'success')
+    } catch (error) {
+      console.error(error)
+      showToast('Failed to send report', 'error')
+    } finally {
+      reportLoading.value = false
+    }
   }
 
   function goToProfile (id) {
@@ -263,6 +286,7 @@ export function useUnrepliedSignals (updateNotify) {
     messages,
     openDialog,
     replyLoading,
+    reportLoading,
     reportSignal,
     respond,
     shareContactInfo,
