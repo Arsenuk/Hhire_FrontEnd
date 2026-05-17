@@ -204,7 +204,7 @@
   const statusOptions = [
     { label: 'All statuses', value: 'all' },
     { label: 'Active', value: 'active' },
-    { label: 'Pending', value: 'pending' },
+    // { label: 'Pending', value: 'pending' },
     { label: 'Frozen', value: 'frozen' },
     { label: 'Banned', value: 'banned' },
   ]
