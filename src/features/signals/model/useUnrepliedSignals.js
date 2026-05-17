@@ -33,6 +33,10 @@ export function useUnrepliedSignals (updateNotify) {
   const canReply = computed(() => activeSignal.value?.status === 'open')
   const canHide = computed(() => activeSignal.value?.status === 'closed')
   const canCloseConversation = computed(() => activeSignal.value?.status === 'open')
+  const isAwaitingMyCloseConfirmation = computed(() => Boolean(
+    activeSignal.value?.status === 'open' &&
+    activeSignal.value?.closeRequestedByCounterparty,
+  ))
 
   async function fetchSignals () {
     try {
@@ -187,7 +191,12 @@ export function useUnrepliedSignals (updateNotify) {
         outcome: 'success',
       }
 
-      showToast('Dialog closed', 'success')
+      showToast(
+        refreshed?.status === 'closed'
+          ? 'Dialog closed after both confirmations'
+          : 'Finish request sent. Waiting for the other side to confirm',
+        'success',
+      )
     } catch (error) {
       console.error(error)
       showToast('Failed to close dialog', 'error')
@@ -239,6 +248,7 @@ export function useUnrepliedSignals (updateNotify) {
     activeSignal,
     canCloseConversation,
     canHide,
+    isAwaitingMyCloseConfirmation,
     canReply,
     closeConversation,
     closeDialog,

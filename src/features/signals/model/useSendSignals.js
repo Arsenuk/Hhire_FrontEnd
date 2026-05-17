@@ -29,6 +29,10 @@ export function useSendSignals () {
   const currentUserId = computed(() => authStore.user?.id || null)
   const canHide = computed(() => activeSignal.value?.status === 'closed')
   const canCloseConversation = computed(() => activeSignal.value?.status === 'open')
+  const isAwaitingMyCloseConfirmation = computed(() => Boolean(
+    activeSignal.value?.status === 'open' &&
+    activeSignal.value?.closeRequestedByCounterparty,
+  ))
 
   async function fetchSignals () {
     try {
@@ -142,7 +146,12 @@ export function useSendSignals () {
         outcome: 'success',
       }
 
-      showToast('Dialog closed', 'success')
+      showToast(
+        refreshed?.status === 'closed'
+          ? 'Dialog closed after both confirmations'
+          : 'Finish request sent. Waiting for the other side to confirm',
+        'success',
+      )
     } catch (error) {
       console.error(error)
       showToast('Failed to close dialog', 'error')
@@ -185,6 +194,7 @@ export function useSendSignals () {
     activeSignal,
     canCloseConversation,
     canHide,
+    isAwaitingMyCloseConfirmation,
     closeConversation,
     closeDialog,
     closeLoading,

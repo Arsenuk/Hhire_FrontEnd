@@ -25,6 +25,8 @@ export function normalizeConversationSummary (conversation, view = 'inbox') {
     status: conversation.conversation_status,
     outcome: conversation.conversation_outcome,
     closedAt: conversation.closed_at,
+    closeRequestedByMe: Boolean(conversation.close_requested_by_me),
+    closeRequestedByCounterparty: Boolean(conversation.close_requested_by_counterparty),
     ownContactsShared: Boolean(conversation.own_contacts_shared),
     contactInfoSharedWithMe: Boolean(conversation.contact_info_shared_with_me),
     counterpart,

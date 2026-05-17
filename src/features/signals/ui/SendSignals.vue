@@ -42,6 +42,7 @@
       :conversation="activeSignal"
       :current-user-id="currentUserId"
       :hide-loading="hideLoading"
+      :is-awaiting-my-close-confirmation="isAwaitingMyCloseConfirmation"
       :loading="loadingConversation"
       :messages="messages"
       :own-contacts-shared="activeSignal?.ownContactsShared"
@@ -79,6 +80,7 @@
     activeSignal,
     canCloseConversation,
     canHide,
+    isAwaitingMyCloseConfirmation,
     closeConversation,
     closeDialog,
     closeLoading,

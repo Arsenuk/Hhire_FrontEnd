@@ -133,10 +133,10 @@
           v-else-if="canCloseConversation"
           class="btn-secondary"
           :loading="closeLoading"
-          prepend-icon="mdi-check-decagram-outline"
+          :prepend-icon="isAwaitingMyCloseConfirmation ? 'mdi-check-all' : 'mdi-timer-sand'"
           @click="$emit('close-conversation')"
         >
-          Finish dialog
+          {{ isAwaitingMyCloseConfirmation ? 'Confirm finish' : 'Request finish' }}
         </v-btn>
 
         <div class="actions-spacer" />
@@ -280,6 +280,10 @@
       default: false,
     },
     canCloseConversation: {
+      type: Boolean,
+      default: false,
+    },
+    isAwaitingMyCloseConfirmation: {
       type: Boolean,
       default: false,
     },
