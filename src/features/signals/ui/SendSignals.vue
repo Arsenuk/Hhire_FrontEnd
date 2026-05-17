@@ -11,14 +11,16 @@
           :ripple="false"
         >
           <UserPreview
+            clickable
             :avatar-size="40"
             :subtitle="signal.message"
-            :user="signal.receiver"
+            :user="signal.counterpart"
+            @click="goToProfile(signal.counterpart.id)"
           />
 
           <template #append>
-            <v-btn icon variant="text" class="delete-btn" @click="deleteSignal(signal)">
-              <v-icon size="20">mdi-close</v-icon>
+            <v-btn class="view-btn" @click="openDialog(signal)">
+              View
             </v-btn>
           </template>
         </v-list-item>
@@ -30,6 +32,30 @@
         </v-list-item>
       </v-list>
     </v-card-text>
+
+    <ConversationDialog
+      v-model="dialog"
+      :can-close-conversation="canCloseConversation"
+      :can-hide="canHide"
+      :close-loading="closeLoading"
+      :contact-info-shared-with-me="activeSignal?.contactInfoSharedWithMe"
+      :conversation="activeSignal"
+      :current-user-id="currentUserId"
+      :hide-loading="hideLoading"
+      :loading="loadingConversation"
+      :messages="messages"
+      :own-contacts-shared="activeSignal?.ownContactsShared"
+      :share-loading="shareLoading"
+      :shared-contacts="sharedContacts"
+      :shared-contacts-loading="sharedContactsLoading"
+      @close="closeDialog"
+      @close-conversation="closeConversation"
+      @go-profile="goToProfile"
+      @hide-conversation="hideConversation"
+      @load-contacts="fetchSharedContacts"
+      @report="reportSignal"
+      @toggle-share="shareContactInfo"
+    />
 
     <v-snackbar
       v-model="snackbar.show"
@@ -47,9 +73,29 @@
 <script setup>
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSendSignals } from '@/features/signals/model/useSendSignals.js'
+  import ConversationDialog from '@/features/signals/ui/ConversationDialog.vue'
 
   const {
-    deleteSignal,
+    activeSignal,
+    canCloseConversation,
+    canHide,
+    closeConversation,
+    closeDialog,
+    closeLoading,
+    currentUserId,
+    dialog,
+    fetchSharedContacts,
+    goToProfile,
+    hideConversation,
+    hideLoading,
+    loadingConversation,
+    messages,
+    openDialog,
+    reportSignal,
+    shareContactInfo,
+    shareLoading,
+    sharedContacts,
+    sharedContactsLoading,
     signals,
     snackbar,
   } = useSendSignals()
@@ -82,19 +128,15 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-.delete-btn {
-  opacity: 0.5;
-  transition: all 0.2s ease;
-  color: #ef4444;
-}
-
-.signal-item:hover .delete-btn {
-  opacity: 1;
-}
-
-.delete-btn:hover {
-  color: #dc2626;
-  background: rgba(239, 68, 68, 0.08);
+.view-btn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 12px !important;
+  background: linear-gradient(90deg, #d3ffad, #97e5ee);
+  color: #000000;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: none;
 }
 
 .no-signal {

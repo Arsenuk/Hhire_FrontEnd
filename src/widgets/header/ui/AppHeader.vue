@@ -128,7 +128,7 @@
     if (!isLoggedIn.value) return
     try {
       const res = await api.get('/conversations/inbox')
-      unansweredSignals.value = res.data.signals.length
+      unansweredSignals.value = (res.data.conversations || []).filter(item => item.conversation_status === 'open').length
     } catch (error) {
       console.error('Failed to fetch signals', error)
     }

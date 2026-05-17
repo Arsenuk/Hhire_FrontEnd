@@ -50,8 +50,8 @@
   const tabs = [
     { key: 'follows', label: 'Follows', component: Follows },
     { key: 'suggested', label: 'Suggested Users', component: SuggestedUsers },
-    { key: 'unreplied', label: 'Unreplied Signals', component: UnrepliedSignals },
-    { key: 'send', label: 'Send Signals', component: SendSignals },
+    { key: 'unreplied', label: 'Inbox', component: UnrepliedSignals },
+    { key: 'send', label: 'Sent Dialogs', component: SendSignals },
   ]
 
   const currentComponent = computed(() => {
