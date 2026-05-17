@@ -185,9 +185,18 @@ export function useSendSignals () {
     navigateToProfile(router, id)
   }
 
-  async function reportSignal ({ tag, comment, onDone } = {}) {
+  async function reportSignal ({ tags, onDone } = {}) {
     if (!activeSignal.value?.messageId) {
       showToast('Failed to prepare report', 'error')
+      return
+    }
+
+    const selectedTags = Array.isArray(tags)
+      ? tags.filter(Boolean)
+      : [tags].filter(Boolean)
+
+    if (!selectedTags.length) {
+      showToast('Please choose at least one reason', 'warning')
       return
     }
 
@@ -197,8 +206,7 @@ export function useSendSignals () {
       await api.post('/reports', {
         targetType: 'message',
         targetId: activeSignal.value.messageId,
-        tags: [tag || 'other'],
-        comment: comment || '',
+        tags: selectedTags,
       })
 
       onDone?.()

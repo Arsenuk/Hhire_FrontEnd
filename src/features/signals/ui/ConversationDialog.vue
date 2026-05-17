@@ -212,20 +212,13 @@
           </p>
 
           <v-select
-            v-model="reportTag"
+            v-model="reportTags"
             :items="reportReasons"
+            chips
             item-title="label"
             item-value="value"
             label="Reason"
-            variant="outlined"
-          />
-
-          <v-textarea
-            v-model="reportComment"
-            auto-grow
-            label="Comment"
-            placeholder="Add context for moderators"
-            rows="4"
+            multiple
             variant="outlined"
           />
         </v-card-text>
@@ -237,7 +230,7 @@
 
           <v-btn
             class="btn-report"
-            :disabled="!reportTag"
+            :disabled="!reportTags.length"
             :loading="reportLoading"
             prepend-icon="mdi-flag-outline"
             @click="submitReport"
@@ -344,8 +337,7 @@
   const replyMessage = ref('')
   const contactsDialog = ref(false)
   const reportDialog = ref(false)
-  const reportTag = ref('other')
-  const reportComment = ref('')
+  const reportTags = ref(['other'])
   const reportReasons = [
     { label: 'Spam', value: 'spam' },
     { label: 'Harassment', value: 'harassment' },
@@ -377,14 +369,12 @@
     }
 
     reportDialog.value = false
-    reportTag.value = 'other'
-    reportComment.value = ''
+    reportTags.value = ['other']
   }
 
   function submitReport () {
     emit('report-submit', {
-      tag: reportTag.value,
-      comment: reportComment.value.trim(),
+      tags: reportTags.value,
       onDone: closeReportDialog,
     })
   }

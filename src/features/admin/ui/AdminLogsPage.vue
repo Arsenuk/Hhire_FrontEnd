@@ -6,7 +6,7 @@
           <p class="admin-logs__eyebrow">Administration</p>
           <h1>Audit Logs</h1>
           <p class="admin-logs__subtitle">
-            Track admin actions, moderation decisions, and security-sensitive events.
+            Track staff actions, moderation decisions, and security-sensitive events.
           </p>
         </div>
 
@@ -53,7 +53,7 @@
             <thead>
               <tr>
                 <th>When</th>
-                <th>Admin</th>
+                <th>Actor</th>
                 <th>Action</th>
                 <th>Entity</th>
                 <th>Severity</th>
@@ -63,46 +63,49 @@
             </thead>
 
             <tbody>
-              <tr v-for="log in logs" :key="log.id">
-                <td>{{ formatDateTime(log.created_at) }}</td>
-                <td>
-                  <div class="admin-logs__admin">
-                    <div class="admin-logs__admin-id">#{{ log.admin_id }}</div>
-                  </div>
-                </td>
-                <td>
-                  <div class="admin-logs__action">{{ log.action }}</div>
-                </td>
-                <td>
-                  <div class="admin-logs__entity">
-                    <span>{{ log.entity_type }}</span>
-                    <span class="admin-logs__entity-id">#{{ log.entity_id }}</span>
-                  </div>
-                </td>
-                <td>
-                  <v-chip :color="getSeverityColor(log.severity)" size="small" variant="tonal">
-                    {{ log.severity }}
-                  </v-chip>
-                </td>
-                <td>{{ log.ip || '-' }}</td>
-                <td class="admin-logs__payload-cell">
-                  <v-btn
-                    v-if="hasPayload(log.payload)"
-                    size="small"
-                    variant="text"
-                    @click="toggleExpanded(log.id)"
-                  >
-                    {{ expandedLogId === log.id ? 'Hide payload' : 'View payload' }}
-                  </v-btn>
-                  <span v-else>-</span>
-                </td>
-              </tr>
+              <template v-for="log in logs" :key="log.id">
+                <tr>
+                  <td>{{ formatDateTime(log.created_at) }}</td>
+                  <td>
+                    <div class="admin-logs__admin">
+                      <div class="admin-logs__admin-id">#{{ log.actor_id ?? '-' }}</div>
+                      <div class="admin-logs__actor-role">{{ log.actor_role || '-' }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="admin-logs__action">{{ log.action }}</div>
+                  </td>
+                  <td>
+                    <div class="admin-logs__entity">
+                      <span>{{ log.entity_type }}</span>
+                      <span class="admin-logs__entity-id">#{{ log.entity_id }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <v-chip :color="getSeverityColor(log.severity)" size="small" variant="tonal">
+                      {{ log.severity }}
+                    </v-chip>
+                  </td>
+                  <td>{{ log.ip || '-' }}</td>
+                  <td class="admin-logs__payload-cell">
+                    <v-btn
+                      v-if="hasPayload(log.payload)"
+                      size="small"
+                      variant="text"
+                      @click="toggleExpanded(log.id)"
+                    >
+                      {{ expandedLogId === log.id ? 'Hide payload' : 'View payload' }}
+                    </v-btn>
+                    <span v-else>-</span>
+                  </td>
+                </tr>
 
-              <tr v-for="log in logs" v-show="expandedLogId === log.id" :key="`payload-${log.id}`">
-                <td colspan="7" class="admin-logs__payload-row">
-                  <pre>{{ formatPayload(log.payload) }}</pre>
-                </td>
-              </tr>
+                <tr v-if="expandedLogId === log.id">
+                  <td colspan="7" class="admin-logs__payload-row">
+                    <pre>{{ formatPayload(log.payload) }}</pre>
+                  </td>
+                </tr>
+              </template>
             </tbody>
           </v-table>
         </div>
@@ -331,6 +334,7 @@
 }
 
 .admin-logs__admin-id,
+.admin-logs__actor-role,
 .admin-logs__entity-id {
   color: #60716e;
   font-size: 13px;
