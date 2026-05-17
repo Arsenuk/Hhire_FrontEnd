@@ -31,7 +31,7 @@ router.onError((err, to) => {
 })
 
 router.beforeEach(async to => {
-  if (to.path.toLowerCase() !== '/adminpanel') {
+  if (!to.path.toLowerCase().startsWith('/adminpanel')) {
     return true
   }
 

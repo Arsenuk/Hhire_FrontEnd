@@ -28,7 +28,21 @@
             </div>
             <h2>{{ item.title }}</h2>
             <p>{{ item.description }}</p>
-            <v-chip size="small" variant="outlined">Coming soon</v-chip>
+
+            <div class="admin-panel__card-actions">
+              <v-btn
+                v-if="item.to"
+                color="primary"
+                variant="flat"
+                @click="router.push(item.to)"
+              >
+                Open
+              </v-btn>
+
+              <v-chip v-else size="small" variant="outlined">
+                Coming soon
+              </v-chip>
+            </div>
           </v-card-text>
         </v-card>
       </div>
@@ -38,9 +52,11 @@
 
 <script setup>
   import { computed } from 'vue'
+  import { useRouter } from 'vue-router'
   import { useAuthStore } from '@/features/auth/model/auth.store.js'
 
   const authStore = useAuthStore()
+  const router = useRouter()
 
   const roleLabel = computed(() => {
     const role = authStore.user?.role || 'staff'
@@ -55,6 +71,7 @@
       title: 'Users',
       description: 'Review users, roles, status, and account actions.',
       icon: 'mdi-account-group',
+      to: '/AdminPanelUsers',
     },
     {
       title: 'Posts',
@@ -65,11 +82,13 @@
       title: 'Signals',
       description: 'Inspect reported signals and conversation safety cases.',
       icon: 'mdi-message-alert-outline',
+      to: '/AdminPanelSignalReports',
     },
     {
       title: 'Audit Logs',
       description: 'Track staff actions and security-sensitive changes.',
       icon: 'mdi-shield-search',
+      to: '/AdminPanelLogs',
     },
   ]
 </script>

@@ -20,6 +20,9 @@ declare module 'vue-router/auto-routes' {
   export interface RouteNamedMap {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/AdminPanel': RouteRecordInfo<'/AdminPanel', '/AdminPanel', Record<never, never>, Record<never, never>>,
+    '/AdminPanelLogs': RouteRecordInfo<'/AdminPanelLogs', '/AdminPanelLogs', Record<never, never>, Record<never, never>>,
+    '/AdminPanelSignalReports': RouteRecordInfo<'/AdminPanelSignalReports', '/AdminPanelSignalReports', Record<never, never>, Record<never, never>>,
+    '/AdminPanelUsers': RouteRecordInfo<'/AdminPanelUsers', '/AdminPanelUsers', Record<never, never>, Record<never, never>>,
     '/Contacts': RouteRecordInfo<'/Contacts', '/Contacts', Record<never, never>, Record<never, never>>,
     '/CreatePost': RouteRecordInfo<'/CreatePost', '/CreatePost', Record<never, never>, Record<never, never>>,
     '/Feed': RouteRecordInfo<'/Feed', '/Feed', Record<never, never>, Record<never, never>>,
@@ -46,6 +49,18 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/AdminPanel.vue': {
       routes: '/AdminPanel'
+      views: never
+    }
+    'src/pages/AdminPanelLogs.vue': {
+      routes: '/AdminPanelLogs'
+      views: never
+    }
+    'src/pages/AdminPanelSignalReports.vue': {
+      routes: '/AdminPanelSignalReports'
+      views: never
+    }
+    'src/pages/AdminPanelUsers.vue': {
+      routes: '/AdminPanelUsers'
       views: never
     }
     'src/pages/Contacts.vue': {
