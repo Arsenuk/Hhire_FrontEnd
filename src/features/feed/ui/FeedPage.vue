@@ -125,7 +125,7 @@
 
 <script setup>
   import PostCard from '@/entities/post/ui/PostCard.vue'
-  import { useFeed } from '@/features/feed/model/useFeed.js'
+  import { useFeed } from '@/features/feed/model/useFeed'
 
   const {
     clearIntentFilters,

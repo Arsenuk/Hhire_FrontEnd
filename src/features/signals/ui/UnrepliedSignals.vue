@@ -77,7 +77,7 @@
 
 <script setup>
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
-  import { useUnrepliedSignals } from '@/features/signals/model/useUnrepliedSignals.js'
+  import { useUnrepliedSignals } from '@/features/signals/model/useUnrepliedSignals'
   import ConversationDialog from '@/features/signals/ui/ConversationDialog.vue'
 
   const props = defineProps({
