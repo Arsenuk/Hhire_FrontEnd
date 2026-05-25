@@ -3,7 +3,7 @@
     :class="['entity-user-preview', { 'entity-user-preview--clickable': clickable }]"
     @click="handleClick"
   >
-    <UserAvatar class="entity-user-preview__avatar" :size="avatarSize" :user="user" />
+    <UserAvatar class="entity-user-preview__avatar" :size="avatarSize" :user="userForPreview" />
 
     <div class="entity-user-preview__content">
       <div class="entity-user-preview__name">
@@ -17,33 +17,32 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { computed } from 'vue'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
+  import type { Nullable, User } from '@/shared/types'
 
-  const emit = defineEmits(['click'])
+  interface UserPreviewProps {
+    user?: User | null
+    subtitle?: Nullable<string>
+    avatarSize?: number | string
+    clickable?: boolean
+  }
 
-  const props = defineProps({
-    user: {
-      type: Object,
-      default: null,
-    },
-    subtitle: {
-      type: String,
-      default: '',
-    },
-    avatarSize: {
-      type: [Number, String],
-      default: 42,
-    },
-    clickable: {
-      type: Boolean,
-      default: false,
-    },
+  const emit = defineEmits<{
+    (event: 'click'): void
+  }>()
+
+  const props = withDefaults(defineProps<UserPreviewProps>(), {
+    user: null,
+    subtitle: '',
+    avatarSize: 42,
+    clickable: false,
   })
 
-  const displayName = computed(() => getUserDisplayName(props.user))
+  const userForPreview = computed(() => props.user ?? undefined)
+  const displayName = computed(() => getUserDisplayName(userForPreview.value))
 
   function handleClick() {
     if (props.clickable) {
