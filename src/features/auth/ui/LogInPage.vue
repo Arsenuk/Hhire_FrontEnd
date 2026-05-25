@@ -51,8 +51,8 @@
   </v-container>
 </template>
 
-<script setup>
-  import { useLogin } from '@/features/auth/model/useLogin.js'
+<script setup lang="ts">
+  import { useLogin } from '@/features/auth/model/useLogin'
 
   const {
     email,

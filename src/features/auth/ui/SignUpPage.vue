@@ -159,7 +159,7 @@
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { useSignUp } from '@/features/auth/model/useSignUp'
 
   const {

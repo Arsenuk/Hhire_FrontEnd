@@ -2,6 +2,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 
+type LoginError = {
+  message?: string
+}
+
 export function useLogin () {
   const authStore = useAuthStore()
   const router = useRouter()
@@ -21,9 +25,10 @@ export function useLogin () {
 
     try {
       await authStore.login(email.value.trim(), password.value)
-      router.push('/feed')
+      await router.push('/feed')
     } catch (error) {
-      loginError.value = error.message || 'Login failed'
+      const typedError = error as LoginError
+      loginError.value = typedError.message || 'Login failed'
     }
   }
 
