@@ -72,7 +72,7 @@
   import { normalizePosts } from '@/entities/post/lib/normalizePost'
   import { normalizeUser } from '@/entities/user/lib/normalizeUser'
   import { api } from '@/shared/api/api'
-  import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+  import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
   import { useAuthStore } from '@/features/auth/model/auth.store'
   import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
   import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'

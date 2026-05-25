@@ -8,7 +8,7 @@
   import { computed } from 'vue'
   import defaultAvatar from '@/shared/assets/default-avatar.png'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
-  import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
+  import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl'
 
   const props = defineProps({
     user: {

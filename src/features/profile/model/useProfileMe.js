@@ -7,7 +7,7 @@ import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'
 import { useProfileContacts } from '@/features/profile/model/useProfileContacts.js'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'
-import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 
 export function useProfileMe () {
   const authStore = useAuthStore()

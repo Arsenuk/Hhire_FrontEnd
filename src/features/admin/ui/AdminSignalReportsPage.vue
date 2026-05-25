@@ -235,7 +235,7 @@
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { api } from '@/shared/api/api'
-  import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+  import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 
   const router = useRouter()
   const { showToast, snackbar } = useSnackbar()

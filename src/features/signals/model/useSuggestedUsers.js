@@ -2,7 +2,7 @@ import { onMounted, ref } from 'vue'
 import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
-import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 

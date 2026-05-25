@@ -85,7 +85,7 @@
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store'
   import { api } from '@/shared/api/api'
-  import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess.js'
+  import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess'
 
   const route = useRoute()
   const router = useRouter()
