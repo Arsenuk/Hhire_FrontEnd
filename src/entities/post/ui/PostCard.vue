@@ -19,8 +19,8 @@
             {{ formattedDate }}
           </div>
 
-          <div v-if="post.tags?.length" class="post-card__tags post-card__tags--feed">
-            <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined">
+          <div v-if="postTags.length" class="post-card__tags post-card__tags--feed">
+            <v-chip v-for="tag in postTags" :key="tag" size="small" variant="outlined">
               {{ tagLabel(tag) }}
             </v-chip>
           </div>
@@ -149,8 +149,8 @@
         </v-chip>
       </div>
 
-      <div v-if="post.tags?.length" class="post-card__tags">
-        <v-chip v-for="tag in post.tags" :key="tag" size="small" variant="outlined" class="ma-1">
+      <div v-if="postTags.length" class="post-card__tags">
+        <v-chip v-for="tag in postTags" :key="tag" size="small" variant="outlined" class="ma-1">
           {{ tagLabel(tag) }}
         </v-chip>
       </div>
@@ -166,57 +166,63 @@
   </v-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, ref } from 'vue'
 import { formatPostDate } from '@/shared/lib/date/formatPostDate.js'
 import { API_ORIGIN } from '@/shared/config/api.js'
 import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl.js'
+import type { EntityId, Nullable, Post, PostOwner } from '@/shared/types'
 
-const props = defineProps({
-  post: {
-    type: Object,
-    required: true,
-  },
-  variant: {
-    type: String,
-    default: 'feed',
-  },
-  titlePlacement: {
-    type: String,
-    default: 'body',
-  },
-  tagPrefix: {
-    type: String,
-    default: '',
-  },
-  showOwnerRole: {
-    type: Boolean,
-    default: false,
-  },
-  ownerClickable: {
-    type: Boolean,
-    default: false,
-  },
-  hoverable: {
-    type: Boolean,
-    default: false,
-  },
-  avatarSize: {
-    type: Number,
-    default: 36,
-  },
+type PostCardVariant = 'feed' | 'profile'
+type PostCardTitlePlacement = 'header' | 'body'
+
+interface PostCardImage {
+  url?: Nullable<string>
+}
+
+type PostCardData = Omit<Post, 'owner'> & {
+  owner?: Nullable<PostOwner>
+  title?: Nullable<string>
+  content?: Nullable<string>
+  intent?: Nullable<string>
+  created_at?: Nullable<string>
+  images?: Nullable<Array<string | PostCardImage>>
+}
+
+interface PostCardProps {
+  post: PostCardData
+  variant?: PostCardVariant
+  titlePlacement?: PostCardTitlePlacement
+  tagPrefix?: string
+  showOwnerRole?: boolean
+  ownerClickable?: boolean
+  hoverable?: boolean
+  avatarSize?: number
+}
+
+const props = withDefaults(defineProps<PostCardProps>(), {
+  variant: 'feed',
+  titlePlacement: 'body',
+  tagPrefix: '',
+  showOwnerRole: false,
+  ownerClickable: false,
+  hoverable: false,
+  avatarSize: 36,
 })
 
-const emit = defineEmits(['owner-click'])
+const emit = defineEmits<{
+  (event: 'owner-click', ownerId: EntityId): void
+}>()
 const isImageDialogOpen = ref(false)
 
-const owner = computed(() => props.post?.owner || {})
-const ownerName = computed(() => owner.value.name || 'Unknown user')
-const ownerRole = computed(() => owner.value.role || '')
-const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value.avatar))
-const formattedDate = computed(() => formatPostDate(props.post?.created_at))
+const owner = computed(() => props.post.owner ?? null)
+const ownerName = computed(() => owner.value?.name || 'Unknown user')
+const ownerRole = computed(() => owner.value?.role || '')
+const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value?.avatar ?? null))
+const formattedDate = computed(() => formatPostDate(props.post.created_at))
+const postTags = computed<string[]>(() => (Array.isArray(props.post.tags) ? props.post.tags : []))
 const firstImageUrl = computed(() => {
-  const [image] = Array.isArray(props.post?.images) ? props.post.images : []
+  const [image] = Array.isArray(props.post.images) ? props.post.images : []
   const imageUrl = typeof image === 'string' ? image : image?.url
 
   if (!imageUrl) return ''
@@ -229,11 +235,11 @@ const cardClasses = computed(() => [
 ])
 
 function handleOwnerClick() {
-  if (!props.ownerClickable || !owner.value.id) return
+  if (!props.ownerClickable || owner.value?.id == null) return
   emit('owner-click', owner.value.id)
 }
 
-function tagLabel(tag) {
+function tagLabel(tag: string) {
   return props.tagPrefix ? `${props.tagPrefix}${tag}` : tag
 }
 </script>
