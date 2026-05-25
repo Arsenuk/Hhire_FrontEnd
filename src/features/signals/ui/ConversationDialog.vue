@@ -92,7 +92,7 @@
           <div v-else class="thread-list">
             <div
               v-for="item in messages"
-              :key="item.id"
+              :key="item.id ?? item.createdAt ?? item.message ?? ''"
               class="thread-bubble"
               :class="{ 'thread-bubble--mine': item.sender?.id === currentUserId }"
             >
@@ -181,8 +181,8 @@
           <v-list v-else class="contacts-list">
             <v-list-item
               v-for="contact in sharedContacts"
-              :key="contact.id"
-              :href="contact.url"
+              :key="contact.id ?? contact.url ?? contact.value ?? contact.description ?? ''"
+              :href="contact.url ?? undefined"
               rel="noopener noreferrer"
               target="_blank"
             >
@@ -243,102 +243,97 @@
   </v-dialog>
 </template>
 
-<script setup>
-  import { ref, watch } from 'vue'
+<script setup lang="ts">
+  import { computed, ref, watch } from 'vue'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
+  import type {
+    ContactLink,
+    ConversationMessage,
+    ConversationSummary,
+    EntityId,
+    Nullable,
+  } from '@/shared/types'
 
-  const emit = defineEmits([
-    'close',
-    'close-conversation',
-    'go-profile',
-    'hide-conversation',
-    'load-contacts',
-    'reply',
-    'report-submit',
-    'toggle-share',
-    'update:modelValue',
-  ])
+  type ReplyAction = 'accept' | 'refuse'
+  type ReportReason = 'spam' | 'harassment' | 'scam' | 'privacy_violation' | 'impersonation' | 'other'
 
-  const props = defineProps({
-    modelValue: {
-      type: Boolean,
-      default: false,
-    },
-    conversation: {
-      type: Object,
-      default: null,
-    },
-    messages: {
-      type: Array,
-      default: () => [],
-    },
-    currentUserId: {
-      type: [Number, String],
-      default: null,
-    },
-    loading: {
-      type: Boolean,
-      default: false,
-    },
-    canReply: {
-      type: Boolean,
-      default: false,
-    },
-    ownContactsShared: {
-      type: Boolean,
-      default: false,
-    },
-    contactInfoSharedWithMe: {
-      type: Boolean,
-      default: false,
-    },
-    sharedContacts: {
-      type: Array,
-      default: () => [],
-    },
-    sharedContactsLoading: {
-      type: Boolean,
-      default: false,
-    },
-    replyLoading: {
-      type: Boolean,
-      default: false,
-    },
-    shareLoading: {
-      type: Boolean,
-      default: false,
-    },
-    hideLoading: {
-      type: Boolean,
-      default: false,
-    },
-    closeLoading: {
-      type: Boolean,
-      default: false,
-    },
-    canHide: {
-      type: Boolean,
-      default: false,
-    },
-    canCloseConversation: {
-      type: Boolean,
-      default: false,
-    },
-    isAwaitingMyCloseConfirmation: {
-      type: Boolean,
-      default: false,
-    },
-    reportLoading: {
-      type: Boolean,
-      default: false,
-    },
+  type ConversationContact = ContactLink & {
+    description?: Nullable<string>
+  }
+
+  type ConversationDialogMessage = ConversationMessage & {
+    message?: Nullable<string>
+  }
+
+  type ReportPayload = {
+    tags: ReportReason[]
+    onDone: () => void
+  }
+
+  type ReplyPayload = {
+    action: ReplyAction
+    message: string
+  }
+
+  interface ConversationDialogProps {
+    modelValue?: boolean
+    conversation?: ConversationSummary | null
+    messages?: ConversationDialogMessage[]
+    currentUserId?: EntityId | null
+    loading?: boolean
+    canReply?: boolean
+    ownContactsShared?: boolean
+    contactInfoSharedWithMe?: boolean
+    sharedContacts?: ConversationContact[]
+    sharedContactsLoading?: boolean
+    replyLoading?: boolean
+    shareLoading?: boolean
+    hideLoading?: boolean
+    closeLoading?: boolean
+    canHide?: boolean
+    canCloseConversation?: boolean
+    isAwaitingMyCloseConfirmation?: boolean
+    reportLoading?: boolean
+  }
+
+  const emit = defineEmits<{
+    (event: 'close'): void
+    (event: 'close-conversation'): void
+    (event: 'go-profile', userId: EntityId | null | undefined): void
+    (event: 'hide-conversation'): void
+    (event: 'load-contacts'): void
+    (event: 'reply', payload: ReplyPayload): void
+    (event: 'report-submit', payload: ReportPayload): void
+    (event: 'toggle-share', visible: boolean): void
+    (event: 'update:modelValue', value: boolean): void
+  }>()
+
+  const props = withDefaults(defineProps<ConversationDialogProps>(), {
+    modelValue: false,
+    conversation: null,
+    messages: () => [],
+    currentUserId: null,
+    loading: false,
+    canReply: false,
+    ownContactsShared: false,
+    contactInfoSharedWithMe: false,
+    sharedContacts: () => [],
+    sharedContactsLoading: false,
+    replyLoading: false,
+    shareLoading: false,
+    hideLoading: false,
+    closeLoading: false,
+    canHide: false,
+    canCloseConversation: false,
+    isAwaitingMyCloseConfirmation: false,
+    reportLoading: false,
   })
 
   const replyMessage = ref('')
   const contactsDialog = ref(false)
   const reportDialog = ref(false)
-  const reportTags = ref(['other'])
-  const reportReasons = [
+  const reportTags = ref<ReportReason[]>(['other'])
+  const reportReasons: Array<{ label: string, value: ReportReason }> = [
     { label: 'Spam', value: 'spam' },
     { label: 'Harassment', value: 'harassment' },
     { label: 'Scam or fraud', value: 'scam' },
@@ -347,7 +342,11 @@
     { label: 'Other', value: 'other' },
   ]
 
-  function handleDialogToggle (value) {
+  const conversation = computed(() => props.conversation)
+  const messages = computed<ConversationDialogMessage[]>(() => props.messages)
+  const sharedContacts = computed<ConversationContact[]>(() => props.sharedContacts)
+
+  function handleDialogToggle (value: boolean) {
     emit('update:modelValue', value)
     if (!value) {
       emit('close')
@@ -387,7 +386,7 @@
     }
   })
 
-  watch(() => props.conversation?.id, () => {
+  watch(() => conversation.value?.id, () => {
     replyMessage.value = ''
     contactsDialog.value = false
     closeReportDialog()
