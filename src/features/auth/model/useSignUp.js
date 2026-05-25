@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/shared/api/api.js'
-import { registerRequest } from '@/features/auth/api/auth.api.js'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { api } from '@/shared/api/api'
+import { registerRequest } from '@/features/auth/api/auth.api'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 import { isSupportedContactLink, parseContactLink } from '@/features/profile/lib/contactLinks.js'
 import { isSupportedUsefulUrl, parseUsefulLink } from '@/features/profile/lib/usefulLinks.js'
 

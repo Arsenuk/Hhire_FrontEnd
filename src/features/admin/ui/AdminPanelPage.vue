@@ -53,7 +53,7 @@
 <script setup>
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
-  import { useAuthStore } from '@/features/auth/model/auth.store.js'
+  import { useAuthStore } from '@/features/auth/model/auth.store'
 
   const authStore = useAuthStore()
   const router = useRouter()

@@ -1,10 +1,24 @@
 import { defineStore } from 'pinia'
-import { normalizeUser } from '@/entities/user/lib/normalizeUser.js'
-import { loginRequest, logoutRequest, meRequest } from '@/features/auth/api/auth.api.js'
-import { clearAuthStorage, getAccessToken, setAccessToken as saveAccessToken } from '@/shared/api/tokenStorage.js'
+import { normalizeUser } from '@/entities/user/lib/normalizeUser'
+import { loginRequest, logoutRequest, meRequest } from '@/features/auth/api/auth.api'
+import { clearAuthStorage, getAccessToken, setAccessToken as saveAccessToken } from '@/shared/api/tokenStorage'
+import type { User } from '@/shared/types'
+
+type ApiError = {
+  response?: {
+    data?: {
+      error?: string
+    }
+  }
+}
+
+interface AuthState {
+  user: User | null
+  accessToken: string | null
+}
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({
+  state: (): AuthState => ({
     user: null,
     accessToken: getAccessToken(),
   }),
@@ -12,12 +26,12 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: state => !!state.accessToken,
   },
   actions: {
-    setAccessToken (token) {
+    setAccessToken (token: string | null | undefined) {
       this.accessToken = token || null
       saveAccessToken(token)
     },
 
-    setUser (user) {
+    setUser (user: User | null) {
       this.user = user ? normalizeUser(user) : null
 
       if (this.user) {
@@ -34,7 +48,7 @@ export const useAuthStore = defineStore('auth', {
       clearAuthStorage()
     },
 
-    async login (email, password) {
+    async login (email: string, password: string) {
       try {
         const data = await loginRequest({ email, password })
 
@@ -43,7 +57,9 @@ export const useAuthStore = defineStore('auth', {
 
         await this.fetchMe()
       } catch (error) {
-        throw new Error(error.response?.data?.error || 'Login failed')
+        const apiError = error as ApiError
+
+        throw new Error(apiError.response?.data?.error || 'Login failed')
       }
     },
 
@@ -69,7 +85,7 @@ export const useAuthStore = defineStore('auth', {
       const token = getAccessToken()
 
       if (user && token) {
-        this.setUser(JSON.parse(user))
+        this.setUser(JSON.parse(user) as User)
         this.setAccessToken(token)
         return
       }

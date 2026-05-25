@@ -7,7 +7,7 @@
 
 <script setup>
   import { onMounted } from 'vue'
-  import { useAuthStore } from '@/features/auth/model/auth.store.js'
+  import { useAuthStore } from '@/features/auth/model/auth.store'
   import AppHeader from '@/widgets/header/ui/AppHeader.vue'
 
   const authStore = useAuthStore()

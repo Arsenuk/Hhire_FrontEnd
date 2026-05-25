@@ -1,9 +1,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
-import { api } from '@/shared/api/api.js'
-import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { normalizePosts } from '@/entities/post/lib/normalizePost'
+import { api } from '@/shared/api/api'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 
 export function useFeed () {
   const router = useRouter()

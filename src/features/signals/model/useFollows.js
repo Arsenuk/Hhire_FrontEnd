@@ -1,8 +1,8 @@
 import { onMounted, ref } from 'vue'
-import { normalizeUsers } from '@/entities/user/lib/normalizeUser.js'
+import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
 import { useRouter } from 'vue-router'
-import { api } from '@/shared/api/api.js'
-import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
+import { api } from '@/shared/api/api'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 
 export function useFollows () {
   const router = useRouter()

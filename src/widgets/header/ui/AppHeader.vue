@@ -83,8 +83,8 @@
   import { useRoute, useRouter } from 'vue-router'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
-  import { useAuthStore } from '@/features/auth/model/auth.store.js'
-  import { api } from '@/shared/api/api.js'
+  import { useAuthStore } from '@/features/auth/model/auth.store'
+  import { api } from '@/shared/api/api'
   import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess.js'
 
   const route = useRoute()

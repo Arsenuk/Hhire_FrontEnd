@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 
 export function useLogin () {
   const authStore = useAuthStore()

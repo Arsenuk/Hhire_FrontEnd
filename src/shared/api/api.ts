@@ -1,17 +1,26 @@
-import axios from 'axios'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { API_BASE_URL } from '@/shared/config/api.js'
-import { clearAuthStorage, getAccessToken, setAccessToken } from '@/shared/api/tokenStorage.js'
+import { clearAuthStorage, getAccessToken, setAccessToken } from '@/shared/api/tokenStorage'
+import type { RefreshResponse } from '@/shared/types'
+
+type RetryableRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean
+}
+
+type ApiErrorPayload = {
+  error?: string
+}
+
+let refreshPromise: Promise<string> | null = null
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 })
 
-let refreshPromise = null
-
-async function syncAuthStoreAccessToken (token) {
+async function syncAuthStoreAccessToken (token: string): Promise<void> {
   try {
-    const { useAuthStore } = await import('@/features/auth/model/auth.store.js')
+    const { useAuthStore } = await import('@/features/auth/model/auth.store')
     const authStore = useAuthStore()
 
     authStore.setAccessToken(token)
@@ -20,11 +29,11 @@ async function syncAuthStoreAccessToken (token) {
   }
 }
 
-async function clearAuthSession () {
+async function clearAuthSession (): Promise<void> {
   clearAuthStorage()
 
   try {
-    const { useAuthStore } = await import('@/features/auth/model/auth.store.js')
+    const { useAuthStore } = await import('@/features/auth/model/auth.store')
     const authStore = useAuthStore()
 
     authStore.clearSession()
@@ -33,7 +42,7 @@ async function clearAuthSession () {
   }
 }
 
-function shouldSkipRefresh (url = '') {
+function shouldSkipRefresh (url = ''): boolean {
   return [
     '/auth/login',
     '/auth/register',
@@ -42,9 +51,9 @@ function shouldSkipRefresh (url = '') {
   ].some(authUrl => url.includes(authUrl))
 }
 
-async function refreshAccessToken () {
+async function refreshAccessToken (): Promise<string> {
   if (!refreshPromise) {
-    refreshPromise = axios.post(`${API_BASE_URL}/auth/refresh`, null, {
+    refreshPromise = axios.post<RefreshResponse>(`${API_BASE_URL}/auth/refresh`, null, {
       withCredentials: true,
     })
       .then(async response => {
@@ -66,16 +75,20 @@ async function refreshAccessToken () {
   return refreshPromise
 }
 
-api.interceptors.request.use(config => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = getAccessToken()
-  if (token) config.headers.Authorization = `Bearer ${token}`
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
   return config
 })
 
 api.interceptors.response.use(
   response => response,
-  async error => {
-    const originalRequest = error.config
+  async (error: AxiosError<ApiErrorPayload>) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined
     const status = error.response?.status
     const requestUrl = originalRequest?.url || ''
 
@@ -88,8 +101,9 @@ api.interceptors.response.use(
     try {
       const accessToken = await refreshAccessToken()
 
-      originalRequest.headers = originalRequest.headers || {}
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`
+      if (typeof originalRequest.headers?.set === 'function') {
+        originalRequest.headers.set('Authorization', `Bearer ${accessToken}`)
+      }
 
       return api(originalRequest)
     } catch (refreshError) {

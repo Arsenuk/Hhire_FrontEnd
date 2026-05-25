@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
-import { normalizePosts } from '@/entities/post/lib/normalizePost.js'
-import { api } from '@/shared/api/api.js'
+import { normalizePosts } from '@/entities/post/lib/normalizePost'
+import { api } from '@/shared/api/api'
 
 const intentOptions = [
   { label: 'General', value: 'general' },

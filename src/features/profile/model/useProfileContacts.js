@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks.js'
-import { api } from '@/shared/api/api.js'
+import { api } from '@/shared/api/api'
 
 export function useProfileContacts ({ loading, errorMessage, successMessage, showToast }) {
   const contacts = ref([])

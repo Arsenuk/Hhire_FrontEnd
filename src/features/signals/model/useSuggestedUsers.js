@@ -1,10 +1,10 @@
 import { onMounted, ref } from 'vue'
-import { normalizeUsers } from '@/entities/user/lib/normalizeUser.js'
+import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
 import { useRouter } from 'vue-router'
-import { api } from '@/shared/api/api.js'
+import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
-import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 
 export function useSuggestedUsers () {
   const auth = useAuthStore()

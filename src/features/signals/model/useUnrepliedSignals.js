@@ -1,14 +1,14 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { api } from '@/shared/api/api.js'
+import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
-import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile.js'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
 import {
   normalizeConversationMessage,
   normalizeConversationSummary,
-} from '@/features/signals/model/normalizeConversation.js'
+} from '@/features/signals/model/normalizeConversation'
 
 export function useUnrepliedSignals (updateNotify) {
   const router = useRouter()

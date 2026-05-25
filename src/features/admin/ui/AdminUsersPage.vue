@@ -184,8 +184,8 @@
 <script setup>
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
-  import { normalizeUsers } from '@/entities/user/lib/normalizeUser.js'
-  import { api } from '@/shared/api/api.js'
+  import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
+  import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar.js'
 
   const router = useRouter()

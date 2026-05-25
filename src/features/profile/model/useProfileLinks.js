@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { isSupportedUsefulUrl, normalizeUsefulLinks, parseUsefulLink } from '@/features/profile/lib/usefulLinks.js'
-import { api } from '@/shared/api/api.js'
+import { api } from '@/shared/api/api'
 
 export function useProfileLinks ({ loading, errorMessage, successMessage }) {
   const links = ref([])

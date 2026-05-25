@@ -7,7 +7,7 @@
 // Composables
 import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess.js'
 
 const router = createRouter({

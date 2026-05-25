@@ -9,7 +9,7 @@ import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from '@/app/App.vue'
 import { registerPlugins } from '@/app/providers'
-import { useAuthStore } from '@/features/auth/model/auth.store.js'
+import { useAuthStore } from '@/features/auth/model/auth.store'
 
 // Styles
 import 'unfonts.css'
