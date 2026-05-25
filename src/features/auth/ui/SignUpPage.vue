@@ -160,7 +160,7 @@
 </template>
 
 <script setup>
-  import { useSignUp } from '@/features/auth/model/useSignUp.js'
+  import { useSignUp } from '@/features/auth/model/useSignUp'
 
   const {
     addLink,

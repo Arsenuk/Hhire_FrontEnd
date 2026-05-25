@@ -113,7 +113,7 @@
 </template>
 
 <script setup>
-  import { useCreatePost } from '@/features/create-post/model/useCreatePost.js'
+  import { useCreatePost } from '@/features/create-post/model/useCreatePost'
 
   const {
     cancel,

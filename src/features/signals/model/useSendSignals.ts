@@ -9,21 +9,48 @@ import {
   normalizeConversationMessage,
   normalizeConversationSummary,
 } from '@/features/signals/model/normalizeConversation'
+import type {
+  ContactLink,
+  ConversationMessage,
+  ConversationSummary,
+  EntityId,
+} from '@/shared/types'
+
+type ContactLinkView = ContactLink & {
+  description?: string
+}
+
+type InboxResponse = {
+  conversations?: Record<string, unknown>[]
+}
+
+type MessagesResponse = {
+  messages?: Record<string, unknown>[]
+}
+
+type ContactsResponse = {
+  contacts?: Record<string, unknown>[]
+}
+
+type ReportPayload = {
+  onDone?: () => void
+  tags?: string | string[]
+}
 
 export function useSendSignals () {
   const router = useRouter()
   const authStore = useAuthStore()
 
-  const signals = ref([])
+  const signals = ref<ConversationSummary[]>([])
   const dialog = ref(false)
-  const activeSignal = ref(null)
-  const messages = ref([])
+  const activeSignal = ref<ConversationSummary | null>(null)
+  const messages = ref<ConversationMessage[]>([])
   const loadingConversation = ref(false)
   const shareLoading = ref(false)
   const hideLoading = ref(false)
   const closeLoading = ref(false)
   const reportLoading = ref(false)
-  const sharedContacts = ref([])
+  const sharedContacts = ref<ContactLinkView[]>([])
   const sharedContactsLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
 
@@ -37,13 +64,13 @@ export function useSendSignals () {
 
   async function fetchSignals () {
     try {
-      const res = await api.get('/conversations/sent')
+      const res = await api.get<InboxResponse>('/conversations/sent')
       const conversations = (res.data.conversations || []).map(item => normalizeConversationSummary(item, 'sent'))
 
       signals.value = conversations
 
       if (activeSignal.value) {
-        const refreshed = conversations.find(item => item.id === activeSignal.value.id)
+        const refreshed = conversations.find(item => item.id === activeSignal.value?.id)
         if (refreshed) {
           activeSignal.value = refreshed
         }
@@ -54,11 +81,16 @@ export function useSendSignals () {
     }
   }
 
-  async function fetchMessages (conversationId) {
+  async function fetchMessages (conversationId: EntityId | null | undefined) {
+    if (!conversationId) {
+      messages.value = []
+      return
+    }
+
     loadingConversation.value = true
 
     try {
-      const res = await api.get(`/conversations/${conversationId}/messages`)
+      const res = await api.get<MessagesResponse>(`/conversations/${conversationId}/messages`)
       messages.value = (res.data.messages || []).map(normalizeConversationMessage)
     } catch (error) {
       console.error(error)
@@ -68,7 +100,7 @@ export function useSendSignals () {
     }
   }
 
-  async function openDialog (signal) {
+  async function openDialog (signal: ConversationSummary) {
     activeSignal.value = signal
     sharedContacts.value = []
     dialog.value = true
@@ -91,8 +123,8 @@ export function useSendSignals () {
     sharedContactsLoading.value = true
 
     try {
-      const res = await api.get(`/conversations/${activeSignal.value.id}/contacts`)
-      sharedContacts.value = normalizeContactsToLinks(res.data.contacts || [])
+      const res = await api.get<ContactsResponse>(`/conversations/${activeSignal.value.id}/contacts`)
+      sharedContacts.value = normalizeContactsToLinks(res.data.contacts || []) as ContactLinkView[]
     } catch (error) {
       console.error(error)
       showToast('Failed to load shared contacts', 'error')
@@ -101,7 +133,7 @@ export function useSendSignals () {
     }
   }
 
-  async function shareContactInfo (visible) {
+  async function shareContactInfo (visible: boolean) {
     if (!activeSignal.value) {
       return
     }
@@ -114,7 +146,7 @@ export function useSendSignals () {
         ...activeSignal.value,
         ownContactsShared: visible,
       }
-      signals.value = signals.value.map(item => item.id === activeSignal.value.id
+      signals.value = signals.value.map(item => item.id === activeSignal.value?.id
         ? { ...item, ownContactsShared: visible }
         : item)
 
@@ -140,7 +172,8 @@ export function useSendSignals () {
       })
 
       await fetchSignals()
-      const refreshed = signals.value.find(item => item.id === activeSignal.value.id)
+      const currentId = activeSignal.value.id
+      const refreshed = signals.value.find(item => item.id === currentId)
       activeSignal.value = refreshed || {
         ...activeSignal.value,
         status: 'closed',
@@ -181,11 +214,11 @@ export function useSendSignals () {
     }
   }
 
-  function goToProfile (id) {
-    navigateToProfile(router, id)
+  function goToProfile (id: EntityId | null | undefined) {
+    return navigateToProfile(router, id)
   }
 
-  async function reportSignal ({ tags, onDone } = {}) {
+  async function reportSignal ({ tags, onDone }: ReportPayload = {}) {
     if (!activeSignal.value?.messageId) {
       showToast('Failed to prepare report', 'error')
       return
@@ -219,7 +252,9 @@ export function useSendSignals () {
     }
   }
 
-  onMounted(fetchSignals)
+  onMounted(() => {
+    void fetchSignals()
+  })
 
   return {
     activeSignal,

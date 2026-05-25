@@ -2,7 +2,25 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
 
-const intentOptions = [
+type CreatePostIntent = 'general' | 'job' | 'mentorship' | 'partnership' | 'hire' | 'offer'
+
+type IntentOption = {
+  label: string
+  value: CreatePostIntent
+}
+
+type ValidationRule = (value: string[]) => true | string
+
+type ApiError = {
+  response?: {
+    data?: {
+      error?: string
+      message?: string
+    }
+  }
+}
+
+const intentOptions: IntentOption[] = [
   { label: 'General', value: 'general' },
   { label: 'Job', value: 'job' },
   { label: 'Mentorship', value: 'mentorship' },
@@ -16,13 +34,13 @@ export function useCreatePost () {
 
   const title = ref('')
   const content = ref('')
-  const tags = ref([])
-  const intent = ref('general')
-  const images = ref([])
+  const tags = ref<string[]>([])
+  const intent = ref<CreatePostIntent>('general')
+  const images = ref<File[]>([])
 
   const showConfirm = ref(false)
   const submitting = ref(false)
-  const tagRules = [
+  const tagRules: ValidationRule[] = [
     value => Boolean(value?.length) || 'Add at least one tag',
   ]
 
@@ -71,12 +89,14 @@ export function useCreatePost () {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      router.push('/feed')
+      await router.push('/feed')
     } catch (error) {
+      const apiError = error as ApiError
+
       console.error(error)
       alert(
-        error.response?.data?.message
-        || error.response?.data?.error
+        apiError.response?.data?.message
+        || apiError.response?.data?.error
         || 'Failed to create post',
       )
     } finally {
@@ -85,7 +105,7 @@ export function useCreatePost () {
   }
 
   function cancel () {
-    router.push('/feed')
+    return router.push('/feed')
   }
 
   return {

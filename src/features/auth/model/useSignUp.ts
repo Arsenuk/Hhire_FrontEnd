@@ -5,10 +5,33 @@ import { registerRequest } from '@/features/auth/api/auth.api'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 import { isSupportedContactLink, parseContactLink } from '@/features/profile/lib/contactLinks.js'
 import { isSupportedUsefulUrl, parseUsefulLink } from '@/features/profile/lib/usefulLinks.js'
+import type { ContactLink, UsefulLink } from '@/shared/types'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function createEmptyLink () {
+type StepId = 1 | 2
+
+type StepDefinition = {
+  id: StepId
+  name: string
+}
+
+type EditableLink = {
+  description: string
+  error: false | string
+  url: string
+}
+
+type ApiError = {
+  message?: string
+  response?: {
+    data?: {
+      error?: string
+    }
+  }
+}
+
+function createEmptyLink (): EditableLink {
   return {
     description: '',
     error: false,
@@ -20,8 +43,8 @@ export function useSignUp () {
   const router = useRouter()
   const authStore = useAuthStore()
 
-  const currentStep = ref(1)
-  const steps = [
+  const currentStep = ref<StepId>(1)
+  const steps: StepDefinition[] = [
     { id: 1, name: 'Account Creation' },
     { id: 2, name: 'Profile Information' },
   ]
@@ -33,10 +56,10 @@ export function useSignUp () {
   const firstName = ref('')
 
   const description = ref('')
-  const contactInfo = ref(createEmptyLink())
-  const profileImageFile = ref(null)
+  const contactInfo = ref<EditableLink>(createEmptyLink())
+  const profileImageFile = ref<File | File[] | null>(null)
   const profileImageName = ref('')
-  const links = ref([createEmptyLink()])
+  const links = ref<EditableLink[]>([createEmptyLink()])
 
   const showPassword = ref(false)
   const loading = ref(false)
@@ -71,12 +94,12 @@ export function useSignUp () {
       return
     }
 
-    currentStep.value += 1
+    currentStep.value = 2
   }
 
   function prevStep () {
     if (currentStep.value > 1) {
-      currentStep.value -= 1
+      currentStep.value = 1
     }
   }
 
@@ -127,8 +150,9 @@ export function useSignUp () {
     }
   }
 
-  function handleFileUpload (event) {
-    const file = event.target.files?.[0]
+  function handleFileUpload (event: Event) {
+    const input = event.target as HTMLInputElement | null
+    const file = input?.files?.[0]
 
     if (!file) {
       return
@@ -142,7 +166,7 @@ export function useSignUp () {
     links.value.push(createEmptyLink())
   }
 
-  function removeLink (index) {
+  function removeLink (index: number) {
     if (links.value.length > 1) {
       links.value.splice(index, 1)
     }
@@ -192,17 +216,17 @@ export function useSignUp () {
     loading.value = true
 
     try {
-      const contacts = [
+      const contacts: ContactLink[] = [
         parseContactLink(contactInfo.value),
       ]
-      const usefulLinks = links.value
+      const usefulLinks: UsefulLink[] = links.value
         .filter(link => link.url.trim() || link.description.trim())
         .map(parseUsefulLink)
 
       await registerRequest({
         contacts,
         email: email.value.trim(),
-        name: firstName.value,
+        name: firstName.value.trim(),
         password: password.value.trim(),
         profile: {
           description: description.value.trim(),
@@ -227,10 +251,12 @@ export function useSignUp () {
         })
       }
 
-      router.push('/feed')
+      await router.push('/feed')
     } catch (error) {
+      const apiError = error as ApiError
+
       console.error(error)
-      descriptionError.value = error.response?.data?.error || error.message || 'Registration failed'
+      descriptionError.value = apiError.response?.data?.error || apiError.message || 'Registration failed'
     } finally {
       loading.value = false
     }
