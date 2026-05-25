@@ -181,25 +181,33 @@
   </v-snackbar>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
   import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
+  import type { EntityId, User, UserRole } from '@/shared/types'
+
+  type UserStatus = 'active' | 'pending' | 'frozen' | 'banned' | string
+  type AdminUser = User & {
+    status?: UserStatus
+    created_at?: string | null
+  }
+  type AdminAction = 'ban' | 'unban'
 
   const router = useRouter()
   const { showToast, snackbar } = useSnackbar()
 
-  const users = ref([])
+  const users = ref<AdminUser[]>([])
   const loading = ref(false)
   const searchQuery = ref('')
   const statusFilter = ref('all')
 
   const confirmDialog = ref(false)
-  const selectedUser = ref(null)
-  const pendingAction = ref('ban')
-  const actionLoadingId = ref(null)
+  const selectedUser = ref<AdminUser | null>(null)
+  const pendingAction = ref<AdminAction>('ban')
+  const actionLoadingId = ref<EntityId | null>(null)
 
   const statusOptions = [
     { label: 'All statuses', value: 'all' },
@@ -217,14 +225,14 @@
     return users.value.filter(user => user.status === statusFilter.value)
   })
 
-  function formatRole(role = 'user') {
+  function formatRole(role: UserRole = 'user') {
     return role
       .split('_')
       .map(part => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ')
   }
 
-  function formatDate(value) {
+  function formatDate(value: string | null | undefined) {
     if (!value) {
       return '-'
     }
@@ -242,7 +250,7 @@
     }).format(date)
   }
 
-  function getStatusColor(status) {
+  function getStatusColor(status: UserStatus | null | undefined) {
     switch (status) {
       case 'active':
         return 'success'
@@ -261,14 +269,14 @@
     loading.value = true
 
     try {
-      const params = {}
+      const params: { q?: string } = {}
 
       if (searchQuery.value.trim()) {
         params.q = searchQuery.value.trim()
       }
 
-      const response = await api.get('/admin/users', { params })
-      users.value = normalizeUsers(response.data || [])
+      const response = await api.get<Record<string, unknown>[]>('/admin/users', { params })
+      users.value = normalizeUsers(response.data || []) as AdminUser[]
     } catch (error) {
       console.error('Failed to load admin users', error)
       showToast('Failed to load users', 'error')
@@ -277,7 +285,7 @@
     }
   }
 
-  function openConfirmation(user, action) {
+  function openConfirmation(user: AdminUser, action: AdminAction) {
     selectedUser.value = user
     pendingAction.value = action
     confirmDialog.value = true
@@ -305,7 +313,7 @@
 
       const nextStatus = action === 'ban' ? 'banned' : 'active'
       users.value = users.value.map(user => (
-        user.id === selectedUser.value.id
+        user.id === selectedUser.value?.id
           ? { ...user, status: nextStatus }
           : user
       ))

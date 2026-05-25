@@ -125,22 +125,37 @@
   </v-snackbar>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 
+  type Severity = 'critical' | 'high' | 'medium' | 'low' | string
+
+  type AuditLog = {
+    id: number | string
+    created_at?: string | null
+    actor_id?: number | string | null
+    actor_role?: string | null
+    action?: string | null
+    entity_type?: string | null
+    entity_id?: number | string | null
+    severity?: Severity | null
+    ip?: string | null
+    payload?: unknown
+  }
+
   const router = useRouter()
   const { showToast, snackbar } = useSnackbar()
 
-  const logs = ref([])
+  const logs = ref<AuditLog[]>([])
   const loading = ref(false)
-  const expandedLogId = ref(null)
+  const expandedLogId = ref<number | string | null>(null)
   const limit = ref(50)
   const limitOptions = [25, 50, 100]
 
-  function formatDateTime(value) {
+  function formatDateTime(value: string | null | undefined) {
     if (!value) {
       return '-'
     }
@@ -160,7 +175,7 @@
     }).format(date)
   }
 
-  function getSeverityColor(severity) {
+  function getSeverityColor(severity: Severity | null | undefined) {
     switch (severity) {
       case 'critical':
         return 'error'
@@ -175,7 +190,7 @@
     }
   }
 
-  function parsePayload(payload) {
+  function parsePayload(payload: unknown) {
     if (!payload) {
       return null
     }
@@ -195,7 +210,7 @@
     return payload
   }
 
-  function hasPayload(payload) {
+  function hasPayload(payload: unknown) {
     const parsed = parsePayload(payload)
 
     if (!parsed) {
@@ -206,10 +221,10 @@
       return parsed.trim().length > 0 && parsed.trim() !== '{}'
     }
 
-    return Object.keys(parsed).length > 0
+    return typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0
   }
 
-  function formatPayload(payload) {
+  function formatPayload(payload: unknown) {
     const parsed = parsePayload(payload)
 
     if (!parsed) {
@@ -223,7 +238,7 @@
     return JSON.stringify(parsed, null, 2)
   }
 
-  function toggleExpanded(id) {
+  function toggleExpanded(id: number | string) {
     expandedLogId.value = expandedLogId.value === id ? null : id
   }
 
@@ -231,7 +246,7 @@
     loading.value = true
 
     try {
-      const response = await api.get('/admin/logs', {
+      const response = await api.get<AuditLog[]>('/admin/logs', {
         params: {
           limit: limit.value,
         },

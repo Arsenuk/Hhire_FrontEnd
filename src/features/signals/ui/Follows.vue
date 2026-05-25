@@ -28,9 +28,10 @@
   </v-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
-  import { useFollows } from '@/features/signals/model/useFollows.js'
+  import { useFollows } from '@/features/signals/model/useFollows'
+  import type { User } from '@/shared/types'
 
   const {
     formatDate,
@@ -38,8 +39,12 @@
     users,
   } = useFollows()
 
-  function getLastPostSubtitle(user) {
-    return user.lastPost ? `Last post: ${formatDate(user.lastPost)}` : 'Last post: No posts'
+  function getLastPostSubtitle(user: User) {
+    const lastPostDate = typeof user.lastPost === 'string' || typeof user.lastPost === 'number' || user.lastPost instanceof Date
+      ? user.lastPost
+      : null
+
+    return lastPostDate ? `Last post: ${formatDate(lastPostDate)}` : 'Last post: No posts'
   }
 </script>
 

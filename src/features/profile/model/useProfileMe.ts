@@ -2,12 +2,25 @@ import { computed, onMounted, ref } from 'vue'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import { api } from '@/shared/api/api'
 import { useAuthStore } from '@/features/auth/model/auth.store'
-import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
-import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'
-import { useProfileContacts } from '@/features/profile/model/useProfileContacts.js'
-import { useProfileLinks } from '@/features/profile/model/useProfileLinks.js'
-import { useProfilePosts } from '@/features/profile/model/useProfilePosts.js'
+import { useProfileContacts } from '@/features/profile/model/useProfileContacts'
+import { useProfileLinks } from '@/features/profile/model/useProfileLinks'
+import { useProfilePosts } from '@/features/profile/model/useProfilePosts'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
+import type { ContactLink, UsefulLink } from '@/shared/types'
+
+type ProfileForm = {
+  name: string
+  description: string
+  avatarFile: File | File[] | null
+}
+
+type ValidatableForm = {
+  validate: () => Promise<{ valid: boolean }>
+}
+
+type ProfileResponse = Record<string, unknown> & {
+  contactInfoVisible?: boolean
+}
 
 export function useProfileMe () {
   const authStore = useAuthStore()
@@ -20,17 +33,17 @@ export function useProfileMe () {
 
   const editMode = ref(false)
   const profileEditorOpen = ref(false)
-  const formRef = ref(null)
+  const formRef = ref<ValidatableForm | null>(null)
 
-  const editForm = ref({
+  const editForm = ref<ProfileForm>({
     name: '',
     description: '',
     avatarFile: null,
   })
 
   const nameRules = [
-    value => !!value || 'Name is required',
-    value => value.length >= 2 || 'Minimum 2 characters',
+    (value: string) => !!value || 'Name is required',
+    (value: string) => value.length >= 2 || 'Minimum 2 characters',
   ]
 
   const profileLinks = useProfileLinks({
@@ -59,18 +72,18 @@ export function useProfileMe () {
 
     try {
       const [{ data }, contactsResponse, linksResponse, postsResponse] = await Promise.all([
-        api.get('/me'),
-        api.get('/contacts'),
-        api.get('/me/links'),
-        api.get('/posts'),
+        api.get<ProfileResponse>('/me'),
+        api.get<ContactLink[]>('/contacts'),
+        api.get<UsefulLink[]>('/me/links'),
+        api.get<{ posts?: Record<string, unknown>[] }>('/posts'),
       ])
 
       const normalizedUser = normalizeUser(data)
 
       authStore.setUser(normalizedUser)
-      profileContacts.setContacts(normalizeContactsToLinks(contactsResponse.data || []))
-      profileContacts.setContactInfoVisible(normalizedUser.contactInfoVisible)
-      profileLinks.setLinks(normalizeUsefulLinks(linksResponse.data || []))
+      profileContacts.setContacts(contactsResponse.data || [])
+      profileContacts.setContactInfoVisible(Boolean(data.contactInfoVisible))
+      profileLinks.setLinks(linksResponse.data || [])
       profilePosts.setPosts(postsResponse.data?.posts || [])
 
       editForm.value.name = normalizedUser.name
@@ -83,7 +96,7 @@ export function useProfileMe () {
   }
 
   async function saveProfile () {
-    const { valid } = await formRef.value.validate()
+    const { valid } = await formRef.value?.validate() ?? { valid: false }
     if (!valid) {
       return
     }
@@ -136,7 +149,7 @@ export function useProfileMe () {
 
   onMounted(() => {
     authStore.loadUserFromStorage()
-    loadProfile()
+    void loadProfile()
   })
 
   return {

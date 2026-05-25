@@ -5,20 +5,21 @@ import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 import { useAuthStore } from '@/features/auth/model/auth.store'
+import type { EntityId, User } from '@/shared/types'
 
 export function useSuggestedUsers () {
   const auth = useAuthStore()
   const router = useRouter()
 
-  const suggestedUsers = ref([])
+  const suggestedUsers = ref<User[]>([])
   const dialog = ref(false)
-  const selectedUser = ref(null)
+  const selectedUser = ref<User | null>(null)
   const message = ref('')
   const { showToast, snackbar } = useSnackbar()
 
   async function fetchSuggestedUsers () {
     try {
-      const res = await api.get('/users')
+      const res = await api.get<Record<string, unknown>[]>('/users')
       suggestedUsers.value = normalizeUsers(res.data).filter(user => user.id !== auth.user?.id)
     } catch (error) {
       console.error(error)
@@ -26,7 +27,7 @@ export function useSuggestedUsers () {
     }
   }
 
-  function openConnectDialog (user) {
+  function openConnectDialog (user: User) {
     selectedUser.value = user
     message.value = ''
     dialog.value = true
@@ -39,6 +40,11 @@ export function useSuggestedUsers () {
   async function sendSignal () {
     if (!message.value.trim()) {
       showToast('Please enter a message', 'warning')
+      return
+    }
+
+    if (!auth.user?.id || !selectedUser.value?.id) {
+      showToast('Failed to prepare signal', 'error')
       return
     }
 
@@ -59,11 +65,13 @@ export function useSuggestedUsers () {
     }
   }
 
-  function goToProfile (userId) {
+  function goToProfile (userId: EntityId | null | undefined) {
     navigateToProfile(router, userId, auth.user?.id)
   }
 
-  onMounted(fetchSuggestedUsers)
+  onMounted(() => {
+    void fetchSuggestedUsers()
+  })
 
   return {
     closeDialog,

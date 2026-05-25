@@ -78,14 +78,24 @@
   </v-app-bar>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { computed, onMounted, onUnmounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
-  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store'
   import { api } from '@/shared/api/api'
   import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess'
+  import type { EntityId } from '@/shared/types'
+
+  type NavLink = {
+    label: string
+    to: string
+  }
+
+  type InboxConversation = {
+    conversation_status?: string
+  }
 
   const route = useRoute()
   const router = useRouter()
@@ -95,7 +105,7 @@
   const user = computed(() => authStore.user)
   const hasAdminPanelAccess = computed(() => canAccessAdminPanel(user.value))
 
-  const navLinks = computed(() => {
+  const navLinks = computed<NavLink[]>(() => {
     if (isLoggedIn.value) {
       const links = [
         { label: 'Feed', to: '/feed' },
@@ -115,11 +125,11 @@
     ]
   })
 
-  const isActive = path => route.path.toLowerCase() === path.toLowerCase()
+  const isActive = (path: string) => route.path.toLowerCase() === path.toLowerCase()
 
   async function logout () {
     await authStore.logout()
-    router.push('/')
+    await router.push('/')
   }
 
   const unansweredSignals = ref(0)
@@ -128,13 +138,15 @@
     if (!isLoggedIn.value) return
     try {
       const res = await api.get('/conversations/inbox')
-      unansweredSignals.value = (res.data.conversations || []).filter(item => item.conversation_status === 'open').length
+      unansweredSignals.value = ((res.data.conversations || []) as InboxConversation[])
+        .filter(item => item.conversation_status === 'open')
+        .length
     } catch (error) {
       console.error('Failed to fetch signals', error)
     }
   }
 
-  let intervalId = null
+  let intervalId: ReturnType<typeof setInterval> | null = null
 
   onMounted(() => {
     fetchUnansweredSignals()

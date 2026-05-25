@@ -1,3 +1,20 @@
+import type { EntityId, Nullable, UsefulLink } from '@/shared/types'
+
+type UsefulLinkInput = UsefulLink & {
+  description?: Nullable<string>
+}
+
+type ParsedUsefulLink = {
+  url: string
+  description: string | null
+}
+
+type NormalizedUsefulLink = {
+  id?: Nullable<EntityId>
+  url: string
+  description: string
+}
+
 export function normalizeUsefulUrl (value = '') {
   const normalized = value.trim()
 
@@ -33,19 +50,21 @@ export function isSupportedUsefulUrl (value = '') {
   }
 }
 
-export function normalizeUsefulLink (link = {}) {
+export function normalizeUsefulLink (link: UsefulLinkInput = {}): NormalizedUsefulLink {
+  const rawUrl = typeof link.url === 'string' ? link.url : ''
+
   return {
     id: link.id,
-    url: normalizeUsefulUrl(link.url || ''),
-    description: link.description || link.url || '',
+    url: normalizeUsefulUrl(rawUrl),
+    description: link.description || rawUrl || '',
   }
 }
 
-export function normalizeUsefulLinks (links = []) {
+export function normalizeUsefulLinks (links: UsefulLinkInput[] = []): NormalizedUsefulLink[] {
   return links.map(normalizeUsefulLink)
 }
 
-export function parseUsefulLink ({ url, description }) {
+export function parseUsefulLink ({ url, description }: { url: string, description: string }): ParsedUsefulLink {
   if (!isSupportedUsefulUrl(url)) {
     throw new Error('Invalid URL')
   }

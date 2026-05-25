@@ -1,34 +1,69 @@
-import { computed, ref } from 'vue'
-import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks.js'
+import { computed, ref, type Ref } from 'vue'
+import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks'
 import { api } from '@/shared/api/api'
+import type { ContactLink, EntityId } from '@/shared/types'
 
-export function useProfileContacts ({ loading, errorMessage, successMessage, showToast }) {
-  const contacts = ref([])
+type ToastColor = 'success' | 'error' | 'warning' | 'info' | string
+type ShowToast = (message: string, color?: ToastColor) => void
+
+type ContactForm = {
+  url: string
+  description: string
+}
+
+type ContactView = ContactLink & {
+  description?: string
+  url?: string
+  value?: string
+}
+
+type ValidatableForm = {
+  validate: () => Promise<{ valid: boolean }>
+}
+
+type ApiError = {
+  message?: string
+  response?: {
+    data?: {
+      error?: string
+    }
+  }
+}
+
+interface UseProfileContactsOptions {
+  loading: Ref<boolean>
+  errorMessage: Ref<string>
+  successMessage: Ref<string>
+  showToast?: ShowToast
+}
+
+export function useProfileContacts ({ loading, errorMessage, successMessage, showToast }: UseProfileContactsOptions) {
+  const contacts = ref<ContactView[]>([])
   const showContactDialog = ref(false)
-  const contactFormRef = ref(null)
-  const editingContact = ref(null)
+  const contactFormRef = ref<ValidatableForm | null>(null)
+  const editingContact = ref<ContactView | null>(null)
 
   const showDeleteContactDialog = ref(false)
-  const contactToDelete = ref(null)
+  const contactToDelete = ref<EntityId | null>(null)
   const contactInfoVisible = ref(false)
   const showContactVisibilityDialog = ref(false)
 
-  const contactForm = ref({
+  const contactForm = ref<ContactForm>({
     url: '',
     description: '',
   })
 
   const contactRules = [
-    value => !!value || 'Contact is required',
-    value => isSupportedContactLink(value) || 'Use email, phone, LinkedIn, or Telegram',
+    (value: string) => !!value || 'Contact is required',
+    (value: string) => isSupportedContactLink(value) || 'Use email, phone, LinkedIn, or Telegram',
   ]
 
   const nextContactInfoVisible = computed(() => !contactInfoVisible.value)
   const contactVisibilityAction = computed(() => nextContactInfoVisible.value ? 'show' : 'hide')
   const contactVisibilityIcon = computed(() => contactInfoVisible.value ? 'mdi-eye' : 'mdi-eye-off')
 
-  function setContacts (nextContacts = []) {
-    contacts.value = nextContacts
+  function setContacts (nextContacts: ContactLink[] = []) {
+    contacts.value = normalizeContactsToLinks(nextContacts)
   }
 
   function setContactInfoVisible (visible = false) {
@@ -41,14 +76,17 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
     showContactDialog.value = true
   }
 
-  function openEditContact (contact) {
+  function openEditContact (contact: ContactView) {
     editingContact.value = contact
-    contactForm.value = { url: contact.value || contact.url, description: contact.description }
+    contactForm.value = {
+      url: contact.value || contact.url || '',
+      description: contact.description || '',
+    }
     showContactDialog.value = true
   }
 
   async function saveContact () {
-    const { valid } = await contactFormRef.value.validate()
+    const { valid } = await contactFormRef.value?.validate() ?? { valid: false }
     if (!valid) {
       return
     }
@@ -65,23 +103,24 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
           : api.post('/contacts', payload)
       )
 
-      const res = await api.get('/contacts')
-      contacts.value = normalizeContactsToLinks(res.data)
+      const res = await api.get<ContactLink[]>('/contacts')
+      contacts.value = normalizeContactsToLinks(res.data || [])
       showContactDialog.value = false
     } catch (error) {
-      errorMessage.value = error.response?.data?.error || error.message || 'Failed to save contact'
+      const apiError = error as ApiError
+      errorMessage.value = apiError.response?.data?.error || apiError.message || 'Failed to save contact'
     } finally {
       loading.value = false
     }
   }
 
-  function openDeleteContact (id) {
-    contactToDelete.value = id
+  function openDeleteContact (id: EntityId | null | undefined) {
+    contactToDelete.value = id ?? null
     showDeleteContactDialog.value = true
   }
 
   async function deleteConfirmedContact () {
-    if (!contactToDelete.value) {
+    if (contactToDelete.value == null) {
       return
     }
 
@@ -114,7 +153,7 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
     successMessage.value = ''
 
     try {
-      const res = await api.put('/me/contact-visibility', {
+      const res = await api.put<{ contactInfoVisible?: boolean }>('/me/contact-visibility', {
         visible: nextVisible,
       })
 
@@ -124,7 +163,8 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
         : 'Contact info is now hidden from other users'
       showToast?.(message, 'success')
     } catch (error) {
-      errorMessage.value = error.response?.data?.error || error.message || 'Failed to update contact visibility'
+      const apiError = error as ApiError
+      errorMessage.value = apiError.response?.data?.error || apiError.message || 'Failed to update contact visibility'
     } finally {
       loading.value = false
       showContactVisibilityDialog.value = false

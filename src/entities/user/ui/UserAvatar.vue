@@ -4,29 +4,25 @@
   </v-avatar>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { computed } from 'vue'
   import defaultAvatar from '@/shared/assets/default-avatar.png'
-  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl'
+  import type { User } from '@/shared/types'
 
-  const props = defineProps({
-    user: {
-      type: Object,
-      default: null,
-    },
-    avatar: {
-      type: String,
-      default: '',
-    },
-    alt: {
-      type: String,
-      default: '',
-    },
-    size: {
-      type: [Number, String],
-      default: 40,
-    },
+  interface UserAvatarProps {
+    user?: User | null
+    avatar?: string
+    alt?: string
+    size?: number | string
+  }
+
+  const props = withDefaults(defineProps<UserAvatarProps>(), {
+    user: null,
+    avatar: '',
+    alt: '',
+    size: 40,
   })
 
   const avatarUrl = computed(() => getAvatarUrl(props.avatar || props.user?.avatar))

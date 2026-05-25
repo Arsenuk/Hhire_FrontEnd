@@ -1,6 +1,37 @@
-import { computed, ref } from 'vue'
+import { computed, ref, type ComputedRef, type Ref } from 'vue'
 import { normalizePosts } from '@/entities/post/lib/normalizePost'
 import { api } from '@/shared/api/api'
+import type { EntityId, Post, User } from '@/shared/types'
+
+type ProfilePost = Post & {
+  user_id?: EntityId | null
+  title?: string
+  content?: string
+  intent?: string
+  created_at?: string
+  images?: unknown[]
+}
+
+type EditablePostForm = {
+  id: EntityId | null
+  title: string
+  content: string
+  intent: string
+  tags: string[]
+  imageFiles: File[]
+  removeImages: boolean
+}
+
+type ValidatableForm = {
+  validate: () => Promise<{ valid: boolean }>
+}
+
+interface UseProfilePostsOptions {
+  user: ComputedRef<User | null>
+  loading: Ref<boolean>
+  errorMessage: Ref<string>
+  successMessage: Ref<string>
+}
 
 const intentOptions = [
   { label: 'General', value: 'general' },
@@ -11,15 +42,15 @@ const intentOptions = [
   { label: 'Offer', value: 'offer' },
 ]
 
-export function useProfilePosts ({ user, loading, errorMessage, successMessage }) {
-  const posts = ref([])
+export function useProfilePosts ({ user, loading, errorMessage, successMessage }: UseProfilePostsOptions) {
+  const posts = ref<ProfilePost[]>([])
   const editingPostDialog = ref(false)
-  const postFormRef = ref(null)
+  const postFormRef = ref<ValidatableForm | null>(null)
 
   const showDeletePostDialog = ref(false)
-  const postToDelete = ref(null)
+  const postToDelete = ref<ProfilePost | null>(null)
 
-  const editPostForm = ref({
+  const editPostForm = ref<EditablePostForm>({
     id: null,
     title: '',
     content: '',
@@ -30,27 +61,27 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
   })
 
   const postRules = {
-    title: [value => !!value || 'Title is required'],
-    content: [value => !!value || 'Content is required'],
-    tags: [value => Boolean(value?.length) || 'Add at least one tag'],
+    title: [(value: string) => !!value || 'Title is required'],
+    content: [(value: string) => !!value || 'Content is required'],
+    tags: [(value: string[]) => Boolean(value?.length) || 'Add at least one tag'],
   }
 
-  function setPosts (nextPosts = []) {
-    posts.value = normalizePosts(nextPosts)
+  function setPosts (nextPosts: Record<string, unknown>[] = []) {
+    posts.value = normalizePosts(nextPosts) as ProfilePost[]
   }
 
   const userId = computed(() => user.value?.id)
 
-  function isOwnPost (post) {
+  function isOwnPost (post: ProfilePost) {
     return post.user_id === userId.value
   }
 
-  function startEditPost (post) {
+  function startEditPost (post: ProfilePost) {
     editingPostDialog.value = true
     editPostForm.value = {
-      id: post.id,
-      title: post.title,
-      content: post.content,
+      id: post.id ?? null,
+      title: post.title || '',
+      content: post.content || '',
       intent: post.intent || 'general',
       tags: [...(post.tags || [])],
       imageFiles: [],
@@ -63,7 +94,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
   }
 
   async function savePost () {
-    const { valid } = await postFormRef.value.validate()
+    const { valid } = await postFormRef.value?.validate() ?? { valid: false }
     if (!valid) {
       return
     }
@@ -76,7 +107,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
       const formData = new FormData()
       const imageFiles = Array.isArray(editPostForm.value.imageFiles)
         ? editPostForm.value.imageFiles
-        : [editPostForm.value.imageFiles].filter(Boolean)
+        : []
 
       formData.append('title', editPostForm.value.title)
       formData.append('content', editPostForm.value.content)
@@ -93,7 +124,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
         formData.append('images', file)
       }
 
-      const { data } = await api.put(`/posts/${editPostForm.value.id}`, formData, {
+      const { data } = await api.put<{ post?: Partial<ProfilePost> }>(`/posts/${editPostForm.value.id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
@@ -116,7 +147,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
     }
   }
 
-  function openDeletePost (post) {
+  function openDeletePost (post: ProfilePost) {
     postToDelete.value = post
     showDeletePostDialog.value = true
   }
@@ -132,7 +163,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
 
     try {
       await api.delete(`/posts/${postToDelete.value.id}`)
-      posts.value = posts.value.filter(post => post.id !== postToDelete.value.id)
+      posts.value = posts.value.filter(post => post.id !== postToDelete.value?.id)
       successMessage.value = 'Post deleted'
       showDeletePostDialog.value = false
       postToDelete.value = null

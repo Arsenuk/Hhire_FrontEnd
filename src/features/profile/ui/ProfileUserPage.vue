@@ -66,7 +66,7 @@
   </v-snackbar>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRoute } from 'vue-router'
   import { normalizePosts } from '@/entities/post/lib/normalizePost'
@@ -74,18 +74,21 @@
   import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
   import { useAuthStore } from '@/features/auth/model/auth.store'
-  import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
-  import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks.js'
+  import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks'
+  import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
+  import type { EntityId, Post, User } from '@/shared/types'
 
   const route = useRoute()
   const authStore = useAuthStore()
   const authUser = computed(() => authStore.user)
 
-  const user = ref(null)
-  const posts = ref([])
-  const contacts = ref([])
-  const links = ref([])
+  type ProfileUser = User & { contactInfoVisible?: boolean }
+
+  const user = ref<ProfileUser | null>(null)
+  const posts = ref<Post[]>([])
+  const contacts = ref<ReturnType<typeof normalizeContactsToLinks>>([])
+  const links = ref<ReturnType<typeof normalizeUsefulLinks>>([])
   const errorMessage = ref('')
   const loading = ref(true)
 
@@ -96,7 +99,13 @@
   const contactMessage = ref('')
   const { showToast, snackbar } = useSnackbar()
 
-  const userId = ref(route.params.id)
+  function getRouteUserId (): EntityId | null {
+    const params = route.params as Record<string, string | string[] | undefined>
+    const param = params.id
+    return typeof param === 'string' ? param : null
+  }
+
+  const userId = ref<EntityId | null>(getRouteUserId())
   const canManageFollow = computed(() => Boolean(authUser.value && user.value && authUser.value.id !== user.value.id))
 
   async function loadUserProfile () {
@@ -109,8 +118,12 @@
     isFollowing.value = false
 
     try {
-      const res = await api.get(`/users/${userId.value}/profile`)
-      user.value = normalizeUser(res.data)
+      const res = await api.get<Record<string, unknown> & {
+        posts?: Record<string, unknown>[]
+        contacts?: Record<string, unknown>[]
+        links?: Record<string, unknown>[]
+      }>(`/users/${userId.value}/profile`)
+      user.value = normalizeUser(res.data) as ProfileUser
       posts.value = normalizePosts(res.data.posts || [])
       contacts.value = normalizeContactsToLinks(res.data.contacts || [])
       links.value = normalizeUsefulLinks(res.data.links || [])
@@ -131,7 +144,7 @@
 
     const res = await api.get('/follows/status', {
       params: {
-        targetId: user.value.id,
+        targetId: user.value?.id,
         targetType: 'user',
       },
     })
@@ -210,10 +223,10 @@
 
   onMounted(loadUserProfile)
 
-  watch(() => route.params.id, newId => {
-    userId.value = newId
+  watch(() => (route.params as Record<string, string | string[] | undefined>).id, () => {
+    userId.value = getRouteUserId()
     closeContactDialog()
-    loadUserProfile()
+    void loadUserProfile()
   })
 </script>
 

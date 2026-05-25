@@ -135,44 +135,37 @@
   </v-container>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import PostCard from '@/entities/post/ui/PostCard.vue'
-  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
+  import type { Post, User } from '@/shared/types'
 
-  defineProps({
-    user: {
-      type: Object,
-      default: null,
-    },
-    links: {
-      type: Array,
-      default: () => [],
-    },
-    contactInfo: {
-      type: Array,
-      default: () => [],
-    },
-    posts: {
-      type: Array,
-      default: () => [],
-    },
-    errorMessage: {
-      type: String,
-      default: '',
-    },
-    successMessage: {
-      type: String,
-      default: '',
-    },
-    emptyInfoText: {
-      type: String,
-      default: 'User did not provide information',
-    },
-    emptyPostsText: {
-      type: String,
-      default: 'User did not provide posts',
-    },
+  type ProfileLinkItem = {
+    id?: string | number | null
+    url?: string | null
+    description?: string | null
+  }
+
+  interface ProfileViewProps {
+    user: User | null
+    links?: ProfileLinkItem[]
+    contactInfo?: ProfileLinkItem[]
+    posts?: Post[]
+    errorMessage?: string
+    successMessage?: string
+    emptyInfoText?: string
+    emptyPostsText?: string
+  }
+
+  withDefaults(defineProps<ProfileViewProps>(), {
+    links: () => [],
+    contactInfo: () => [],
+    posts: () => [],
+    errorMessage: '',
+    successMessage: '',
+    emptyInfoText: 'User did not provide information',
+    emptyPostsText: 'User did not provide posts',
   })
 </script>
 

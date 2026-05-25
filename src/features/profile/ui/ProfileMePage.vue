@@ -39,10 +39,10 @@
 
     <template #contact-append="{ contact }">
       <template v-if="editMode">
-        <v-btn icon size="x-small" @click="openEditContact(contact)">
+        <v-btn icon size="x-small" @click="openEditContactFromSlot(contact)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
-        <v-btn icon size="x-small" @click="openDeleteContact(contact.id)">
+        <v-btn icon size="x-small" @click="openDeleteContactFromSlot(contact?.id)">
           <v-icon color="red">mdi-delete</v-icon>
         </v-btn>
       </template>
@@ -50,21 +50,21 @@
 
     <template #link-append="{ link }">
       <template v-if="editMode">
-        <v-btn icon size="x-small" @click="openEditLink(link)">
+        <v-btn icon size="x-small" @click="openEditLinkFromSlot(link)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
-        <v-btn icon size="x-small" @click="openDeleteLink(link.id)">
+        <v-btn icon size="x-small" @click="openDeleteLinkFromSlot(link?.id)">
           <v-icon color="red">mdi-delete</v-icon>
         </v-btn>
       </template>
     </template>
 
     <template #post-actions="{ post }">
-      <div v-if="editMode && isOwnPost(post)" class="post-actions">
-        <v-btn icon size="x-small" @click="startEditPost(post)">
+      <div v-if="editMode && isOwnPostFromSlot(post)" class="post-actions">
+        <v-btn icon size="x-small" @click="startEditPostFromSlot(post)">
           <v-icon>mdi-pencil</v-icon>
         </v-btn>
-        <v-btn icon size="x-small" @click="openDeletePost(post)">
+        <v-btn icon size="x-small" @click="openDeletePostFromSlot(post)">
           <v-icon color="red">mdi-delete</v-icon>
         </v-btn>
       </div>
@@ -285,9 +285,28 @@
   </v-snackbar>
 </template>
 
-<script setup>
-  import { useProfileMe } from '@/features/profile/model/useProfileMe.js'
+<script setup lang="ts">
+  import { useProfileMe } from '@/features/profile/model/useProfileMe'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
+  import type { EntityId, Post, User } from '@/shared/types'
+
+  type ContactView = {
+    id?: EntityId | null
+    url?: string | null
+    description?: string | null
+  }
+
+  type LinkView = {
+    id?: EntityId | null
+    url?: string | null
+    description?: string | null
+  }
+
+  type ProfilePost = Post & {
+    title?: string
+    content?: string
+    intent?: string
+  }
 
   const {
     cancelEdit,
@@ -348,6 +367,34 @@
     urlRules,
     user,
   } = useProfileMe()
+
+  function openEditContactFromSlot (contact: unknown) {
+    openEditContact(contact as ContactView)
+  }
+
+  function openDeleteContactFromSlot (contactId: unknown) {
+    openDeleteContact(contactId as EntityId | null | undefined)
+  }
+
+  function openEditLinkFromSlot (link: unknown) {
+    openEditLink(link as LinkView)
+  }
+
+  function openDeleteLinkFromSlot (linkId: unknown) {
+    openDeleteLink(linkId as EntityId | null | undefined)
+  }
+
+  function startEditPostFromSlot (post: unknown) {
+    startEditPost(post as ProfilePost)
+  }
+
+  function openDeletePostFromSlot (post: unknown) {
+    openDeletePost(post as ProfilePost)
+  }
+
+  function isOwnPostFromSlot (post: unknown) {
+    return isOwnPost(post as ProfilePost)
+  }
 </script>
 
 <style scoped>

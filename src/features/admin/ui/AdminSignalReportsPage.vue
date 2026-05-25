@@ -106,10 +106,10 @@
                   <td>
                     <div class="admin-signals__signal-preview">
                       <div class="admin-signals__signal-subject">
-                        {{ report.signal_subject || snapshotValue(report, 'subject') || 'No subject' }}
+                        {{ report.signal_subject || snapshotTextValue(report, 'subject') || 'No subject' }}
                       </div>
                       <div class="admin-signals__signal-message">
-                        {{ truncate(report.signal_message || snapshotValue(report, 'message') || 'No message') }}
+                        {{ truncate(report.signal_message || snapshotTextValue(report, 'message') || 'No message') }}
                       </div>
                     </div>
                   </td>
@@ -195,7 +195,7 @@
 
                     <div class="admin-signals__message-card">
                       <div class="admin-signals__detail-label">Reported message</div>
-                      <pre>{{ report.signal_message || snapshotValue(report, 'message') || 'No message content' }}</pre>
+                      <pre>{{ report.signal_message || snapshotTextValue(report, 'message') || 'No message content' }}</pre>
                     </div>
 
                     <div class="admin-signals__json-grid">
@@ -231,20 +231,59 @@
   </v-snackbar>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 
+  type ReportStatus = 'open' | 'in_review' | 'resolved' | 'rejected' | string
+  type ReportActionType = 'delete-signal' | 'status'
+  type JsonRecord = Record<string, unknown>
+
+  type SignalReport = {
+    id: number | string
+    status: ReportStatus
+    target_id?: number | string | null
+    target_type?: string | null
+    reporter_name?: string | null
+    reporter_email?: string | null
+    reporter_id?: number | string | null
+    signal_subject?: string | null
+    signal_message?: string | null
+    tags?: unknown
+    created_at?: string | null
+    conversation_id?: number | string | null
+    sender_name?: string | null
+    sender_email?: string | null
+    sender_id?: number | string | null
+    receiver_name?: string | null
+    receiver_email?: string | null
+    receiver_id?: number | string | null
+    moderator_name?: string | null
+    moderator_email?: string | null
+    moderator_id?: number | string | null
+    snapshot?: unknown
+    resolution?: unknown
+  }
+
+  type StatusActionButton = {
+    key: string
+    label: string
+    color: string
+    variant: 'text' | 'flat' | 'elevated' | 'outlined' | 'plain' | 'tonal'
+    type: ReportActionType
+    status?: ReportStatus
+  }
+
   const router = useRouter()
   const { showToast, snackbar } = useSnackbar()
 
-  const reports = ref([])
+  const reports = ref<SignalReport[]>([])
   const loading = ref(false)
   const statusFilter = ref('open')
   const limit = ref(50)
-  const expandedReportId = ref(null)
+  const expandedReportId = ref<number | string | null>(null)
   const actionLoadingKey = ref('')
 
   const statusOptions = [
@@ -252,14 +291,14 @@
   ]
 
   const limitOptions = [25, 50, 100]
-  const statusActionButtons = {
+  const statusActionButtons: Record<string, StatusActionButton[]> = {
     open: [
       { key: 'delete-signal', label: 'Delete signal', color: 'error', variant: 'tonal', type: 'delete-signal' },
       { key: 'resolved', label: 'Resolve', color: 'success', variant: 'tonal', type: 'status', status: 'resolved' },
     ],
   }
 
-  function parseJson(value) {
+  function parseJson(value: unknown): unknown {
     if (!value) {
       return null
     }
@@ -279,7 +318,7 @@
     return value
   }
 
-  function parsedTags(report) {
+  function parsedTags(report: SignalReport): string[] {
     const value = parseJson(report.tags)
 
     if (Array.isArray(value)) {
@@ -293,21 +332,28 @@
     return []
   }
 
-  function snapshotValue(report, key) {
+  function snapshotValue(report: SignalReport, key: string): unknown {
     const snapshot = parseJson(report.snapshot)
 
     if (!snapshot || typeof snapshot !== 'object') {
       return ''
     }
 
-    return snapshot.data?.[key] ?? ''
+    const snapshotRecord = snapshot as { data?: JsonRecord }
+    return snapshotRecord.data?.[key] ?? ''
   }
 
-  function getSignalId(report) {
+  function getSignalId(report: SignalReport) {
     return report?.target_id || snapshotValue(report, 'id') || null
   }
 
-  function formatJson(value) {
+  function snapshotTextValue (report: SignalReport, key: string) {
+    const value = snapshotValue(report, key)
+
+    return typeof value === 'string' ? value : ''
+  }
+
+  function formatJson(value: unknown) {
     if (!value) {
       return '{}'
     }
@@ -319,7 +365,7 @@
     return JSON.stringify(value, null, 2)
   }
 
-  function truncate(value, maxLength = 96) {
+  function truncate(value: string | null | undefined, maxLength = 96) {
     if (!value || value.length <= maxLength) {
       return value
     }
@@ -327,7 +373,7 @@
     return `${value.slice(0, maxLength).trim()}...`
   }
 
-  function formatDateTime(value) {
+  function formatDateTime(value: string | null | undefined) {
     if (!value) {
       return '-'
     }
@@ -347,7 +393,7 @@
     }).format(date)
   }
 
-  function getStatusColor(status) {
+  function getStatusColor(status: ReportStatus | null | undefined) {
     switch (status) {
       case 'open':
         return 'warning'
@@ -362,15 +408,15 @@
     }
   }
 
-  function toggleExpanded(reportId) {
+  function toggleExpanded(reportId: number | string) {
     expandedReportId.value = expandedReportId.value === reportId ? null : reportId
   }
 
-  function getActionButtons(report) {
+  function getActionButtons(report: SignalReport) {
     return statusActionButtons[report.status] || []
   }
 
-  function getStatusSuccessMessage(status) {
+  function getStatusSuccessMessage(status: ReportStatus) {
     switch (status) {
       case 'resolved':
         return 'Report marked as resolved'
@@ -379,7 +425,7 @@
     }
   }
 
-  async function runReportAction(report, action) {
+  async function runReportAction(report: SignalReport, action: StatusActionButton) {
     if (action.type === 'delete-signal') {
       await deleteSignal(report)
       return
@@ -396,7 +442,7 @@
         limit: limit.value,
       }
 
-      const response = await api.get('/moderation/queue', { params })
+      const response = await api.get<SignalReport[]>('/moderation/queue', { params })
       const data = Array.isArray(response.data) ? response.data : []
       reports.value = data.filter(report => report?.target_type === 'message')
     } catch (error) {
@@ -407,7 +453,7 @@
     }
   }
 
-  async function updateStatus(report, status) {
+  async function updateStatus(report: SignalReport, status: ReportStatus) {
     const loadingKey = `${report.id}:${status}`
     actionLoadingKey.value = loadingKey
 
@@ -428,7 +474,7 @@
     }
   }
 
-  async function deleteSignal(report) {
+  async function deleteSignal(report: SignalReport) {
     const signalId = getSignalId(report)
     const loadingKey = `${report.id}:delete-signal`
     actionLoadingKey.value = loadingKey

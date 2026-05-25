@@ -1,4 +1,4 @@
-import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
 import type { EntityId, User, UserRole } from '@/shared/types'
 
 type UserSource = Partial<User> & Record<string, unknown> & {

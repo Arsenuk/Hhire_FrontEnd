@@ -4,7 +4,7 @@ import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 import { useAuthStore } from '@/features/auth/model/auth.store'
-import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
+import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks'
 import {
   normalizeConversationMessage,
   normalizeConversationSummary,
