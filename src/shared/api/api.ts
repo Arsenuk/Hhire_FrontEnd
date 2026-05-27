@@ -1,5 +1,5 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
-import { API_BASE_URL } from '@/shared/config/api.js'
+import { API_BASE_URL } from '@/shared/config/api'
 import { clearAuthStorage, getAccessToken, setAccessToken } from '@/shared/api/tokenStorage'
 import type { RefreshResponse } from '@/shared/types'
 

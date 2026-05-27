@@ -1,7 +1,5 @@
 {
   "compilerOptions": {
-    "allowJs": true,
-    "checkJs": true,
     "isolatedModules": true,
     "jsx": "preserve",
     "lib": [
@@ -34,8 +32,6 @@
     "typed-router.d.ts",
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.js",
-    "src/**/*.jsx",
     "src/**/*.vue",
     "src/**/*.d.ts"
   ]

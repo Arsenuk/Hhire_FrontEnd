@@ -169,7 +169,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { formatPostDate } from '@/shared/lib/date/formatPostDate'
-import { API_ORIGIN } from '@/shared/config/api.js'
+import { API_ORIGIN } from '@/shared/config/api'
 import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl'
 import type { EntityId, Nullable, Post, PostOwner } from '@/shared/types'
 

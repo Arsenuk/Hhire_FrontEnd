@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
   import { computed } from 'vue'
-  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName.js'
+  import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import type { Nullable, User } from '@/shared/types'
 

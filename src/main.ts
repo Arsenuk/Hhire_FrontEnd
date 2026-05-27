@@ -1,17 +1,14 @@
 /**
- * main.js
+ * main.ts
  *
- * Bootstraps Vuetify and other plugins then mounts the App`
+ * Bootstraps Vuetify and other plugins, then mounts the app.
  */
 
-// Plugins
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from '@/app/App.vue'
 import { registerPlugins } from '@/app/providers'
 import { useAuthStore } from '@/features/auth/model/auth.store'
-
-// Styles
 import 'unfonts.css'
 
 const pinia = createPinia()
