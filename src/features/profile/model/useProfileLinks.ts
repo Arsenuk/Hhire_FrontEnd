@@ -1,21 +1,8 @@
 import { ref, type Ref } from 'vue'
 import { isSupportedUsefulUrl, normalizeUsefulLinks, parseUsefulLink } from '@/features/profile/lib/usefulLinks'
+import type { LinkForm, ProfileLinkView, ValidatableForm } from '@/features/profile/model/contracts'
 import { api } from '@/shared/api/api'
 import type { EntityId, UsefulLink } from '@/shared/types'
-
-type LinkForm = {
-  url: string
-  description: string
-}
-
-type LinkView = UsefulLink & {
-  description?: string
-  url?: string
-}
-
-type ValidatableForm = {
-  validate: () => Promise<{ valid: boolean }>
-}
 
 type ApiError = {
   message?: string
@@ -33,10 +20,10 @@ interface UseProfileLinksOptions {
 }
 
 export function useProfileLinks ({ loading, errorMessage, successMessage }: UseProfileLinksOptions) {
-  const links = ref<LinkView[]>([])
+  const links = ref<ProfileLinkView[]>([])
   const showLinkDialog = ref(false)
   const linkFormRef = ref<ValidatableForm | null>(null)
-  const editingLink = ref<LinkView | null>(null)
+  const editingLink = ref<ProfileLinkView | null>(null)
 
   const showDeleteLinkDialog = ref(false)
   const linkToDelete = ref<EntityId | null>(null)
@@ -52,7 +39,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }: UseP
   ]
 
   function setLinks (nextLinks: UsefulLink[] = []) {
-    links.value = normalizeUsefulLinks(nextLinks)
+    links.value = normalizeUsefulLinks(nextLinks) as ProfileLinkView[]
   }
 
   function openAddLink () {
@@ -61,7 +48,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }: UseP
     showLinkDialog.value = true
   }
 
-  function openEditLink (link: LinkView) {
+  function openEditLink (link: ProfileLinkView) {
     editingLink.value = link
     linkForm.value = { url: link.url || '', description: link.description || '' }
     showLinkDialog.value = true

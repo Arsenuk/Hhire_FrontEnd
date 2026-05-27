@@ -129,7 +129,7 @@
       </v-row>
     </template>
 
-    <v-row v-else class="mt-10" justify="center">
+    <v-row v-else-if="loading" class="mt-10" justify="center">
       <v-progress-circular indeterminate size="50" />
     </v-row>
   </v-container>
@@ -139,29 +139,39 @@
   import PostCard from '@/entities/post/ui/PostCard.vue'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
-  import type { Post, User } from '@/shared/types'
-
-  type ProfileLinkItem = {
-    id?: string | number | null
-    url?: string | null
-    description?: string | null
-  }
+  import type {
+    ProfileContactView,
+    ProfileLinkView,
+    ProfilePostView,
+    ProfileUserView,
+  } from '@/features/profile/model/contracts'
 
   interface ProfileViewProps {
-    user: User | null
-    links?: ProfileLinkItem[]
-    contactInfo?: ProfileLinkItem[]
-    posts?: Post[]
+    user: ProfileUserView | null
+    links?: ProfileLinkView[]
+    contactInfo?: ProfileContactView[]
+    posts?: ProfilePostView[]
+    loading?: boolean
     errorMessage?: string
     successMessage?: string
     emptyInfoText?: string
     emptyPostsText?: string
   }
 
+  defineSlots<{
+    'header-actions'?: () => unknown
+    'contact-title-actions'?: () => unknown
+    'links-title-actions'?: () => unknown
+    'contact-append'?: (props: { contact: ProfileContactView }) => unknown
+    'link-append'?: (props: { link: ProfileLinkView }) => unknown
+    'post-actions'?: (props: { post: ProfilePostView }) => unknown
+  }>()
+
   withDefaults(defineProps<ProfileViewProps>(), {
     links: () => [],
     contactInfo: () => [],
     posts: () => [],
+    loading: false,
     errorMessage: '',
     successMessage: '',
     emptyInfoText: 'User did not provide information',

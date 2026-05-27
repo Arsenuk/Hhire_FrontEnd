@@ -5,6 +5,7 @@
     :contact-info="contacts"
     :error-message="errorMessage"
     :links="links"
+    :loading="loading"
     :posts="posts"
     :user="user"
   >
@@ -67,167 +68,28 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, ref, watch } from 'vue'
-  import { useRoute } from 'vue-router'
-  import { normalizePosts } from '@/entities/post/lib/normalizePost'
-  import { normalizeUser } from '@/entities/user/lib/normalizeUser'
-  import { api } from '@/shared/api/api'
-  import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
-  import { useAuthStore } from '@/features/auth/model/auth.store'
-  import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks'
-  import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks'
+  import { useProfileUser } from '@/features/profile/model/useProfileUser'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
-  import type { EntityId, Post, User } from '@/shared/types'
 
-  const route = useRoute()
-  const authStore = useAuthStore()
-  const authUser = computed(() => authStore.user)
-
-  type ProfileUser = User & { contactInfoVisible?: boolean }
-
-  const user = ref<ProfileUser | null>(null)
-  const posts = ref<Post[]>([])
-  const contacts = ref<ReturnType<typeof normalizeContactsToLinks>>([])
-  const links = ref<ReturnType<typeof normalizeUsefulLinks>>([])
-  const errorMessage = ref('')
-  const loading = ref(true)
-
-  const isFollowing = ref(false)
-  const followLoading = ref(false)
-  const contactDialog = ref(false)
-  const contactLoading = ref(false)
-  const contactMessage = ref('')
-  const { showToast, snackbar } = useSnackbar()
-
-  function getRouteUserId (): EntityId | null {
-    const params = route.params as Record<string, string | string[] | undefined>
-    const param = params.id
-    return typeof param === 'string' ? param : null
-  }
-
-  const userId = ref<EntityId | null>(getRouteUserId())
-  const canManageFollow = computed(() => Boolean(authUser.value && user.value && authUser.value.id !== user.value.id))
-
-  async function loadUserProfile () {
-    loading.value = true
-    errorMessage.value = ''
-    user.value = null
-    posts.value = []
-    contacts.value = []
-    links.value = []
-    isFollowing.value = false
-
-    try {
-      const res = await api.get<Record<string, unknown> & {
-        posts?: Record<string, unknown>[]
-        contacts?: Record<string, unknown>[]
-        links?: Record<string, unknown>[]
-      }>(`/users/${userId.value}/profile`)
-      user.value = normalizeUser(res.data) as ProfileUser
-      posts.value = normalizePosts(res.data.posts || [])
-      contacts.value = normalizeContactsToLinks(res.data.contacts || [])
-      links.value = normalizeUsefulLinks(res.data.links || [])
-
-      await checkFollowStatus()
-    } catch (error) {
-      console.error(error)
-      errorMessage.value = 'Failed to load profile'
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function checkFollowStatus () {
-    if (!canManageFollow.value) {
-      return
-    }
-
-    const res = await api.get('/follows/status', {
-      params: {
-        targetId: user.value?.id,
-        targetType: 'user',
-      },
-    })
-
-    isFollowing.value = res.data.following
-  }
-
-  async function toggleFollow () {
-    if (!user.value) {
-      return
-    }
-
-    followLoading.value = true
-
-    try {
-      if (isFollowing.value) {
-        await api.delete('/follows', {
-          data: {
-            targetId: user.value.id,
-            targetType: 'user',
-          },
-        })
-        isFollowing.value = false
-      } else {
-        await api.post('/follows', {
-          targetId: user.value.id,
-          targetType: 'user',
-        })
-        isFollowing.value = true
-      }
-    } finally {
-      followLoading.value = false
-    }
-  }
-
-  function openContactDialog () {
-    contactMessage.value = ''
-    contactDialog.value = true
-  }
-
-  function closeContactDialog () {
-    contactDialog.value = false
-  }
-
-  async function sendSignal () {
-    if (!authUser.value || !user.value) {
-      showToast('Please log in to send a signal', 'warning')
-      return
-    }
-
-    if (!contactMessage.value.trim()) {
-      showToast('Please enter a message', 'warning')
-      return
-    }
-
-    contactLoading.value = true
-
-    try {
-      await api.post('/signals', {
-        sender_type: 'user',
-        sender_id: authUser.value.id,
-        receiver_type: 'user',
-        receiver_id: user.value.id,
-        message: contactMessage.value,
-      })
-
-      contactDialog.value = false
-      showToast('Signal sent successfully', 'success')
-    } catch (error) {
-      console.error(error)
-      showToast('Failed to send signal', 'error')
-    } finally {
-      contactLoading.value = false
-    }
-  }
-
-  onMounted(loadUserProfile)
-
-  watch(() => (route.params as Record<string, string | string[] | undefined>).id, () => {
-    userId.value = getRouteUserId()
-    closeContactDialog()
-    void loadUserProfile()
-  })
+  const {
+    canManageFollow,
+    closeContactDialog,
+    contactDialog,
+    contactLoading,
+    contactMessage,
+    contacts,
+    errorMessage,
+    followLoading,
+    isFollowing,
+    links,
+    loading,
+    openContactDialog,
+    posts,
+    sendSignal,
+    snackbar,
+    toggleFollow,
+    user,
+  } = useProfileUser()
 </script>
 
 <style scoped>

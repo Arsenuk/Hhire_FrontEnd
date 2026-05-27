@@ -1,25 +1,11 @@
 import { computed, ref, type Ref } from 'vue'
 import { isSupportedContactLink, normalizeContactsToLinks, parseContactLink } from '@/features/profile/lib/contactLinks'
+import type { ContactForm, ProfileContactView, ValidatableForm } from '@/features/profile/model/contracts'
 import { api } from '@/shared/api/api'
 import type { ContactLink, EntityId } from '@/shared/types'
 
 type ToastColor = 'success' | 'error' | 'warning' | 'info' | string
 type ShowToast = (message: string, color?: ToastColor) => void
-
-type ContactForm = {
-  url: string
-  description: string
-}
-
-type ContactView = ContactLink & {
-  description?: string
-  url?: string
-  value?: string
-}
-
-type ValidatableForm = {
-  validate: () => Promise<{ valid: boolean }>
-}
 
 type ApiError = {
   message?: string
@@ -38,10 +24,10 @@ interface UseProfileContactsOptions {
 }
 
 export function useProfileContacts ({ loading, errorMessage, successMessage, showToast }: UseProfileContactsOptions) {
-  const contacts = ref<ContactView[]>([])
+  const contacts = ref<ProfileContactView[]>([])
   const showContactDialog = ref(false)
   const contactFormRef = ref<ValidatableForm | null>(null)
-  const editingContact = ref<ContactView | null>(null)
+  const editingContact = ref<ProfileContactView | null>(null)
 
   const showDeleteContactDialog = ref(false)
   const contactToDelete = ref<EntityId | null>(null)
@@ -63,7 +49,7 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
   const contactVisibilityIcon = computed(() => contactInfoVisible.value ? 'mdi-eye' : 'mdi-eye-off')
 
   function setContacts (nextContacts: ContactLink[] = []) {
-    contacts.value = normalizeContactsToLinks(nextContacts)
+    contacts.value = normalizeContactsToLinks(nextContacts) as ProfileContactView[]
   }
 
   function setContactInfoVisible (visible = false) {
@@ -76,7 +62,7 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
     showContactDialog.value = true
   }
 
-  function openEditContact (contact: ContactView) {
+  function openEditContact (contact: ProfileContactView) {
     editingContact.value = contact
     contactForm.value = {
       url: contact.value || contact.url || '',

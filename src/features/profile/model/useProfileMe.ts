@@ -1,26 +1,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
-import { api } from '@/shared/api/api'
 import { useAuthStore } from '@/features/auth/model/auth.store'
+import type { ProfileForm, ProfileMeResponse, ProfilePostView, ValidatableForm } from '@/features/profile/model/contracts'
 import { useProfileContacts } from '@/features/profile/model/useProfileContacts'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts'
+import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import type { ContactLink, UsefulLink } from '@/shared/types'
-
-type ProfileForm = {
-  name: string
-  description: string
-  avatarFile: File | File[] | null
-}
-
-type ValidatableForm = {
-  validate: () => Promise<{ valid: boolean }>
-}
-
-type ProfileResponse = Record<string, unknown> & {
-  contactInfoVisible?: boolean
-}
 
 export function useProfileMe () {
   const authStore = useAuthStore()
@@ -72,10 +59,10 @@ export function useProfileMe () {
 
     try {
       const [{ data }, contactsResponse, linksResponse, postsResponse] = await Promise.all([
-        api.get<ProfileResponse>('/me'),
+        api.get<ProfileMeResponse>('/me'),
         api.get<ContactLink[]>('/contacts'),
         api.get<UsefulLink[]>('/me/links'),
-        api.get<{ posts?: Record<string, unknown>[] }>('/posts'),
+        api.get<{ posts?: ProfilePostView[] }>('/posts'),
       ])
 
       const normalizedUser = normalizeUser(data)
