@@ -3,12 +3,10 @@
     "allowJs": true,
     "target": "es5",
     "module": "esnext",
-    "baseUrl": "./",
     "moduleResolution": "bundler",
-    "ignoreDeprecations": "6.0",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ]
     },
     "lib": [
