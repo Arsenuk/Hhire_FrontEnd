@@ -298,6 +298,10 @@
     ],
   }
 
+  function isJsonRecord(value: unknown): value is JsonRecord {
+    return typeof value === 'object' && value !== null
+  }
+
   function parseJson(value: unknown): unknown {
     if (!value) {
       return null
@@ -339,8 +343,12 @@
       return ''
     }
 
-    const snapshotRecord = snapshot as { data?: JsonRecord }
-    return snapshotRecord.data?.[key] ?? ''
+    if (!('data' in snapshot)) {
+      return ''
+    }
+
+    const data = snapshot.data
+    return isJsonRecord(data) ? data[key] ?? '' : ''
   }
 
   function getSignalId(report: SignalReport) {

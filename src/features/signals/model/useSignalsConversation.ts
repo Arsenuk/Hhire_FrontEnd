@@ -140,7 +140,7 @@ export function useSignalsConversation ({
 
     try {
       const res = await api.get<ContactsResponse>(`/conversations/${activeSignal.value.id}/contacts`)
-      sharedContacts.value = normalizeContactsToLinks(res.data.contacts ?? []) as ContactLinkView[]
+      sharedContacts.value = normalizeContactsToLinks(res.data.contacts ?? [])
     } catch (error) {
       console.error(error)
       showToast('Failed to load shared contacts', 'error')

@@ -184,7 +184,7 @@
 <script setup lang="ts">
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
-  import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
+  import { normalizeUser } from '@/entities/user/lib/normalizeUser'
   import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
   import type { EntityId, User, UserRole } from '@/shared/types'
@@ -275,8 +275,15 @@
         params.q = searchQuery.value.trim()
       }
 
-      const response = await api.get<Record<string, unknown>[]>('/admin/users', { params })
-      users.value = normalizeUsers(response.data || []) as AdminUser[]
+      const response = await api.get<Array<Record<string, unknown> & {
+        status?: UserStatus
+        created_at?: string | null
+      }>>('/admin/users', { params })
+      users.value = (response.data || []).map(user => ({
+        ...normalizeUser(user),
+        ...(user.status !== undefined ? { status: user.status } : {}),
+        ...(user.created_at !== undefined ? { created_at: user.created_at } : {}),
+      }))
     } catch (error) {
       console.error('Failed to load admin users', error)
       showToast('Failed to load users', 'error')

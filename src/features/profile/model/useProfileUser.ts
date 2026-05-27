@@ -71,10 +71,13 @@ export function useProfileUser () {
     try {
       const { data } = await api.get<ProfileUserResponse>(`/users/${userId.value}/profile`)
 
-      user.value = normalizeUser(data) as ProfileUserView
-      posts.value = normalizePosts(data.posts || []) as ProfilePostView[]
-      contacts.value = normalizeContactsToLinks(data.contacts || []) as ProfileContactView[]
-      links.value = normalizeUsefulLinks(data.links || []) as ProfileLinkView[]
+      user.value = {
+        ...normalizeUser(data),
+        ...(data.contactInfoVisible !== undefined ? { contactInfoVisible: data.contactInfoVisible } : {}),
+      }
+      posts.value = normalizePosts(data.posts || [])
+      contacts.value = normalizeContactsToLinks(data.contacts || [])
+      links.value = normalizeUsefulLinks(data.links || [])
 
       await checkFollowStatus()
     } catch (error) {

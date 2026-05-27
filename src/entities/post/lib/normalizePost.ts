@@ -14,11 +14,13 @@ type PostSource = Record<string, unknown> & {
   tags?: TagLike[]
 }
 
+export function normalizePost<T extends PostSource> (post: T): T & Post
+export function normalizePost (post?: PostSource): Post
 export function normalizePost (post: PostSource = {}): Post {
-  const owner = normalizeUser(post.owner, {
+  const owner: PostOwner = normalizeUser(post.owner, {
     id: post.owner?.id ?? post.user_id ?? post.company_id ?? null,
     role: post.owner?.role ?? (post.company_id ? 'company' : 'user'),
-  }) as PostOwner
+  })
 
   return {
     ...post,
@@ -31,6 +33,8 @@ export function normalizePost (post: PostSource = {}): Post {
   }
 }
 
+export function normalizePosts<T extends PostSource> (posts: T[]): Array<T & Post>
+export function normalizePosts (posts?: PostSource[]): Post[]
 export function normalizePosts (posts: PostSource[] = []): Post[] {
   return posts.map(normalizePost)
 }

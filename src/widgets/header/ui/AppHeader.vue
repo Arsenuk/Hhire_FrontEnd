@@ -137,8 +137,8 @@
   async function fetchUnansweredSignals () {
     if (!isLoggedIn.value) return
     try {
-      const res = await api.get('/conversations/inbox')
-      unansweredSignals.value = ((res.data.conversations || []) as InboxConversation[])
+      const res = await api.get<{ conversations?: InboxConversation[] }>('/conversations/inbox')
+      unansweredSignals.value = (res.data.conversations || [])
         .filter(item => item.conversation_status === 'open')
         .length
     } catch (error) {

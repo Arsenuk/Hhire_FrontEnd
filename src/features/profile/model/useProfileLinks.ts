@@ -39,7 +39,7 @@ export function useProfileLinks ({ loading, errorMessage, successMessage }: UseP
   ]
 
   function setLinks (nextLinks: UsefulLink[] = []) {
-    links.value = normalizeUsefulLinks(nextLinks) as ProfileLinkView[]
+    links.value = normalizeUsefulLinks(nextLinks)
   }
 
   function openAddLink () {

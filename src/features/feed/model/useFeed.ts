@@ -109,7 +109,7 @@ export function useFeed () {
       const responseData = res.data
       const rawPosts = Array.isArray(responseData) ? responseData : responseData.posts || []
 
-      allPosts.value = normalizePosts(rawPosts) as FeedPost[]
+      allPosts.value = normalizePosts(rawPosts)
       posts.value = allPosts.value
       nextCursor.value = Array.isArray(responseData) ? null : responseData.nextCursor || null
       hasMorePosts.value = Boolean(nextCursor.value) && rawPosts.length === pageSize
@@ -133,7 +133,7 @@ export function useFeed () {
         }),
       })
       const rawPosts = res.data.posts || []
-      const nextPosts = normalizePosts(rawPosts) as FeedPost[]
+      const nextPosts = normalizePosts(rawPosts)
       const existingIds = new Set(allPosts.value.map(post => post.id))
       const uniquePosts = nextPosts.filter(post => !existingIds.has(post.id))
 
@@ -305,7 +305,7 @@ export function useFeed () {
     intentOptions,
     isLoading,
     isLoadingMore,
-    loadMoreTrigger: loadMoreTrigger as Ref<HTMLElement | null>,
+    loadMoreTrigger,
     loadMorePosts,
     posts,
     selectedIntents,

@@ -49,7 +49,7 @@ export function useProfileContacts ({ loading, errorMessage, successMessage, sho
   const contactVisibilityIcon = computed(() => contactInfoVisible.value ? 'mdi-eye' : 'mdi-eye-off')
 
   function setContacts (nextContacts: ContactLink[] = []) {
-    contacts.value = normalizeContactsToLinks(nextContacts) as ProfileContactView[]
+    contacts.value = normalizeContactsToLinks(nextContacts)
   }
 
   function setContactInfoVisible (visible = false) {

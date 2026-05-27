@@ -9,7 +9,7 @@ type ParsedUsefulLink = {
   description: string | null
 }
 
-type NormalizedUsefulLink = {
+export type NormalizedUsefulLink = UsefulLink & {
   id?: Nullable<EntityId>
   url: string
   description: string

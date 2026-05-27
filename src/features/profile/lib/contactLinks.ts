@@ -18,7 +18,7 @@ type ParsedContactLink = {
   label: string | null
 }
 
-type NormalizedContactLink = {
+export type NormalizedContactLink = ContactLink & {
   id?: Nullable<EntityId>
   type?: Nullable<string>
   url: string

@@ -105,7 +105,7 @@ export const useAuthStore = defineStore('auth', {
       }
 
       try {
-        this.user = normalizeUser(JSON.parse(user) as User)
+        this.user = normalizeUser(JSON.parse(user))
       } catch {
         localStorage.removeItem(USER_STORAGE_KEY)
         this.user = null

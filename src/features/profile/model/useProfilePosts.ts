@@ -45,7 +45,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
   }
 
   function setPosts (nextPosts: Post[] = []) {
-    posts.value = normalizePosts(nextPosts) as ProfilePostView[]
+    posts.value = normalizePosts(nextPosts)
   }
 
   const userId = computed(() => user.value?.id)
@@ -122,7 +122,7 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
         }])
 
         if (normalizedPost) {
-          posts.value[index] = normalizedPost as ProfilePostView
+          posts.value[index] = normalizedPost
         }
       }
 
