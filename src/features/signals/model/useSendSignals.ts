@@ -1,10 +1,10 @@
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, type ComputedRef, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 import { useAuthStore } from '@/features/auth/model/auth.store'
-import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks.js'
+import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks'
 import {
   normalizeConversationMessage,
   normalizeConversationSummary,
@@ -37,7 +37,34 @@ type ReportPayload = {
   tags?: string | string[]
 }
 
-export function useSendSignals () {
+type UseSendSignalsReturn = {
+  activeSignal: Ref<ConversationSummary | null>
+  canCloseConversation: ComputedRef<boolean>
+  canHide: ComputedRef<boolean>
+  isAwaitingMyCloseConfirmation: ComputedRef<boolean>
+  closeConversation: () => Promise<void>
+  closeDialog: () => void
+  closeLoading: Ref<boolean>
+  currentUserId: ComputedRef<EntityId | null>
+  dialog: Ref<boolean>
+  fetchSharedContacts: () => Promise<void>
+  goToProfile: (id: EntityId | null | undefined) => ReturnType<typeof navigateToProfile>
+  hideConversation: () => Promise<void>
+  hideLoading: Ref<boolean>
+  loadingConversation: Ref<boolean>
+  messages: Ref<ConversationMessage[]>
+  openDialog: (signal: ConversationSummary) => Promise<void>
+  reportLoading: Ref<boolean>
+  reportSignal: (payload?: ReportPayload) => Promise<void>
+  shareContactInfo: (visible: boolean) => Promise<void>
+  shareLoading: Ref<boolean>
+  sharedContacts: Ref<ContactLinkView[]>
+  sharedContactsLoading: Ref<boolean>
+  signals: Ref<ConversationSummary[]>
+  snackbar: ReturnType<typeof useSnackbar>['snackbar']
+}
+
+export function useSendSignals (): UseSendSignalsReturn {
   const router = useRouter()
   const authStore = useAuthStore()
 
@@ -62,7 +89,7 @@ export function useSendSignals () {
     activeSignal.value?.closeRequestedByCounterparty,
   ))
 
-  async function fetchSignals () {
+  async function fetchSignals (): Promise<void> {
     try {
       const res = await api.get<InboxResponse>('/conversations/sent')
       const conversations = (res.data.conversations || []).map(item => normalizeConversationSummary(item, 'sent'))
@@ -81,7 +108,7 @@ export function useSendSignals () {
     }
   }
 
-  async function fetchMessages (conversationId: EntityId | null | undefined) {
+  async function fetchMessages (conversationId: EntityId | null | undefined): Promise<void> {
     if (!conversationId) {
       messages.value = []
       return
@@ -100,21 +127,21 @@ export function useSendSignals () {
     }
   }
 
-  async function openDialog (signal: ConversationSummary) {
+  async function openDialog (signal: ConversationSummary): Promise<void> {
     activeSignal.value = signal
     sharedContacts.value = []
     dialog.value = true
     await fetchMessages(signal.id)
   }
 
-  function closeDialog () {
+  function closeDialog (): void {
     dialog.value = false
     activeSignal.value = null
     messages.value = []
     sharedContacts.value = []
   }
 
-  async function fetchSharedContacts () {
+  async function fetchSharedContacts (): Promise<void> {
     if (!activeSignal.value?.contactInfoSharedWithMe) {
       sharedContacts.value = []
       return
@@ -133,7 +160,7 @@ export function useSendSignals () {
     }
   }
 
-  async function shareContactInfo (visible: boolean) {
+  async function shareContactInfo (visible: boolean): Promise<void> {
     if (!activeSignal.value) {
       return
     }
@@ -159,7 +186,7 @@ export function useSendSignals () {
     }
   }
 
-  async function closeConversation () {
+  async function closeConversation (): Promise<void> {
     if (!activeSignal.value) {
       return
     }
@@ -194,7 +221,7 @@ export function useSendSignals () {
     }
   }
 
-  async function hideConversation () {
+  async function hideConversation (): Promise<void> {
     if (!activeSignal.value) {
       return
     }
@@ -214,11 +241,11 @@ export function useSendSignals () {
     }
   }
 
-  function goToProfile (id: EntityId | null | undefined) {
+  function goToProfile (id: EntityId | null | undefined): ReturnType<typeof navigateToProfile> {
     return navigateToProfile(router, id)
   }
 
-  async function reportSignal ({ tags, onDone }: ReportPayload = {}) {
+  async function reportSignal ({ tags, onDone }: ReportPayload = {}): Promise<void> {
     if (!activeSignal.value?.messageId) {
       showToast('Failed to prepare report', 'error')
       return

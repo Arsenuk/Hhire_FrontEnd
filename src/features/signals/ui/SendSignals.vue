@@ -72,7 +72,7 @@
   </v-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSendSignals } from '@/features/signals/model/useSendSignals'
   import ConversationDialog from '@/features/signals/ui/ConversationDialog.vue'

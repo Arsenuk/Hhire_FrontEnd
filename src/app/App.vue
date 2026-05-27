@@ -5,7 +5,7 @@
   </v-app>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import { onMounted } from 'vue'
   import { useAuthStore } from '@/features/auth/model/auth.store'
   import AppHeader from '@/widgets/header/ui/AppHeader.vue'

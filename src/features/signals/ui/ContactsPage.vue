@@ -38,23 +38,31 @@
   </v-container>
 </template>
 
-<script setup>
-  import { computed, ref } from 'vue'
+<script setup lang="ts">
+  import { computed, ref, type Component } from 'vue'
   import Follows from '@/features/signals/ui/Follows.vue'
   import SendSignals from '@/features/signals/ui/SendSignals.vue'
   import SuggestedUsers from '@/features/signals/ui/SuggestedUsers.vue'
   import UnrepliedSignals from '@/features/signals/ui/UnrepliedSignals.vue'
 
-  const currentTab = ref('follows')
+  type TabKey = 'follows' | 'suggested' | 'unreplied' | 'send'
 
-  const tabs = [
+  type TabItem = {
+    key: TabKey
+    label: string
+    component: Component
+  }
+
+  const currentTab = ref<TabKey>('follows')
+
+  const tabs: TabItem[] = [
     { key: 'follows', label: 'Follows', component: Follows },
     { key: 'suggested', label: 'Suggested Users', component: SuggestedUsers },
     { key: 'unreplied', label: 'Inbox', component: UnrepliedSignals },
     { key: 'send', label: 'Sent Dialogs', component: SendSignals },
   ]
 
-  const currentComponent = computed(() => {
+  const currentComponent = computed<Component | null>(() => {
     const tab = tabs.find(item => item.key === currentTab.value)
     return tab ? tab.component : null
   })

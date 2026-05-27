@@ -74,9 +74,9 @@
   </v-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
-  import { useSuggestedUsers } from '@/features/signals/model/useSuggestedUsers.js'
+  import { useSuggestedUsers } from '@/features/signals/model/useSuggestedUsers'
 
   const {
     closeDialog,
