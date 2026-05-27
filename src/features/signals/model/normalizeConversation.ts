@@ -1,42 +1,16 @@
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import type {
-  ConversationMessage,
-  ConversationSummary,
-  EntityId,
-} from '@/shared/types'
-
-type ConversationView = 'inbox' | 'sent'
-
-type ConversationSource = Record<string, unknown> & {
-  id?: EntityId | null
-  conversation_id?: EntityId | null
-  parent_id?: EntityId | null
-  root_id?: EntityId | null
-  post_id?: EntityId | null
-  subject?: string | null
-  message?: string | null
-  created_at?: string | null
-  conversation_status?: string | null
-  conversation_outcome?: string | null
-  closed_at?: string | null
-  close_requested_by_me?: unknown
-  close_requested_by_counterparty?: unknown
-  own_contacts_shared?: unknown
-  contact_info_shared_with_me?: unknown
-  sender_id?: EntityId | null
-  sender_name?: string | null
-  sender_avatar?: string | null
-  sender_type?: string | null
-  receiver_id?: EntityId | null
-  receiver_name?: string | null
-  receiver_avatar?: string | null
-  receiver_type?: string | null
-}
+  ConversationMessageDto,
+  ConversationMessageVm,
+  ConversationSummaryDto,
+  ConversationSummaryVm,
+  ConversationView,
+} from '@/features/signals/model/conversation.types'
 
 export function normalizeConversationSummary (
-  conversation: ConversationSource,
+  conversation: ConversationSummaryDto,
   view: ConversationView = 'inbox',
-): ConversationSummary {
+): ConversationSummaryVm {
   const counterpart = view === 'inbox'
     ? normalizeUser({
       id: conversation.sender_id,
@@ -79,7 +53,7 @@ export function normalizeConversationSummary (
   }
 }
 
-export function normalizeConversationMessage (message: ConversationSource): ConversationMessage {
+export function normalizeConversationMessage (message: ConversationMessageDto): ConversationMessageVm {
   return {
     id: message.id ?? null,
     message: message.message ?? null,

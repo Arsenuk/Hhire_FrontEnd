@@ -248,21 +248,19 @@
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import type {
     ContactLink,
-    ConversationMessage,
-    ConversationSummary,
     EntityId,
     Nullable,
   } from '@/shared/types'
+  import type {
+    ConversationMessageVm,
+    ConversationSummaryVm,
+  } from '@/features/signals/model/conversation.types'
 
   type ReplyAction = 'accept' | 'refuse'
   type ReportReason = 'spam' | 'harassment' | 'scam' | 'privacy_violation' | 'impersonation' | 'other'
 
   type ConversationContact = ContactLink & {
     description?: Nullable<string>
-  }
-
-  type ConversationDialogMessage = ConversationMessage & {
-    message?: Nullable<string>
   }
 
   type ReportPayload = {
@@ -277,8 +275,8 @@
 
   interface ConversationDialogProps {
     modelValue?: boolean
-    conversation?: ConversationSummary | null
-    messages?: ConversationDialogMessage[]
+    conversation?: ConversationSummaryVm | null
+    messages?: ConversationMessageVm[]
     currentUserId?: EntityId | null
     loading?: boolean
     canReply?: boolean
@@ -343,7 +341,7 @@
   ]
 
   const conversation = computed(() => props.conversation)
-  const messages = computed<ConversationDialogMessage[]>(() => props.messages)
+  const messages = computed<ConversationMessageVm[]>(() => props.messages)
   const sharedContacts = computed<ConversationContact[]>(() => props.sharedContacts)
 
   function handleDialogToggle (value: boolean) {
