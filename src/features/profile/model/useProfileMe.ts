@@ -148,7 +148,6 @@ export function useProfileMe () {
   }
 
   onMounted(() => {
-    authStore.loadUserFromStorage()
     void loadProfile()
   })
 

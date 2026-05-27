@@ -1,7 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
 import { API_BASE_URL } from '@/shared/config/api'
-import { clearAuthStorage, getAccessToken, setAccessToken } from '@/shared/api/tokenStorage'
-import type { RefreshResponse } from '@/shared/types'
+import { getSessionToken, refreshSessionToken } from '@/shared/auth/session'
 
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean
@@ -11,36 +10,10 @@ type ApiErrorPayload = {
   error?: string
 }
 
-let refreshPromise: Promise<string> | null = null
-
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
 })
-
-async function syncAuthStoreAccessToken (token: string): Promise<void> {
-  try {
-    const { useAuthStore } = await import('@/features/auth/model/auth.store')
-    const authStore = useAuthStore()
-
-    authStore.setAccessToken(token)
-  } catch (error) {
-    console.warn('Failed to sync access token with auth store', error)
-  }
-}
-
-async function clearAuthSession (): Promise<void> {
-  clearAuthStorage()
-
-  try {
-    const { useAuthStore } = await import('@/features/auth/model/auth.store')
-    const authStore = useAuthStore()
-
-    authStore.clearSession()
-  } catch (error) {
-    console.warn('Failed to clear auth store session', error)
-  }
-}
 
 function shouldSkipRefresh (url = ''): boolean {
   return [
@@ -51,32 +24,8 @@ function shouldSkipRefresh (url = ''): boolean {
   ].some(authUrl => url.includes(authUrl))
 }
 
-async function refreshAccessToken (): Promise<string> {
-  if (!refreshPromise) {
-    refreshPromise = axios.post<RefreshResponse>(`${API_BASE_URL}/auth/refresh`, null, {
-      withCredentials: true,
-    })
-      .then(async response => {
-        const accessToken = response.data?.accessToken
-
-        if (!accessToken) {
-          throw new Error('Refresh response does not include access token')
-        }
-
-        setAccessToken(accessToken)
-        await syncAuthStoreAccessToken(accessToken)
-        return accessToken
-      })
-      .finally(() => {
-        refreshPromise = null
-      })
-  }
-
-  return refreshPromise
-}
-
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = getAccessToken()
+  const token = getSessionToken()
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
@@ -99,7 +48,7 @@ api.interceptors.response.use(
     originalRequest._retry = true
 
     try {
-      const accessToken = await refreshAccessToken()
+      const accessToken = await refreshSessionToken()
 
       if (typeof originalRequest.headers?.set === 'function') {
         originalRequest.headers.set('Authorization', `Bearer ${accessToken}`)
@@ -107,7 +56,6 @@ api.interceptors.response.use(
 
       return api(originalRequest)
     } catch (refreshError) {
-      await clearAuthSession()
       return Promise.reject(refreshError)
     }
   },

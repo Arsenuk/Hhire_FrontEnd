@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import { loginRequest, logoutRequest, meRequest } from '@/features/auth/api/auth.api'
-import { clearAuthStorage, getAccessToken, setAccessToken as saveAccessToken } from '@/shared/api/tokenStorage'
+import { clearSessionToken, getSessionToken, setSessionToken, subscribeToSession } from '@/shared/auth/session'
 import type { User } from '@/shared/types'
 
 type ApiError = {
@@ -17,35 +17,51 @@ interface AuthState {
   accessToken: string | null
 }
 
+const USER_STORAGE_KEY = 'user'
+
+let stopSessionSync: (() => void) | null = null
+
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
     user: null,
-    accessToken: getAccessToken(),
+    accessToken: getSessionToken(),
   }),
   getters: {
     isLoggedIn: state => !!state.accessToken,
   },
   actions: {
+    bindSession () {
+      if (stopSessionSync) {
+        return
+      }
+
+      stopSessionSync = subscribeToSession(session => {
+        this.accessToken = session.accessToken
+
+        if (!session.accessToken) {
+          this.setUser(null)
+        }
+      })
+    },
+
     setAccessToken (token: string | null | undefined) {
-      this.accessToken = token || null
-      saveAccessToken(token)
+      setSessionToken(token)
     },
 
     setUser (user: User | null) {
       this.user = user ? normalizeUser(user) : null
 
       if (this.user) {
-        localStorage.setItem('user', JSON.stringify(this.user))
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(this.user))
         return
       }
 
-      localStorage.removeItem('user')
+      localStorage.removeItem(USER_STORAGE_KEY)
     },
 
     clearSession () {
       this.setUser(null)
-      this.setAccessToken(null)
-      clearAuthStorage()
+      clearSessionToken()
     },
 
     async login (email: string, password: string) {
@@ -80,17 +96,20 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    loadUserFromStorage () {
-      const user = localStorage.getItem('user')
-      const token = getAccessToken()
+    hydrateUserFromStorage () {
+      const user = localStorage.getItem(USER_STORAGE_KEY)
 
-      if (user && token) {
-        this.setUser(JSON.parse(user) as User)
-        this.setAccessToken(token)
+      if (!user) {
+        this.user = null
         return
       }
 
-      this.clearSession()
+      try {
+        this.user = normalizeUser(JSON.parse(user) as User)
+      } catch {
+        localStorage.removeItem(USER_STORAGE_KEY)
+        this.user = null
+      }
     },
   },
 })

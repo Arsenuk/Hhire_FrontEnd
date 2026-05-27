@@ -7,8 +7,8 @@
 import { createPinia } from 'pinia'
 import { createApp } from 'vue'
 import App from '@/app/App.vue'
+import { initAuth } from '@/app/bootstrap/initAuth'
 import { registerPlugins } from '@/app/providers'
-import { useAuthStore } from '@/features/auth/model/auth.store'
 import 'unfonts.css'
 
 const pinia = createPinia()
@@ -16,8 +16,7 @@ const app = createApp(App)
 
 app.use(pinia)
 
-const authStore = useAuthStore(pinia)
-authStore.loadUserFromStorage()
+await initAuth(pinia)
 
 registerPlugins(app)
 

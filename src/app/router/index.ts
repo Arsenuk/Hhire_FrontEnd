@@ -6,6 +6,7 @@
 
 import { createRouter, createWebHistory, type RouteLocationNormalized } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
+import { waitForAuthInitialization } from '@/app/bootstrap/initAuth'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess'
 
@@ -35,15 +36,9 @@ router.beforeEach(async to => {
     return true
   }
 
-  const authStore = useAuthStore()
+  await waitForAuthInitialization()
 
-  if (authStore.accessToken && !authStore.user) {
-    try {
-      await authStore.fetchMe()
-    } catch (error) {
-      console.error('Failed to verify admin panel access', error)
-    }
-  }
+  const authStore = useAuthStore()
 
   if (!authStore.isLoggedIn) {
     return '/login'
