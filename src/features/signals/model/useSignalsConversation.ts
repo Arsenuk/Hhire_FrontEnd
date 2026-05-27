@@ -97,7 +97,7 @@ export function useSignalsConversation ({
     }
   }
 
-  async function fetchMessages (conversationId: EntityId | null | undefined): Promise<void> {
+  async function fetchMessages (conversationId: EntityId | null): Promise<void> {
     if (!conversationId) {
       messages.value = []
       return

@@ -1,14 +1,14 @@
 import type { Nullable, User } from '@/shared/types'
 
 type DisplayNameSource = {
-  name?: Nullable<string> | undefined
-  username?: Nullable<string> | undefined
-  email?: Nullable<string> | undefined
-  fullName?: Nullable<string> | undefined
+  name?: Nullable<string>
+  username?: Nullable<string>
+  email?: Nullable<string>
+  fullName?: Nullable<string>
 }
 
 export function getUserDisplayName (
-  user: DisplayNameSource | null | undefined = {},
+  user: DisplayNameSource | null = {},
   fallback = 'Unknown user',
 ) {
   const source = user && typeof user === 'object' ? user : {}

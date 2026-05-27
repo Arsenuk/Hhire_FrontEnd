@@ -30,7 +30,7 @@ export function getSessionToken (): string | null {
   return accessToken
 }
 
-export function setSessionToken (token: string | null | undefined): void {
+export function setSessionToken (token: string | null): void {
   const nextToken = token || null
 
   accessToken = nextToken

@@ -2,16 +2,16 @@ import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
 import type { ContactLink, EntityId, Nullable, UsefulLink, User, UserRole } from '@/shared/types'
 
 type UserSource = Record<string, unknown> & {
-  id?: Nullable<EntityId> | undefined
-  name?: Nullable<string> | undefined
-  description?: Nullable<string> | undefined
-  avatar?: Nullable<string> | undefined
-  role?: Nullable<UserRole> | undefined
-  username?: Nullable<string> | undefined
-  email?: Nullable<string> | undefined
+  id?: Nullable<EntityId>
+  name?: Nullable<string>
+  description?: Nullable<string>
+  avatar?: Nullable<string>
+  role?: Nullable<UserRole>
+  username?: Nullable<string>
+  email?: Nullable<string>
   lastPost?: unknown
-  contacts?: ContactLink[] | undefined
-  usefulLinks?: UsefulLink[] | undefined
+  contacts?: ContactLink[]
+  usefulLinks?: UsefulLink[]
   user_id?: EntityId | null
   sender_id?: EntityId | null
   receiver_id?: EntityId | null
@@ -23,7 +23,7 @@ type UserSource = Record<string, unknown> & {
 
 type UserOverrides = Partial<User>
 
-export function normalizeUser (user: UserSource | null | undefined = {}, overrides: UserOverrides = {}): User {
+export function normalizeUser (user: UserSource | null = {}, overrides: UserOverrides = {}): User {
   const source = user && typeof user === 'object' ? user : {}
 
   const normalized: User = {

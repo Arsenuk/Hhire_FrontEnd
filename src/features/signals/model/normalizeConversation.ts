@@ -12,12 +12,12 @@ export function normalizeConversationSummary (
   view: ConversationView = 'inbox',
 ): ConversationSummaryVm {
   const senderUser = normalizeUser({
-    id: conversation.sender_id,
+    ...(conversation.sender_id !== undefined ? { id: conversation.sender_id } : {}),
     ...(conversation.sender_name !== undefined ? { name: conversation.sender_name } : {}),
     ...(conversation.sender_avatar !== undefined ? { avatar: conversation.sender_avatar } : {}),
   })
   const receiverUser = normalizeUser({
-    id: conversation.receiver_id,
+    ...(conversation.receiver_id !== undefined ? { id: conversation.receiver_id } : {}),
     ...(conversation.receiver_name !== undefined ? { name: conversation.receiver_name } : {}),
     ...(conversation.receiver_avatar !== undefined ? { avatar: conversation.receiver_avatar } : {}),
   })
@@ -49,12 +49,12 @@ export function normalizeConversationSummary (
 
 export function normalizeConversationMessage (message: ConversationMessageDto): ConversationMessageVm {
   const senderUser = normalizeUser({
-    id: message.sender_id,
+    ...(message.sender_id !== undefined ? { id: message.sender_id } : {}),
     ...(message.sender_name !== undefined ? { name: message.sender_name } : {}),
     ...(message.sender_avatar !== undefined ? { avatar: message.sender_avatar } : {}),
   })
   const receiverUser = normalizeUser({
-    id: message.receiver_id,
+    ...(message.receiver_id !== undefined ? { id: message.receiver_id } : {}),
     ...(message.receiver_name !== undefined ? { name: message.receiver_name } : {}),
     ...(message.receiver_avatar !== undefined ? { avatar: message.receiver_avatar } : {}),
   })

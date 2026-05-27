@@ -44,7 +44,7 @@ export const useAuthStore = defineStore('auth', {
       })
     },
 
-    setAccessToken (token: string | null | undefined) {
+    setAccessToken (token: string | null) {
       setSessionToken(token)
     },
 
