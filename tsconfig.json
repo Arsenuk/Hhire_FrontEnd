@@ -23,7 +23,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
-    "strict": false,
+    "strict": true,
     "useUnknownInCatchVariables": true,
     "exactOptionalPropertyTypes": true,
     "target": "ESNext",
