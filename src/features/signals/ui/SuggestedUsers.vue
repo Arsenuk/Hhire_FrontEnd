@@ -5,8 +5,8 @@
     <v-card-text class="card-body">
       <v-list class="list">
         <v-list-item
-          v-for="user in suggestedUsers"
-          :key="user.id"
+          v-for="(user, index) in suggestedUsers"
+          :key="user.id ?? `suggested-user-${index}`"
           class="user-item"
           :ripple="false"
         >

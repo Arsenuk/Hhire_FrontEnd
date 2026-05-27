@@ -12,6 +12,9 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "@/*": [
         "./src/*"
@@ -19,7 +22,10 @@
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
+    "strictNullChecks": true,
     "strict": false,
+    "useUnknownInCatchVariables": true,
+    "exactOptionalPropertyTypes": true,
     "target": "ESNext",
     "types": [
       "vite/client",

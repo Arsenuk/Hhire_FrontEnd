@@ -108,11 +108,21 @@ export function useProfilePosts ({ user, loading, errorMessage, successMessage }
 
       const index = posts.value.findIndex(post => post.id === editPostForm.value.id)
       if (index !== -1) {
+        const currentPost = posts.value[index]
+        if (!currentPost) {
+          return
+        }
+
         const updatedPost = data?.post || {}
-        posts.value[index] = {
-          ...posts.value[index],
+        const [normalizedPost] = normalizePosts([{
+          ...currentPost,
           ...updatedPost,
-          owner: posts.value[index].owner,
+          owner: currentPost.owner,
+          tags: updatedPost.tags ?? currentPost.tags,
+        }])
+
+        if (normalizedPost) {
+          posts.value[index] = normalizedPost as ProfilePostView
         }
       }
 

@@ -431,6 +431,11 @@
       return
     }
 
+    if (!action.status) {
+      showToast('Report action is missing a target status', 'error')
+      return
+    }
+
     await updateStatus(report, action.status)
   }
 

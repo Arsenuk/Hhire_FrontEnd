@@ -5,8 +5,8 @@
     <v-card-text>
       <v-list>
         <v-list-item
-          v-for="signal in signals"
-          :key="signal.id"
+          v-for="(signal, index) in signals"
+          :key="signal.id ?? `sent-signal-${index}`"
           class="signal-item"
           :ripple="false"
         >
@@ -38,14 +38,14 @@
       :can-close-conversation="canCloseConversation"
       :can-hide="canHide"
       :close-loading="closeLoading"
-      :contact-info-shared-with-me="activeSignal?.contactInfoSharedWithMe"
+      :contact-info-shared-with-me="activeSignal?.contactInfoSharedWithMe ?? false"
       :conversation="activeSignal"
       :current-user-id="currentUserId"
       :hide-loading="hideLoading"
       :is-awaiting-my-close-confirmation="isAwaitingMyCloseConfirmation"
       :loading="loadingConversation"
       :messages="messages"
-      :own-contacts-shared="activeSignal?.ownContactsShared"
+      :own-contacts-shared="activeSignal?.ownContactsShared ?? false"
       :report-loading="reportLoading"
       :share-loading="shareLoading"
       :shared-contacts="sharedContacts"

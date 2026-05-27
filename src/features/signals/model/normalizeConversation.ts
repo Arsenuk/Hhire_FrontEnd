@@ -11,17 +11,19 @@ export function normalizeConversationSummary (
   conversation: ConversationSummaryDto,
   view: ConversationView = 'inbox',
 ): ConversationSummaryVm {
+  const senderUser = normalizeUser({
+    id: conversation.sender_id,
+    ...(conversation.sender_name !== undefined ? { name: conversation.sender_name } : {}),
+    ...(conversation.sender_avatar !== undefined ? { avatar: conversation.sender_avatar } : {}),
+  })
+  const receiverUser = normalizeUser({
+    id: conversation.receiver_id,
+    ...(conversation.receiver_name !== undefined ? { name: conversation.receiver_name } : {}),
+    ...(conversation.receiver_avatar !== undefined ? { avatar: conversation.receiver_avatar } : {}),
+  })
   const counterpart = view === 'inbox'
-    ? normalizeUser({
-      id: conversation.sender_id,
-      name: conversation.sender_name,
-      avatar: conversation.sender_avatar,
-    })
-    : normalizeUser({
-      id: conversation.receiver_id,
-      name: conversation.receiver_name,
-      avatar: conversation.receiver_avatar,
-    })
+    ? senderUser
+    : receiverUser
 
   return {
     id: conversation.conversation_id ?? null,
@@ -40,20 +42,23 @@ export function normalizeConversationSummary (
     ownContactsShared: Boolean(conversation.own_contacts_shared),
     contactInfoSharedWithMe: Boolean(conversation.contact_info_shared_with_me),
     counterpart,
-    sender: normalizeUser({
-      id: conversation.sender_id,
-      name: conversation.sender_name,
-      avatar: conversation.sender_avatar,
-    }),
-    receiver: normalizeUser({
-      id: conversation.receiver_id,
-      name: conversation.receiver_name,
-      avatar: conversation.receiver_avatar,
-    }),
+    sender: senderUser,
+    receiver: receiverUser,
   }
 }
 
 export function normalizeConversationMessage (message: ConversationMessageDto): ConversationMessageVm {
+  const senderUser = normalizeUser({
+    id: message.sender_id,
+    ...(message.sender_name !== undefined ? { name: message.sender_name } : {}),
+    ...(message.sender_avatar !== undefined ? { avatar: message.sender_avatar } : {}),
+  })
+  const receiverUser = normalizeUser({
+    id: message.receiver_id,
+    ...(message.receiver_name !== undefined ? { name: message.receiver_name } : {}),
+    ...(message.receiver_avatar !== undefined ? { avatar: message.receiver_avatar } : {}),
+  })
+
   return {
     id: message.id ?? null,
     message: message.message ?? null,
@@ -62,15 +67,7 @@ export function normalizeConversationMessage (message: ConversationMessageDto): 
     senderId: message.sender_id ?? null,
     receiverType: message.receiver_type ?? null,
     receiverId: message.receiver_id ?? null,
-    sender: normalizeUser({
-      id: message.sender_id,
-      name: message.sender_name,
-      avatar: message.sender_avatar,
-    }),
-    receiver: normalizeUser({
-      id: message.receiver_id,
-      name: message.receiver_name,
-      avatar: message.receiver_avatar,
-    }),
+    sender: senderUser,
+    receiver: receiverUser,
   }
 }

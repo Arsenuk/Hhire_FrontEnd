@@ -7,8 +7,8 @@
     <v-card-text class="card-body">
       <v-list class="signal-list">
         <v-list-item
-          v-for="signal in signals"
-          :key="signal.id"
+          v-for="(signal, index) in signals"
+          :key="signal.id ?? `unreplied-signal-${index}`"
           class="signal-item"
           :ripple="false"
         >
@@ -39,14 +39,14 @@
       :can-hide="canHide"
       :can-reply="canReply"
       :close-loading="closeLoading"
-      :contact-info-shared-with-me="activeSignal?.contactInfoSharedWithMe"
+      :contact-info-shared-with-me="activeSignal?.contactInfoSharedWithMe ?? false"
       :conversation="activeSignal"
       :current-user-id="currentUserId"
       :hide-loading="hideLoading"
       :is-awaiting-my-close-confirmation="isAwaitingMyCloseConfirmation"
       :loading="loadingConversation"
       :messages="messages"
-      :own-contacts-shared="activeSignal?.ownContactsShared"
+      :own-contacts-shared="activeSignal?.ownContactsShared ?? false"
       :reply-loading="replyLoading"
       :report-loading="reportLoading"
       :share-loading="shareLoading"

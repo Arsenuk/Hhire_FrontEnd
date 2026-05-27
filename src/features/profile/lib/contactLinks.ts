@@ -31,12 +31,15 @@ export function normalizeContactsToLinks (contacts: ContactLinkInput[] = []): No
     const value = typeof contact.value === 'string' ? contact.value : ''
     const normalizedTelegram = value.replace(/^@/, '')
     const label = typeof contact.label === 'string' && contact.label.trim() ? contact.label : value
+    const baseLink = {
+      ...(contact.id !== undefined ? { id: contact.id } : {}),
+      ...(contact.type !== undefined ? { type: contact.type } : {}),
+    }
 
     switch (contact.type) {
       case 'email':
         return {
-          id: contact.id,
-          type: contact.type,
+          ...baseLink,
           url: `mailto:${value}`,
           description: label,
           value,
@@ -44,8 +47,7 @@ export function normalizeContactsToLinks (contacts: ContactLinkInput[] = []): No
 
       case 'phone':
         return {
-          id: contact.id,
-          type: contact.type,
+          ...baseLink,
           url: `tel:${value}`,
           description: label,
           value,
@@ -53,8 +55,7 @@ export function normalizeContactsToLinks (contacts: ContactLinkInput[] = []): No
 
       case 'telegram':
         return {
-          id: contact.id,
-          type: contact.type,
+          ...baseLink,
           url: `https://t.me/${normalizedTelegram}`,
           description: label || `Telegram @${normalizedTelegram}`,
           value,
@@ -63,8 +64,7 @@ export function normalizeContactsToLinks (contacts: ContactLinkInput[] = []): No
       case 'linkedin':
       default:
         return {
-          id: contact.id,
-          type: contact.type,
+          ...baseLink,
           url: value,
           description: label,
           value,
@@ -133,9 +133,11 @@ export function parseContactLink ({ url, description }: { url: string, descripti
 
   const telegramUrlMatch = normalizedUrl.match(telegramUrlPattern)
   if (telegramUrlMatch) {
+    const [, , username = ''] = telegramUrlMatch
+
     return {
       type: 'telegram',
-      value: telegramUrlMatch[2],
+      value: username,
       label,
     }
   }

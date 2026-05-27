@@ -48,7 +48,7 @@
 
             <v-card-text>
               <v-list density="compact">
-                <v-list-item v-for="contact in contactInfo" :key="contact.id">
+                <v-list-item v-for="(contact, index) in contactInfo" :key="contact.id ?? contact.url ?? `contact-${index}`">
                   <v-list-item-title>
                     <a :href="contact.url" target="_blank">
                       {{ contact.description || contact.url }}
@@ -77,7 +77,7 @@
 
             <v-card-text>
               <v-list density="compact">
-                <v-list-item v-for="link in links" :key="link.id">
+                <v-list-item v-for="(link, index) in links" :key="link.id ?? link.url ?? `link-${index}`">
                   <v-list-item-title>
                     <a :href="link.url" target="_blank">
                       {{ link.description || link.url }}
@@ -106,8 +106,8 @@
             <v-card-text>
               <div v-if="posts.length" class="profile-posts-list">
                 <PostCard
-                  v-for="post in posts"
-                  :key="post.id"
+                  v-for="(post, index) in posts"
+                  :key="post.id ?? `post-${index}`"
                   :avatar-size="40"
                   hoverable
                   :post="post"

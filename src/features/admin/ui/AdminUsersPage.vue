@@ -74,7 +74,7 @@
             </thead>
 
             <tbody>
-              <tr v-for="user in filteredUsers" :key="user.id">
+              <tr v-for="(user, index) in filteredUsers" :key="user.id ?? `admin-user-${index}`">
                 <td>
                   <div class="admin-users__person">
                     <div class="admin-users__person-name">

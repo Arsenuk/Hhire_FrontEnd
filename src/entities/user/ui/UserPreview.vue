@@ -3,7 +3,7 @@
     :class="['entity-user-preview', { 'entity-user-preview--clickable': clickable }]"
     @click="handleClick"
   >
-    <UserAvatar class="entity-user-preview__avatar" :size="avatarSize" :user="userForPreview" />
+    <UserAvatar class="entity-user-preview__avatar" :size="avatarSize" :user="props.user" />
 
     <div class="entity-user-preview__content">
       <div class="entity-user-preview__name">
@@ -41,8 +41,7 @@
     clickable: false,
   })
 
-  const userForPreview = computed(() => props.user ?? undefined)
-  const displayName = computed(() => getUserDisplayName(userForPreview.value))
+  const displayName = computed(() => getUserDisplayName(props.user))
 
   function handleClick() {
     if (props.clickable) {

@@ -66,7 +66,7 @@
             <UserAvatar
               class="counterpart-avatar"
               :size="62"
-              :user="conversation?.counterpart"
+              :user="conversation?.counterpart ?? null"
             />
 
             <div class="counterpart-info">

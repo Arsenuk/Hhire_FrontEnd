@@ -1,7 +1,17 @@
 import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
-import type { EntityId, User, UserRole } from '@/shared/types'
+import type { ContactLink, EntityId, Nullable, UsefulLink, User, UserRole } from '@/shared/types'
 
-type UserSource = Partial<User> & Record<string, unknown> & {
+type UserSource = Record<string, unknown> & {
+  id?: Nullable<EntityId> | undefined
+  name?: Nullable<string> | undefined
+  description?: Nullable<string> | undefined
+  avatar?: Nullable<string> | undefined
+  role?: Nullable<UserRole> | undefined
+  username?: Nullable<string> | undefined
+  email?: Nullable<string> | undefined
+  lastPost?: unknown
+  contacts?: ContactLink[] | undefined
+  usefulLinks?: UsefulLink[] | undefined
   user_id?: EntityId | null
   sender_id?: EntityId | null
   receiver_id?: EntityId | null
@@ -13,11 +23,10 @@ type UserSource = Partial<User> & Record<string, unknown> & {
 
 type UserOverrides = Partial<User>
 
-export function normalizeUser (user: UserSource = {}, overrides: UserOverrides = {}): User {
+export function normalizeUser (user: UserSource | null | undefined = {}, overrides: UserOverrides = {}): User {
   const source = user && typeof user === 'object' ? user : {}
 
   const normalized: User = {
-    ...source,
     id: (source.id ?? source.user_id ?? source.sender_id ?? source.receiver_id ?? source.company_id ?? null) as EntityId | null,
     name: getUserDisplayName(source),
     description: typeof source.description === 'string' ? source.description : '',
@@ -29,6 +38,8 @@ export function normalizeUser (user: UserSource = {}, overrides: UserOverrides =
         : null,
     email: typeof source.email === 'string' && source.email.trim() ? source.email.trim() : null,
     lastPost: source.lastPost ?? source.last_post ?? null,
+    ...(Array.isArray(source.contacts) ? { contacts: source.contacts } : {}),
+    ...(Array.isArray(source.usefulLinks) ? { usefulLinks: source.usefulLinks } : {}),
   }
 
   return {

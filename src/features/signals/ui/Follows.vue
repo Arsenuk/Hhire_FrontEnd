@@ -7,8 +7,8 @@
     <v-card-text class="card-body">
       <v-list class="follow-list">
         <v-list-item
-          v-for="user in users"
-          :key="user.id"
+          v-for="(user, index) in users"
+          :key="user.id ?? `follow-${index}`"
           class="follow-item"
           :ripple="false"
           @click="goToProfile(user.id)"

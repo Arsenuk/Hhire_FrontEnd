@@ -1,7 +1,10 @@
-import type { User } from '@/shared/types'
+import type { Nullable, User } from '@/shared/types'
 
-type DisplayNameSource = Partial<User> & {
-  fullName?: string | null
+type DisplayNameSource = {
+  name?: Nullable<string> | undefined
+  username?: Nullable<string> | undefined
+  email?: Nullable<string> | undefined
+  fullName?: Nullable<string> | undefined
 }
 
 export function getUserDisplayName (

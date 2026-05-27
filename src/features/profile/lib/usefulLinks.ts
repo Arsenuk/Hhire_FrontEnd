@@ -54,7 +54,7 @@ export function normalizeUsefulLink (link: UsefulLinkInput = {}): NormalizedUsef
   const rawUrl = typeof link.url === 'string' ? link.url : ''
 
   return {
-    id: link.id,
+    ...(link.id !== undefined ? { id: link.id } : {}),
     url: normalizeUsefulUrl(rawUrl),
     description: link.description || rawUrl || '',
   }
