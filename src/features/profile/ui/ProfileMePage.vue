@@ -356,9 +356,11 @@
   background: linear-gradient(90deg, #D3FFAD, #97E5EE);
   color: #020617;
   font-weight: 600;
-  border-radius: 20px;
+  border-radius: 999px;
   border-color: black;
   border-width: 1pt;
+  text-transform: none;
+  padding-inline: 18px;
 }
 
 .profile-edit-actions {
@@ -371,6 +373,7 @@
 .done-btn {
   color: #020617;
   font-weight: 600;
+  text-transform: none;
 }
 
 .post-actions {
@@ -381,6 +384,11 @@
 .contact-title-actions {
   display: inline-flex;
   gap: 6px;
+}
+
+.contact-title-actions :deep(.v-btn),
+.profile-edit-actions :deep(.v-btn) {
+  border-radius: 999px;
 }
 
 .confirm-card {

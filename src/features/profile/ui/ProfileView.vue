@@ -13,95 +13,156 @@
     </v-row>
 
     <template v-if="user">
-      <v-row align="center" class="profile-header mb-8">
-        <v-col class="text-center" cols="12" md="2">
-          <UserAvatar class="avatar-border" :size="120" :user="user" />
-        </v-col>
+      <section class="profile-hero">
+        <div class="profile-hero__media">
+          <UserAvatar class="avatar-border" :size="124" :user="user" />
+        </div>
 
-        <v-col cols="12" md="7">
+        <div class="profile-hero__body">
+          <div class="profile-hero__eyebrow">
+            Profile overview
+          </div>
+
           <h1 class="profile-name">
             {{ getUserDisplayName(user, emptyInfoText) }}
           </h1>
-        </v-col>
 
-        <v-col v-if="$slots['header-actions']" class="text-md-right text-center" cols="12" md="3">
+          <p class="profile-summary">
+            {{ user.description || emptyInfoText }}
+          </p>
+
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <span class="profile-stat__value">{{ contactInfo.length }}</span>
+              <span class="profile-stat__label">Contacts</span>
+            </div>
+            <div class="profile-stat">
+              <span class="profile-stat__value">{{ links.length }}</span>
+              <span class="profile-stat__label">Links</span>
+            </div>
+            <div class="profile-stat">
+              <span class="profile-stat__value">{{ posts.length }}</span>
+              <span class="profile-stat__label">Posts</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="$slots['header-actions']" class="profile-hero__actions">
           <slot name="header-actions" />
-        </v-col>
-      </v-row>
+        </div>
+      </section>
 
-      <v-row class="mb-8">
-        <v-col cols="12" md="4">
-          <v-card class="profile-card">
-            <v-card-title>Description</v-card-title>
-            <v-card-text>
+      <nav class="profile-nav" aria-label="Profile sections">
+        <div class="profile-nav__label">
+          Quick sections
+        </div>
+
+        <div class="profile-nav__tabs">
+          <v-btn
+            v-for="section in sections"
+            :key="section.id"
+            class="profile-nav__tab"
+            :class="{ 'profile-nav__tab--active': activeSection === section.id }"
+            :variant="activeSection === section.id ? 'flat' : 'tonal'"
+            @click="scrollToSection(section.id)"
+          >
+            {{ section.label }}
+          </v-btn>
+        </div>
+      </nav>
+
+      <v-row class="profile-sections" dense>
+        <v-col cols="12" md="7">
+          <v-card id="about" class="profile-card profile-section">
+            <div class="profile-section__header">
+              <div>
+                <div class="profile-section__eyebrow">About</div>
+                <v-card-title class="profile-section__title">Description</v-card-title>
+              </div>
+            </div>
+
+            <v-card-text class="profile-section__text">
               {{ user.description || emptyInfoText }}
             </v-card-text>
           </v-card>
         </v-col>
 
-        <v-col cols="12" md="4">
-          <v-card class="profile-card">
-            <v-card-title class="d-flex justify-space-between align-center">
-              Contact Info
-              <slot name="contact-title-actions" />
-            </v-card-title>
+        <v-col cols="12" md="5">
+          <v-row dense>
+            <v-col cols="12">
+              <v-card id="contacts" class="profile-card profile-section">
+                <v-card-title class="profile-section__title profile-section__title--spaced">
+                  <span>Contact Info</span>
+                  <slot name="contact-title-actions" />
+                </v-card-title>
 
-            <v-card-text>
-              <v-list density="compact">
-                <v-list-item v-for="(contact, index) in contactInfo" :key="contact.id ?? contact.url ?? `contact-${index}`">
-                  <v-list-item-title>
-                    <a :href="contact.url" target="_blank">
-                      {{ contact.description || contact.url }}
-                    </a>
-                  </v-list-item-title>
+                <v-card-text>
+                  <v-list class="profile-list" density="compact">
+                    <v-list-item v-for="(contact, index) in contactInfo" :key="contact.id ?? contact.url ?? `contact-${index}`">
+                      <v-list-item-title>
+                        <a :href="contact.url" rel="noreferrer" target="_blank">
+                          {{ contact.description || contact.url }}
+                        </a>
+                      </v-list-item-title>
 
-                  <template v-if="$slots['contact-append']" #append>
-                    <slot :contact="contact" name="contact-append" />
-                  </template>
-                </v-list-item>
+                      <template v-if="$slots['contact-append']" #append>
+                        <slot :contact="contact" name="contact-append" />
+                      </template>
+                    </v-list-item>
 
-                <v-list-item v-if="contactInfo.length === 0">
-                  <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-        </v-col>
+                    <v-list-item v-if="contactInfo.length === 0">
+                      <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
+              </v-card>
+            </v-col>
 
-        <v-col cols="12" md="4">
-          <v-card class="profile-card">
-            <v-card-title class="d-flex justify-space-between align-center">
-              Useful Links
-              <slot name="links-title-actions" />
-            </v-card-title>
+            <v-col cols="12">
+              <v-card id="links" class="profile-card profile-section">
+                <v-card-title class="profile-section__title profile-section__title--spaced">
+                  <span>Useful Links</span>
+                  <slot name="links-title-actions" />
+                </v-card-title>
 
-            <v-card-text>
-              <v-list density="compact">
-                <v-list-item v-for="(link, index) in links" :key="link.id ?? link.url ?? `link-${index}`">
-                  <v-list-item-title>
-                    <a :href="link.url" target="_blank">
-                      {{ link.description || link.url }}
-                    </a>
-                  </v-list-item-title>
+                <v-card-text>
+                  <v-list class="profile-list" density="compact">
+                    <v-list-item v-for="(link, index) in links" :key="link.id ?? link.url ?? `link-${index}`">
+                      <v-list-item-title>
+                        <a :href="link.url" rel="noreferrer" target="_blank">
+                          {{ link.description || link.url }}
+                        </a>
+                      </v-list-item-title>
 
-                  <template v-if="$slots['link-append']" #append>
-                    <slot :link="link" name="link-append" />
-                  </template>
-                </v-list-item>
+                      <template v-if="$slots['link-append']" #append>
+                        <slot :link="link" name="link-append" />
+                      </template>
+                    </v-list-item>
 
-                <v-list-item v-if="links.length === 0">
-                  <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
+                    <v-list-item v-if="links.length === 0">
+                      <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
         </v-col>
       </v-row>
 
       <v-row>
         <v-col cols="12">
-          <v-card class="profile-card profile-posts-card">
-            <v-card-title>Posts</v-card-title>
+          <v-card id="posts" class="profile-card profile-posts-card profile-section">
+            <div class="profile-section__header profile-section__header--posts">
+              <div>
+                <div class="profile-section__eyebrow">Content</div>
+                <v-card-title class="profile-section__title">Posts</v-card-title>
+              </div>
+
+              <div class="profile-posts-count">
+                {{ posts.length }} total
+              </div>
+            </div>
 
             <v-card-text>
               <div v-if="posts.length" class="profile-posts-list">
@@ -136,6 +197,7 @@
 </template>
 
 <script setup lang="ts">
+  import { onBeforeUnmount, onMounted, ref } from 'vue'
   import PostCard from '@/entities/post/ui/PostCard.vue'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
@@ -167,6 +229,57 @@
     'post-actions'?: (props: { post: ProfilePostView }) => unknown
   }>()
 
+  const sections = [
+    { id: 'about', label: 'About' },
+    { id: 'contacts', label: 'Contacts' },
+    { id: 'links', label: 'Links' },
+    { id: 'posts', label: 'Posts' },
+  ] as const
+
+  const activeSection = ref<(typeof sections)[number]['id']>('about')
+  let sectionObserver: IntersectionObserver | null = null
+
+  function scrollToSection (sectionId: string) {
+    const element = document.getElementById(sectionId)
+
+    if (!element) return
+
+    element.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+  }
+
+  onMounted(() => {
+    const observedSections = sections
+      .map(section => document.getElementById(section.id))
+      .filter((element): element is HTMLElement => Boolean(element))
+
+    if (!observedSections.length || !('IntersectionObserver' in window)) return
+
+    sectionObserver = new IntersectionObserver(
+      entries => {
+        const visible = entries
+          .filter(entry => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+
+        if (visible?.target instanceof HTMLElement) {
+          activeSection.value = visible.target.id as typeof activeSection.value
+        }
+      },
+      {
+        rootMargin: '-20% 0px -65% 0px',
+        threshold: [0.2, 0.4, 0.6, 0.8],
+      }
+    )
+
+    observedSections.forEach(section => sectionObserver?.observe(section))
+  })
+
+  onBeforeUnmount(() => {
+    sectionObserver?.disconnect()
+  })
+
   withDefaults(defineProps<ProfileViewProps>(), {
     links: () => [],
     contactInfo: () => [],
@@ -181,35 +294,225 @@
 
 <style scoped>
 .profile-page {
-  background-color: #f9f9f9;
+  background:
+    radial-gradient(circle at top left, rgba(211, 255, 173, 0.45), transparent 30%),
+    radial-gradient(circle at top right, rgba(151, 229, 238, 0.35), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #f3f7fb 100%);
   min-height: 100vh;
-  padding: clamp(80px, 10vh, 120px) 16px 16px;
-  color: #e5e7eb;
+  padding: clamp(80px, 10vh, 120px) 16px 32px;
+  color: #0f172a;
 }
 
-.profile-header {
-  background: linear-gradient(170deg, #73AA43 20%, #63B5BE 50%);
-  border-radius: 18px;
-  padding: 24px;
+.profile-hero {
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.75));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 28px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 20px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  margin-bottom: 20px;
+  padding: 28px;
+  backdrop-filter: blur(18px);
 }
 
 .avatar-border {
-  border: 3px solid #14b8a6;
+  border: 4px solid rgba(20, 184, 166, 0.2);
+  border-radius: 50%;
 }
 
 .profile-name {
-  font-size: 28px;
+  color: #0f172a;
+  font-size: clamp(28px, 3vw, 40px);
   font-weight: 700;
+  line-height: 1.1;
+  margin: 4px 0 10px;
+}
+
+.profile-hero__eyebrow,
+.profile-section__eyebrow {
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.profile-summary {
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 60ch;
+}
+
+.profile-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.profile-stat {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  min-width: 100px;
+  padding: 12px 14px;
+}
+
+.profile-stat__value {
+  display: block;
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.profile-stat__label {
+  color: #64748b;
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.profile-hero__actions {
+  align-self: start;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.profile-nav {
+  align-items: flex-start;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 22px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 14px;
+  position: sticky;
+  top: 100px;
+  z-index: 4;
+  backdrop-filter: blur(14px);
+}
+
+.profile-nav__label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.profile-nav__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.profile-nav__tab {
+  border-radius: 999px;
+  color: #334155;
+  font-weight: 600;
+  letter-spacing: 0;
+  min-height: 38px;
+  padding-inline: 16px;
+  text-transform: none;
+}
+
+.profile-nav__tab--active {
+  background: linear-gradient(90deg, #d3ffad, #97e5ee);
+  color: #020617;
+}
+
+.profile-nav__tab:hover {
+  transform: translateY(-1px);
+}
+
+.profile-nav__tab :deep(.v-btn__overlay) {
+  opacity: 0.08;
+}
+
+.profile-nav__tab :deep(.v-btn__content) {
+  font-size: 13px;
+}
+
+.profile-sections {
+  margin-bottom: 12px;
 }
 
 .profile-card {
-  border-radius: 18px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+.profile-section {
+  scroll-margin-top: 120px;
+}
+
+.profile-section__header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 0;
+}
+
+.profile-section__header--posts {
+  padding-bottom: 4px;
+}
+
+.profile-section__title {
+  color: #0f172a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 0;
+}
+
+.profile-section__title--spaced {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile-section__text {
+  color: #334155;
+  font-size: 15px;
+  line-height: 1.8;
+  padding-top: 12px;
+}
+
+.profile-list {
+  padding: 0;
 }
 
 .profile-posts-card {
-  max-width: 920px;
   margin: 0 auto;
+  max-width: 980px;
+}
+
+.profile-posts-count {
+  align-self: flex-start;
+  background: rgba(15, 118, 110, 0.08);
+  border-radius: 999px;
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 8px 12px;
+  text-transform: uppercase;
 }
 
 .profile-posts-list {
@@ -225,7 +528,7 @@
 }
 
 a {
-  color: #5eead4;
+  color: #0f766e;
   text-decoration: none;
 }
 
@@ -234,21 +537,61 @@ a:hover {
 }
 
 .v-list-item {
-  border-radius: 12px;
-  transition: background 0.2s ease;
+  border-radius: 14px;
+  margin: 0 4px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .v-list-item:hover {
-  background: rgba(20, 184, 166, 0.08);
+  background: rgba(15, 118, 110, 0.06);
+  transform: translateY(-1px);
 }
 
 .v-card-text {
-  color: #94a3b8;
+  color: #334155;
 }
 
 @media (max-width: 960px) {
-  .profile-header {
+  .profile-hero {
+    grid-template-columns: 1fr;
     text-align: center;
+  }
+
+  .profile-hero__actions {
+    justify-content: center;
+  }
+
+  .profile-stats {
+    justify-content: center;
+  }
+
+  .profile-nav {
+    top: 88px;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-page {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .profile-hero {
+    padding: 20px;
+    border-radius: 22px;
+  }
+
+  .profile-section__header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-nav {
+    top: 80px;
+  }
+
+  .profile-nav__label {
+    width: 100%;
   }
 }
 </style>

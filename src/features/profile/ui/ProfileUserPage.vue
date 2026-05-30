@@ -103,6 +103,13 @@
 .contact-btn {
   text-transform: none;
   font-weight: 600;
+  border-radius: 999px;
+  padding-inline: 18px;
+}
+
+.profile-actions :deep(.v-btn) {
+  border-radius: 999px;
+  text-transform: none;
 }
 
 .contact-card {
