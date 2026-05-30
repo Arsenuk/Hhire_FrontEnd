@@ -257,14 +257,15 @@ function tagLabel(tag: string) {
 }
 
 .entity-post-card--feed {
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
 }
 
 .entity-post-card--feed.entity-post-card--hoverable:hover,
 .entity-post-card--feed:hover {
-  border-color: #b9dce1;
-  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.1);
+  border-color: rgba(151, 229, 238, 0.9);
+  box-shadow: 0 22px 52px rgba(15, 23, 42, 0.12);
 }
 
 .entity-post-card--profile {
@@ -341,7 +342,7 @@ function tagLabel(tag: string) {
 }
 
 .post-card__feed-header .post-card__owner-name {
-  font-size: 23px;
+  font-size: 21px;
   line-height: 1.2;
   letter-spacing: 0;
 }
@@ -426,7 +427,7 @@ function tagLabel(tag: string) {
   max-width: 100%;
   margin: 0 0 16px;
   color: #0f172a;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.25;
   overflow-wrap: anywhere;
@@ -449,7 +450,7 @@ function tagLabel(tag: string) {
   min-height: 120px;
   margin: 0 auto;
   padding: 22px 24px;
-  border-radius: 8px;
+  border-radius: 18px;
   background: #f8fafc;
   border-left: 4px solid #97e5ee;
   color: #1f2937;
@@ -464,7 +465,7 @@ function tagLabel(tag: string) {
   margin: 26px auto 0;
   overflow: hidden;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 18px;
   aspect-ratio: 16 / 9;
   background: #f8fafc;
   box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
