@@ -1,85 +1,91 @@
 <template>
-  <v-app-bar class="hhire-header" flat height="auto">
-    <div class="header-left">
-      <img alt="Hhire logo" class="logo" src="@/shared/assets/hhire-logo.png">
-      <span class="brand-name">Hhire</span>
-    </div>
+  <v-app-bar
+    class="hhire-header"
+    :height="headerHeight"
+    flat
+  >
+    <div ref="headerContentRef" class="header-content">
+      <div class="header-left">
+        <img alt="Hhire logo" class="logo" src="@/shared/assets/hhire-logo.png">
+        <span class="brand-name">Hhire</span>
+      </div>
 
-    <div class="header-center">
-      <RouterLink
-        v-for="link in navLinks"
-        :key="link.to"
-        class="nav-link"
-        :class="{ active: isActive(link.to) }"
-        :to="link.to"
-      >
-        {{ link.label }}
-      </RouterLink>
-    </div>
-
-    <div class="header-right">
-      <template v-if="isLoggedIn">
-        <v-menu offset-y>
-          <template #activator="{ props }">
-            <v-btn v-bind="props" class="position-relative" icon>
-              <v-icon>mdi-bell</v-icon>
-              <span v-if="unansweredSignals > 0" class="notif-count">{{ unansweredSignals }}</span>
-            </v-btn>
-          </template>
-          <v-card style="width: 300px;">
-            <v-card-title>Notifications</v-card-title>
-            <v-card-text>
-              <v-list>
-                <v-list-item v-if="unansweredSignals === 0">
-                  <v-list-item-title>No new signals</v-list-item-title>
-                </v-list-item>
-                <v-list-item v-else>
-                  <v-list-item-title>
-                    You have {{ unansweredSignals }} signals awaiting reply
-                  </v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-card-text>
-          </v-card>
-        </v-menu>
-
-        <RouterLink to="/createpost">
-          <v-btn class="create-post-btn" rounded>
-            Create Post
-          </v-btn>
+      <div class="header-center">
+        <RouterLink
+          v-for="link in navLinks"
+          :key="link.to"
+          class="nav-link"
+          :class="{ active: isActive(link.to) }"
+          :to="link.to"
+        >
+          {{ link.label }}
         </RouterLink>
+      </div>
 
-        <v-menu offset-y>
-          <template #activator="{ props }">
-            <v-btn icon v-bind="props">
-              <UserAvatar :alt="`${getUserDisplayName(user)} avatar`" :size="36" :user="user" />
+      <div class="header-right">
+        <template v-if="isLoggedIn">
+          <v-menu offset-y>
+            <template #activator="{ props }">
+              <v-btn v-bind="props" class="position-relative" icon>
+                <v-icon>mdi-bell</v-icon>
+                <span v-if="unansweredSignals > 0" class="notif-count">{{ unansweredSignals }}</span>
+              </v-btn>
+            </template>
+            <v-card style="width: 300px;">
+              <v-card-title>Notifications</v-card-title>
+              <v-card-text>
+                <v-list>
+                  <v-list-item v-if="unansweredSignals === 0">
+                    <v-list-item-title>No new signals</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item v-else>
+                    <v-list-item-title>
+                      You have {{ unansweredSignals }} signals awaiting reply
+                    </v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-card-text>
+            </v-card>
+          </v-menu>
+
+          <RouterLink to="/createpost">
+            <v-btn class="create-post-btn" rounded>
+              Create Post
             </v-btn>
-          </template>
-          <v-list>
-            <RouterLink to="/ProfileMe">
-              <v-list-item>
-                <v-list-item-title>Profile</v-list-item-title>
+          </RouterLink>
+
+          <v-menu offset-y>
+            <template #activator="{ props }">
+              <v-btn icon v-bind="props">
+                <UserAvatar :alt="`${getUserDisplayName(user)} avatar`" :size="36" :user="user" />
+              </v-btn>
+            </template>
+            <v-list>
+              <RouterLink to="/ProfileMe">
+                <v-list-item>
+                  <v-list-item-title>Profile</v-list-item-title>
+                </v-list-item>
+              </RouterLink>
+              <v-list-item @click="logout">
+                <v-list-item-title>Log out</v-list-item-title>
               </v-list-item>
-            </RouterLink>
-            <v-list-item @click="logout">
-              <v-list-item-title>Log out</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </template>
+            </v-list>
+          </v-menu>
+        </template>
 
-      <template v-else>
-        <RouterLink class="login-link" to="/login">Log In</RouterLink>
-        <RouterLink to="/signup">
-          <v-btn class="signup-btn" elevation="0" rounded>Sign Up</v-btn>
-        </RouterLink>
-      </template>
+        <template v-else>
+          <RouterLink class="login-link" to="/login">Log In</RouterLink>
+          <RouterLink to="/signup">
+            <v-btn class="signup-btn" elevation="0" rounded>Sign Up</v-btn>
+          </RouterLink>
+        </template>
+      </div>
     </div>
   </v-app-bar>
 </template>
 
 <script setup lang="ts">
-  import { computed, onMounted, onUnmounted, ref } from 'vue'
+  import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
@@ -100,6 +106,8 @@
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
+  const headerContentRef = ref<HTMLElement | null>(null)
+  const headerHeight = ref(88)
 
   const isLoggedIn = computed(() => authStore.isLoggedIn)
   const user = computed(() => authStore.user)
@@ -134,6 +142,16 @@
 
   const unansweredSignals = ref(0)
 
+  let resizeObserver: ResizeObserver | null = null
+
+  function syncHeaderHeight () {
+    const height = headerContentRef.value?.getBoundingClientRect().height
+
+    if (!height) return
+
+    headerHeight.value = Math.ceil(height)
+  }
+
   async function fetchUnansweredSignals () {
     if (!isLoggedIn.value) return
     try {
@@ -149,12 +167,25 @@
   let intervalId: ReturnType<typeof setInterval> | null = null
 
   onMounted(() => {
+    nextTick(() => {
+      syncHeaderHeight()
+
+      if (headerContentRef.value) {
+        resizeObserver = new ResizeObserver(() => {
+          syncHeaderHeight()
+        })
+
+        resizeObserver.observe(headerContentRef.value)
+      }
+    })
+
     fetchUnansweredSignals()
     intervalId = setInterval(fetchUnansweredSignals, 15_000)
   })
 
   onUnmounted(() => {
     if (intervalId) clearInterval(intervalId)
+    resizeObserver?.disconnect()
   })
 </script>
 
@@ -162,12 +193,17 @@
 .hhire-header {
   border-bottom: 1px solid #cfcfcf;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
-  padding: 10px 20px;
+  padding: 0;
+}
+
+.header-content {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  width: 100%;
+  padding: 10px 20px;
 }
 
 .header-left {
@@ -252,6 +288,10 @@
 }
 
 @media (max-width: 768px) {
+  .header-content {
+    padding: 12px 16px;
+  }
+
   .header-left,
   .header-center,
   .header-right {
