@@ -68,7 +68,12 @@
 <style scoped>
 .login-page {
   background-color: #f7f9fc;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
+  padding: 16px;
 }
 
 .login-illustration {
@@ -84,12 +89,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
   border-radius: 16px;
+  margin: 0 auto;
 }
 
 .login-title {

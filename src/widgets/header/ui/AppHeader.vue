@@ -150,6 +150,7 @@
     if (!height) return
 
     headerHeight.value = Math.ceil(height)
+    document.documentElement.style.setProperty('--app-header-height', `${headerHeight.value}px`)
   }
 
   async function fetchUnansweredSignals () {
@@ -186,6 +187,7 @@
   onUnmounted(() => {
     if (intervalId) clearInterval(intervalId)
     resizeObserver?.disconnect()
+    document.documentElement.style.removeProperty('--app-header-height')
   })
 </script>
 

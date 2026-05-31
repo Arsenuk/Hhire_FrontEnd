@@ -134,19 +134,26 @@
 <style scoped>
 .create-post-page {
   background-color: #f7f9fc;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: 100vh;
+  padding: 16px;
 }
 
 .form-col {
   display: flex;
   justify-content: center;
   align-items: center;
+  width: 100%;
 }
 
 .form-card {
   width: 100%;
   max-width: 520px;
   border-radius: 16px;
+  margin: 0 auto;
 }
 
 .form-title {
