@@ -186,7 +186,7 @@
         <v-col cols="12" md="6" class="text-center">
           <v-btn
             class="primary-cta"
-            color="#111111"
+            color="#000000"
             size="large"
             to="/signup"
             variant="flat"
@@ -385,9 +385,10 @@
 }
 
 .primary-cta {
+  background: linear-gradient(90deg, #D3FFAD 11%, #97e5ee 100%);
+  color: #000000;
   min-width: 170px;
   border-radius: 999px;
-  color: #ffffff;
   font-weight: 700;
   text-transform: none;
   letter-spacing: 0.01em;
