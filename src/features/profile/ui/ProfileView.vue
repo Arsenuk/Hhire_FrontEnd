@@ -659,6 +659,8 @@
   font-size: 16px;
   line-height: 1.9;
   padding: 16px 20px 22px;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .profile-section__subtitle {
