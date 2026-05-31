@@ -11,10 +11,10 @@ type UseSuggestedUsersReturn = {
   closeDialog: () => void
   dialog: Ref<boolean>
   goToProfile: (userId: EntityId | null | undefined) => void
-  message: Ref<string>
   openConnectDialog: (user: User) => void
   selectedUser: Ref<User | null>
-  sendSignal: () => Promise<void>
+  sendSignal: (message: string) => Promise<void>
+  sendLoading: Ref<boolean>
   snackbar: ReturnType<typeof useSnackbar>['snackbar']
   suggestedUsers: Ref<User[]>
 }
@@ -26,7 +26,7 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
   const suggestedUsers = ref<User[]>([])
   const dialog = ref(false)
   const selectedUser = ref<User | null>(null)
-  const message = ref('')
+  const sendLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
 
   async function fetchSuggestedUsers (): Promise<void> {
@@ -41,7 +41,6 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
 
   function openConnectDialog (user: User): void {
     selectedUser.value = user
-    message.value = ''
     dialog.value = true
   }
 
@@ -49,8 +48,10 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
     dialog.value = false
   }
 
-  async function sendSignal (): Promise<void> {
-    if (!message.value.trim()) {
+  async function sendSignal (message: string): Promise<void> {
+    const trimmedMessage = message.trim()
+
+    if (!trimmedMessage) {
       showToast('Please enter a message', 'warning')
       return
     }
@@ -60,13 +61,15 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
       return
     }
 
+    sendLoading.value = true
+
     try {
       await api.post('/signals', {
         sender_type: 'user',
         sender_id: auth.user.id,
         receiver_type: 'user',
         receiver_id: selectedUser.value.id,
-        message: message.value,
+        message: trimmedMessage,
       })
 
       dialog.value = false
@@ -74,6 +77,8 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
     } catch (error) {
       console.error(error)
       showToast('Failed to send signal', 'error')
+    } finally {
+      sendLoading.value = false
     }
   }
 
@@ -89,10 +94,10 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
     closeDialog,
     dialog,
     goToProfile,
-    message,
     openConnectDialog,
     selectedUser,
     sendSignal,
+    sendLoading,
     snackbar,
     suggestedUsers,
   }

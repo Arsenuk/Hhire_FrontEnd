@@ -28,38 +28,17 @@
       </v-list>
     </v-card-text>
 
-    <v-dialog v-model="dialog" max-width="520px" persistent>
-      <v-card class="confirm-card">
-        <v-card-title class="confirm-title">
-          Send Signal
-          <span class="to-user">to {{ selectedUser?.name }}</span>
-
-          <v-btn icon variant="text" @click="closeDialog">
-            <v-icon>mdi-close</v-icon>
-          </v-btn>
-        </v-card-title>
-
-        <v-card-text>
-          <v-textarea
-            v-model="message"
-            auto-grow
-            label="Write your message"
-            rows="4"
-            variant="outlined"
-          />
-        </v-card-text>
-
-        <v-card-actions class="confirm-actions">
-          <v-btn class="cancel-btn" @click="closeDialog">
-            Cancel
-          </v-btn>
-
-          <v-btn class="send-btn" @click="sendSignal">
-            Send
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <SendSignalDialog
+      v-model="dialog"
+      :context-copy="'Introduce yourself and start a conversation.'"
+      context-label="Connect"
+      :loading="sendLoading"
+      :primary-action-label="'Send signal'"
+      :target-user="selectedUser"
+      :title="'Send Signal'"
+      @close="closeDialog"
+      @submit="sendSignal"
+    />
 
     <v-snackbar
       v-model="snackbar.show"
@@ -77,15 +56,16 @@
 <script setup lang="ts">
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSuggestedUsers } from '@/features/signals/model/useSuggestedUsers'
+  import SendSignalDialog from '@/features/signals/ui/SendSignalDialog.vue'
 
   const {
     closeDialog,
     dialog,
     goToProfile,
-    message,
     openConnectDialog,
     selectedUser,
     sendSignal,
+    sendLoading,
     snackbar,
     suggestedUsers,
   } = useSuggestedUsers()
@@ -178,66 +158,6 @@
 
 .connect-btn:active {
   transform: scale(0.97);
-}
-
-.confirm-card {
-  border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
-  padding: 8px;
-}
-
-.confirm-title {
-  font-weight: 700;
-  font-size: 16px;
-  color: #111827;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-}
-
-.to-user {
-  font-weight: 500;
-  color: #6366f1;
-  margin-left: 6px;
-}
-
-:deep(.v-textarea) {
-  border-radius: 14px;
-}
-
-.confirm-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 12px 14px 14px;
-}
-
-.cancel-btn {
-  background: #f3f4f6;
-  color: #111827;
-  border-radius: 12px;
-  font-weight: 600;
-  text-transform: none;
-}
-
-.cancel-btn:hover {
-  background: #e5e7eb;
-}
-
-.send-btn {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #fff;
-  border-radius: 12px;
-  font-weight: 600;
-  text-transform: none;
-  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.25);
-}
-
-.send-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 22px rgba(34, 197, 94, 0.35);
 }
 
 :deep(.v-snackbar) {

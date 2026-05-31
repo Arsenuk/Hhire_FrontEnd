@@ -36,7 +36,6 @@ export function useProfileUser () {
   const followLoading = ref(false)
   const contactDialog = ref(false)
   const contactLoading = ref(false)
-  const contactMessage = ref('')
   const { showToast, snackbar } = useSnackbar()
 
   function getRouteUserId (): EntityId | null {
@@ -138,7 +137,6 @@ export function useProfileUser () {
   }
 
   function openContactDialog () {
-    contactMessage.value = ''
     contactDialog.value = true
   }
 
@@ -146,13 +144,15 @@ export function useProfileUser () {
     contactDialog.value = false
   }
 
-  async function sendSignal () {
+  async function sendSignal (message: string) {
     if (!authUser.value || !user.value) {
       showToast('Please log in to send a signal', 'warning')
       return
     }
 
-    if (!contactMessage.value.trim()) {
+    const trimmedMessage = message.trim()
+
+    if (!trimmedMessage) {
       showToast('Please enter a message', 'warning')
       return
     }
@@ -165,7 +165,7 @@ export function useProfileUser () {
         sender_id: authUser.value.id,
         receiver_type: 'user',
         receiver_id: user.value.id,
-        message: contactMessage.value,
+        message: trimmedMessage,
       })
 
       contactDialog.value = false
@@ -192,7 +192,6 @@ export function useProfileUser () {
     closeContactDialog,
     contactDialog,
     contactLoading,
-    contactMessage,
     contacts,
     errorMessage,
     followLoading,

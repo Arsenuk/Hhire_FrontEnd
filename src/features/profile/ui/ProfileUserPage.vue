@@ -23,38 +23,17 @@
     </template>
   </ProfileView>
 
-  <v-dialog v-model="contactDialog" max-width="520px" persistent>
-    <v-card class="contact-card">
-      <v-card-title class="contact-title">
-        Send Signal
-        <span class="to-user">to {{ user?.name }}</span>
-
-        <v-btn icon variant="text" @click="closeContactDialog">
-          <v-icon>mdi-close</v-icon>
-        </v-btn>
-      </v-card-title>
-
-      <v-card-text>
-        <v-textarea
-          v-model="contactMessage"
-          auto-grow
-          label="Write your message"
-          rows="4"
-          variant="outlined"
-        />
-      </v-card-text>
-
-      <v-card-actions class="contact-actions">
-        <v-btn class="cancel-btn" @click="closeContactDialog">
-          Cancel
-        </v-btn>
-
-        <v-btn class="send-btn" :loading="contactLoading" @click="sendSignal">
-          Send
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <SendSignalDialog
+    v-model="contactDialog"
+    :context-copy="'Write a short note to introduce yourself or explain why you want to connect.'"
+    context-label="Contact"
+    :loading="contactLoading"
+    :primary-action-label="'Send signal'"
+    :target-user="user"
+    :title="'Send Signal'"
+    @close="closeContactDialog"
+    @submit="sendSignal"
+  />
 
   <v-snackbar
     v-model="snackbar.show"
@@ -71,6 +50,7 @@
 <script setup lang="ts">
   import { useProfileUser } from '@/features/profile/model/useProfileUser'
   import ProfileView from '@/features/profile/ui/ProfileView.vue'
+  import SendSignalDialog from '@/features/signals/ui/SendSignalDialog.vue'
 
   const {
     canManageFollow,
@@ -78,7 +58,6 @@
     closeContactDialog,
     contactDialog,
     contactLoading,
-    contactMessage,
     contacts,
     errorMessage,
     followLoading,
@@ -114,42 +93,4 @@
   text-transform: none;
 }
 
-.contact-card {
-  border-radius: 20px;
-  padding: 8px;
-}
-
-.contact-title {
-  align-items: center;
-  display: flex;
-  font-size: 16px;
-  font-weight: 700;
-  justify-content: space-between;
-  padding: 10px 14px;
-}
-
-.to-user {
-  color: #6366f1;
-  font-weight: 500;
-  margin-left: 6px;
-}
-
-.contact-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  padding: 12px 14px 14px;
-}
-
-.cancel-btn,
-.send-btn {
-  border-radius: 12px;
-  font-weight: 600;
-  text-transform: none;
-}
-
-.send-btn {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: #fff;
-}
 </style>
