@@ -73,11 +73,21 @@
 
       <v-row class="profile-sections" dense>
         <v-col cols="12" md="7">
-          <v-card id="about" class="profile-card profile-section">
-            <div class="profile-section__header">
-              <div>
-                <div class="profile-section__eyebrow">About</div>
-                <v-card-title class="profile-section__title">Description</v-card-title>
+          <v-card id="about" class="profile-card profile-section profile-section--about">
+            <div class="profile-section__header profile-section__header--about">
+              <div class="profile-section__heading">
+                <div class="profile-section__icon profile-section__icon--about">
+                  <v-icon size="18">mdi-account-details-outline</v-icon>
+                </div>
+
+                <div>
+                  <div class="profile-section__eyebrow">About</div>
+                  <v-card-title class="profile-section__title">Description</v-card-title>
+                </div>
+              </div>
+
+              <div class="profile-section__subtitle">
+                A quick snapshot of the person behind the profile.
               </div>
             </div>
 
@@ -90,28 +100,64 @@
         <v-col cols="12" md="5">
           <v-row dense>
             <v-col v-if="showContactInfo" cols="12">
-              <v-card id="contacts" class="profile-card profile-section">
-                <v-card-title class="profile-section__title profile-section__title--spaced">
-                  <span>Contact Info</span>
-                  <slot name="contact-title-actions" />
-                </v-card-title>
+              <v-card id="contacts" class="profile-card profile-section profile-section--contacts">
+                <div class="profile-section__header profile-section__header--compact">
+                  <div class="profile-section__heading">
+                    <div class="profile-section__icon profile-section__icon--contacts">
+                      <v-icon size="18">mdi-card-account-phone-outline</v-icon>
+                    </div>
+
+                    <div>
+                      <div class="profile-section__eyebrow">Contact Info</div>
+                      <v-card-title class="profile-section__title profile-section__title--spaced">
+                        <span>Reach out</span>
+                        <slot name="contact-title-actions" />
+                      </v-card-title>
+                    </div>
+                  </div>
+
+                  <div class="profile-section__subtitle">
+                    Direct ways to contact this user.
+                  </div>
+                </div>
 
                 <v-card-text>
                   <v-list class="profile-list" density="compact">
-                    <v-list-item v-for="(contact, index) in contactInfo" :key="contact.id ?? contact.url ?? `contact-${index}`">
-                      <v-list-item-title>
-                        <a :href="contact.url" rel="noreferrer" target="_blank">
-                          {{ contact.description || contact.url }}
-                        </a>
-                      </v-list-item-title>
+                    <v-list-item
+                      v-for="(contact, index) in contactInfo"
+                      :key="contact.id ?? contact.url ?? `contact-${index}`"
+                      class="profile-list-item profile-list-item--contact"
+                    >
+                      <template #prepend>
+                        <div class="profile-list-item__badge profile-list-item__badge--contact">
+                          <v-icon size="16">mdi-at</v-icon>
+                        </div>
+                      </template>
+
+                      <div class="profile-list-item__content">
+                        <v-list-item-title class="profile-list-item__title">
+                          <a :href="contact.url" rel="noreferrer" target="_blank">
+                            {{ contact.description || contact.url }}
+                          </a>
+                        </v-list-item-title>
+
+                        <v-list-item-subtitle
+                          v-if="contact.description && contact.url && contact.description !== contact.url"
+                          class="profile-list-item__subtitle"
+                        >
+                          {{ contact.url }}
+                        </v-list-item-subtitle>
+                      </div>
 
                       <template v-if="$slots['contact-append']" #append>
                         <slot :contact="contact" name="contact-append" />
                       </template>
                     </v-list-item>
 
-                    <v-list-item v-if="contactInfo.length === 0">
-                      <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
+                    <v-list-item v-if="contactInfo.length === 0" class="profile-list-item profile-list-item--empty">
+                      <v-list-item-title class="profile-list-item__title">
+                        {{ emptyInfoText }}
+                      </v-list-item-title>
                     </v-list-item>
                   </v-list>
                 </v-card-text>
@@ -119,28 +165,64 @@
             </v-col>
 
             <v-col cols="12">
-              <v-card id="links" class="profile-card profile-section">
-                <v-card-title class="profile-section__title profile-section__title--spaced">
-                  <span>Useful Links</span>
-                  <slot name="links-title-actions" />
-                </v-card-title>
+              <v-card id="links" class="profile-card profile-section profile-section--links">
+                <div class="profile-section__header profile-section__header--compact">
+                  <div class="profile-section__heading">
+                    <div class="profile-section__icon profile-section__icon--links">
+                      <v-icon size="18">mdi-link-variant</v-icon>
+                    </div>
+
+                    <div>
+                      <div class="profile-section__eyebrow">Useful Links</div>
+                      <v-card-title class="profile-section__title profile-section__title--spaced">
+                        <span>Open resources</span>
+                        <slot name="links-title-actions" />
+                      </v-card-title>
+                    </div>
+                  </div>
+
+                  <div class="profile-section__subtitle">
+                    Portfolio, socials, and other important references.
+                  </div>
+                </div>
 
                 <v-card-text>
                   <v-list class="profile-list" density="compact">
-                    <v-list-item v-for="(link, index) in links" :key="link.id ?? link.url ?? `link-${index}`">
-                      <v-list-item-title>
-                        <a :href="link.url" rel="noreferrer" target="_blank">
-                          {{ link.description || link.url }}
-                        </a>
-                      </v-list-item-title>
+                    <v-list-item
+                      v-for="(link, index) in links"
+                      :key="link.id ?? link.url ?? `link-${index}`"
+                      class="profile-list-item profile-list-item--link"
+                    >
+                      <template #prepend>
+                        <div class="profile-list-item__badge profile-list-item__badge--link">
+                          <v-icon size="16">mdi-open-in-new</v-icon>
+                        </div>
+                      </template>
+
+                      <div class="profile-list-item__content">
+                        <v-list-item-title class="profile-list-item__title">
+                          <a :href="link.url" rel="noreferrer" target="_blank">
+                            {{ link.description || link.url }}
+                          </a>
+                        </v-list-item-title>
+
+                        <v-list-item-subtitle
+                          v-if="link.description && link.url && link.description !== link.url"
+                          class="profile-list-item__subtitle"
+                        >
+                          {{ link.url }}
+                        </v-list-item-subtitle>
+                      </div>
 
                       <template v-if="$slots['link-append']" #append>
                         <slot :link="link" name="link-append" />
                       </template>
                     </v-list-item>
 
-                    <v-list-item v-if="links.length === 0">
-                      <v-list-item-title>{{ emptyInfoText }}</v-list-item-title>
+                    <v-list-item v-if="links.length === 0" class="profile-list-item profile-list-item--empty">
+                      <v-list-item-title class="profile-list-item__title">
+                        {{ emptyInfoText }}
+                      </v-list-item-title>
                     </v-list-item>
                   </v-list>
                 </v-card-text>
@@ -484,6 +566,29 @@
 
 .profile-section {
   scroll-margin-top: 120px;
+  position: relative;
+}
+
+.profile-section::before {
+  content: '';
+  display: block;
+  height: 4px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.profile-section--about::before {
+  background: linear-gradient(90deg, #0f766e, #97e5ee);
+}
+
+.profile-section--contacts::before {
+  background: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+}
+
+.profile-section--links::before {
+  background: linear-gradient(90deg, #0ea5e9, #67e8f9);
 }
 
 .profile-section__header {
@@ -494,8 +599,44 @@
   padding: 18px 20px 0;
 }
 
+.profile-section__header--compact {
+  align-items: start;
+  gap: 10px;
+}
+
 .profile-section__header--posts {
   padding-bottom: 4px;
+}
+
+.profile-section__heading {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.profile-section__icon {
+  align-items: center;
+  border-radius: 14px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.profile-section__icon--about {
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+}
+
+.profile-section__icon--contacts {
+  background: rgba(139, 92, 246, 0.1);
+  color: #7c3aed;
+}
+
+.profile-section__icon--links {
+  background: rgba(14, 165, 233, 0.1);
+  color: #0284c7;
 }
 
 .profile-section__title {
@@ -515,13 +656,77 @@
 
 .profile-section__text {
   color: #334155;
-  font-size: 15px;
-  line-height: 1.8;
-  padding-top: 12px;
+  font-size: 16px;
+  line-height: 1.9;
+  padding: 16px 20px 22px;
+}
+
+.profile-section__subtitle {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+  max-width: 28ch;
+  text-align: right;
 }
 
 .profile-list {
-  padding: 0;
+  gap: 10px;
+  padding: 4px 12px 16px;
+}
+
+.profile-list-item {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(255, 255, 255, 0.98));
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  margin: 0;
+  min-height: 58px;
+  padding-block: 12px;
+}
+
+.profile-list-item__content {
+  min-width: 0;
+}
+
+.profile-list-item__title {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.profile-list-item__subtitle {
+  color: #64748b;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.profile-list-item__badge {
+  align-items: center;
+  border-radius: 12px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+
+.profile-list-item__badge--contact {
+  background: rgba(139, 92, 246, 0.12);
+  color: #7c3aed;
+}
+
+.profile-list-item__badge--link {
+  background: rgba(14, 165, 233, 0.12);
+  color: #0284c7;
+}
+
+.profile-list-item--empty {
+  background: rgba(15, 23, 42, 0.03);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.profile-list-item--empty .profile-list-item__title {
+  color: #64748b;
 }
 
 .profile-posts-card {
@@ -610,6 +815,15 @@ a:hover {
   .profile-section__header {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .profile-section__subtitle {
+    max-width: none;
+    text-align: left;
+  }
+
+  .profile-section__text {
+    padding: 14px 16px 18px;
   }
 
   .profile-nav {
