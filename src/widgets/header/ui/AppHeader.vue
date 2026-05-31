@@ -1,87 +1,101 @@
 <template>
-  <v-app-bar
-    class="hhire-header"
-    :height="headerHeight"
-    flat
-  >
-    <div ref="headerContentRef" class="header-content">
-      <div class="header-left">
-        <img alt="Hhire logo" class="logo" src="@/shared/assets/hhire-logo.png">
-        <span class="brand-name">Hhire</span>
-      </div>
+  <div class="app-shell">
+    <v-app-bar
+      class="hhire-header"
+      :height="headerHeight"
+      flat
+    >
+      <div ref="headerContentRef" class="header-content">
+        <div class="header-left">
+          <img alt="Hhire logo" class="logo" src="@/shared/assets/hhire-logo.png">
+          <span class="brand-name">Hhire</span>
+        </div>
 
-      <div class="header-center">
-        <RouterLink
-          v-for="link in navLinks"
-          :key="link.to"
-          class="nav-link"
-          :class="{ active: isActive(link.to) }"
-          :to="link.to"
-        >
-          {{ link.label }}
-        </RouterLink>
-      </div>
-
-      <div class="header-right">
-        <template v-if="isLoggedIn">
-          <v-menu offset-y>
-            <template #activator="{ props }">
-              <v-btn v-bind="props" class="position-relative" icon>
-                <v-icon>mdi-bell</v-icon>
-                <span v-if="unansweredSignals > 0" class="notif-count">{{ unansweredSignals }}</span>
-              </v-btn>
-            </template>
-            <v-card style="width: 300px;">
-              <v-card-title>Notifications</v-card-title>
-              <v-card-text>
-                <v-list>
-                  <v-list-item v-if="unansweredSignals === 0">
-                    <v-list-item-title>No new signals</v-list-item-title>
-                  </v-list-item>
-                  <v-list-item v-else>
-                    <v-list-item-title>
-                      You have {{ unansweredSignals }} signals awaiting reply
-                    </v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-card-text>
-            </v-card>
-          </v-menu>
-
-          <RouterLink to="/createpost">
-            <v-btn class="create-post-btn" rounded>
-              Create Post
-            </v-btn>
+        <div class="header-center">
+          <RouterLink
+            v-for="link in navLinks"
+            :key="link.to"
+            class="nav-link"
+            :class="{ active: isActive(link.to) }"
+            :to="link.to"
+          >
+            {{ link.label }}
           </RouterLink>
+        </div>
 
-          <v-menu offset-y>
-            <template #activator="{ props }">
-              <v-btn icon v-bind="props">
-                <UserAvatar :alt="`${getUserDisplayName(user)} avatar`" :size="36" :user="user" />
+        <div class="header-right">
+          <template v-if="isLoggedIn">
+            <v-menu offset-y>
+              <template #activator="{ props }">
+                <v-btn v-bind="props" class="position-relative" icon>
+                  <v-icon>mdi-bell</v-icon>
+                  <span v-if="unansweredSignals > 0" class="notif-count">{{ unansweredSignals }}</span>
+                </v-btn>
+              </template>
+              <v-card style="width: 300px;">
+                <v-card-title>Notifications</v-card-title>
+                <v-card-text>
+                  <v-list>
+                    <v-list-item v-if="unansweredSignals === 0">
+                      <v-list-item-title>No new signals</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item v-else>
+                      <v-list-item-title>
+                        You have {{ unansweredSignals }} signals awaiting reply
+                      </v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
+              </v-card>
+            </v-menu>
+
+            <RouterLink to="/createpost">
+              <v-btn class="create-post-btn" rounded>
+                Create Post
               </v-btn>
-            </template>
-            <v-list>
-              <RouterLink to="/ProfileMe">
-                <v-list-item>
-                  <v-list-item-title>Profile</v-list-item-title>
+            </RouterLink>
+
+            <v-menu offset-y>
+              <template #activator="{ props }">
+                <v-btn icon v-bind="props">
+                  <UserAvatar :alt="`${getUserDisplayName(user)} avatar`" :size="36" :user="user" />
+                </v-btn>
+              </template>
+              <v-list>
+                <RouterLink to="/ProfileMe">
+                  <v-list-item>
+                    <v-list-item-title>Profile</v-list-item-title>
+                  </v-list-item>
+                </RouterLink>
+                <v-list-item @click="logout">
+                  <v-list-item-title>Log out</v-list-item-title>
                 </v-list-item>
-              </RouterLink>
-              <v-list-item @click="logout">
-                <v-list-item-title>Log out</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-        </template>
+              </v-list>
+            </v-menu>
+          </template>
 
-        <template v-else>
-          <RouterLink class="login-link" to="/login">Log In</RouterLink>
-          <RouterLink to="/signup">
-            <v-btn class="signup-btn" elevation="0" rounded>Sign Up</v-btn>
-          </RouterLink>
-        </template>
+          <template v-else>
+            <RouterLink class="login-link" to="/login">Log In</RouterLink>
+            <RouterLink to="/signup">
+              <v-btn class="signup-btn" elevation="0" rounded>Sign Up</v-btn>
+            </RouterLink>
+          </template>
+        </div>
       </div>
-    </div>
-  </v-app-bar>
+    </v-app-bar>
+
+    <nav v-if="navLinks.length > 1" class="mobile-nav" aria-label="Primary navigation">
+      <RouterLink
+        v-for="link in navLinks"
+        :key="`mobile-${link.to}`"
+        class="mobile-nav__link"
+        :class="{ 'mobile-nav__link--active': isActive(link.to) }"
+        :to="link.to"
+      >
+        <span class="mobile-nav__label">{{ link.label }}</span>
+      </RouterLink>
+    </nav>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -198,6 +212,10 @@
   padding: 0;
 }
 
+.app-shell {
+  width: 100%;
+}
+
 .header-content {
   display: flex;
   flex-wrap: wrap;
@@ -289,15 +307,88 @@
   right: -4px;
 }
 
+.mobile-nav {
+  display: none;
+}
+
 @media (max-width: 768px) {
   .header-content {
     padding: 12px 16px;
+    flex-wrap: nowrap;
   }
 
-  .header-left,
-  .header-center,
+  .header-left {
+    min-width: 0;
+    flex-shrink: 0;
+  }
+
+  .header-center {
+    display: none;
+  }
+
   .header-right {
+    min-width: 0;
+    flex: 1;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .create-post-btn {
+    min-width: 0;
+    padding-inline: 12px;
+  }
+
+  .brand-name {
+    font-size: 18px;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    inset: auto 0 0;
+    z-index: 1100;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 8px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    border-top: 1px solid rgba(207, 207, 207, 0.9);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-nav__link {
+    display: flex;
+    align-items: center;
     justify-content: center;
+    min-height: 46px;
+    border-radius: 14px;
+    padding: 10px 12px;
+    text-decoration: none;
+    color: #111827;
+    background: #f7fafc;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .mobile-nav__link:hover {
+    transform: translateY(-1px);
+    background: #eefcf0;
+  }
+
+  .mobile-nav__link--active {
+    background: linear-gradient(135deg, #9BFF43, #31EAFF);
+    border-color: rgba(255, 255, 255, 0.65);
+    color: #0f172a;
+    font-weight: 700;
+  }
+
+  .mobile-nav__label {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.1;
+    text-align: center;
+    white-space: nowrap;
   }
 
   .header-center {
@@ -310,4 +401,5 @@
     margin-top: 5px;
   }
 }
+
 </style>
