@@ -15,6 +15,10 @@
               {{ conversation.outcome }}
             </span>
           </div>
+
+          <div v-if="conversation?.createdAt" class="title-submeta">
+            Started {{ formatDateTime(conversation.createdAt) }}
+          </div>
         </div>
 
         <v-btn
@@ -86,7 +90,10 @@
           </div>
 
           <div v-else-if="messages.length === 0" class="thread-state">
-            No messages yet
+            <div class="thread-state__title">No messages yet</div>
+            <div class="thread-state__subtitle">
+              The conversation will appear here once either side sends a signal.
+            </div>
           </div>
 
           <div v-else class="thread-list">
@@ -102,6 +109,9 @@
               <div class="thread-bubble__message">
                 {{ item.message }}
               </div>
+              <div v-if="item.createdAt" class="thread-bubble__time">
+                {{ formatDateTime(item.createdAt) }}
+              </div>
             </div>
           </div>
         </div>
@@ -113,9 +123,14 @@
           auto-grow
           hide-details
           label="Reply"
+          placeholder="Write your reply..."
           rows="3"
           variant="outlined"
         />
+
+        <div v-if="canReply" class="reply-hint">
+          Press send when you are ready. You can keep the message short or add more detail.
+        </div>
       </v-card-text>
 
       <v-card-actions class="conversation-dialog__actions">
@@ -344,6 +359,22 @@
   const messages = computed<ConversationMessageVm[]>(() => props.messages)
   const sharedContacts = computed<ConversationContact[]>(() => props.sharedContacts)
 
+  function formatDateTime (value: string | null | undefined) {
+    if (!value) {
+      return ''
+    }
+
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) {
+      return ''
+    }
+
+    return new Intl.DateTimeFormat('en', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date)
+  }
+
   function handleDialogToggle (value: boolean) {
     emit('update:modelValue', value)
     if (!value) {
@@ -393,6 +424,9 @@
 
 <style scoped>
 .conversation-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 920px);
   border-radius: 24px !important;
   overflow: hidden;
 }
@@ -419,6 +453,13 @@
   display: flex;
   gap: 8px;
   margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.title-submeta {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 13px;
 }
 
 .status-chip,
@@ -462,6 +503,8 @@
 }
 
 .conversation-dialog__body {
+  flex: 1 1 auto;
+  overflow: hidden;
   padding: 22px;
 }
 
@@ -497,11 +540,15 @@
 }
 
 .thread-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 18px;
   background: linear-gradient(180deg, rgba(248, 250, 252, 0.92), #ffffff);
   padding: 16px;
-  min-height: 220px;
   margin-bottom: 18px;
 }
 
@@ -511,10 +558,26 @@
   padding: 36px 12px;
 }
 
+.thread-state__title {
+  color: #334155;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.thread-state__subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .thread-list {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .thread-bubble {
@@ -544,11 +607,25 @@
   word-break: break-word;
 }
 
+.thread-bubble__time {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
 .reply-field :deep(.v-field) {
   border-radius: 16px;
 }
 
+.reply-hint {
+  margin-top: 10px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .conversation-dialog__actions {
+  flex-shrink: 0;
   display: flex;
   gap: 10px;
   padding: 0 22px 22px;
@@ -628,6 +705,11 @@
 }
 
 @media (max-width: 640px) {
+  .conversation-dialog {
+    max-height: 100vh;
+    border-radius: 0 !important;
+  }
+
   .conversation-dialog__toolbar,
   .conversation-dialog__body,
   .conversation-dialog__actions {
@@ -648,5 +730,6 @@
   .btn-accept {
     width: 100%;
   }
+
 }
 </style>
