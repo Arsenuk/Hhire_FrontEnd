@@ -47,6 +47,12 @@ export function useProfileUser () {
 
   const userId = ref<EntityId | null>(getRouteUserId())
   const canManageFollow = computed(() => Boolean(authUser.value && user.value && authUser.value.id !== user.value.id))
+  const canViewContactInfo = computed(() => Boolean(
+    user.value && authUser.value && (
+      authUser.value.role === 'admin' ||
+      authUser.value.id === user.value.id
+    )
+  ))
 
   async function loadUserProfile () {
     if (!userId.value) {
@@ -182,6 +188,7 @@ export function useProfileUser () {
 
   return {
     canManageFollow,
+    canViewContactInfo,
     closeContactDialog,
     contactDialog,
     contactLoading,

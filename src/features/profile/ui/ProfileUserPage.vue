@@ -7,6 +7,7 @@
     :links="links"
     :loading="loading"
     :posts="posts"
+    :show-contact-info="canViewContactInfo"
     :user="user"
   >
     <template v-if="canManageFollow" #header-actions>
@@ -73,6 +74,7 @@
 
   const {
     canManageFollow,
+    canViewContactInfo,
     closeContactDialog,
     contactDialog,
     contactLoading,

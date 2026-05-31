@@ -32,7 +32,7 @@
           </p>
 
           <div class="profile-stats">
-            <div class="profile-stat">
+            <div v-if="showContactInfo" class="profile-stat">
               <span class="profile-stat__value">{{ contactInfo.length }}</span>
               <span class="profile-stat__label">Contacts</span>
             </div>
@@ -89,7 +89,7 @@
 
         <v-col cols="12" md="5">
           <v-row dense>
-            <v-col cols="12">
+            <v-col v-if="showContactInfo" cols="12">
               <v-card id="contacts" class="profile-card profile-section">
                 <v-card-title class="profile-section__title profile-section__title--spaced">
                   <span>Contact Info</span>
@@ -197,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-  import { onBeforeUnmount, onMounted, ref } from 'vue'
+  import { computed, onBeforeUnmount, onMounted, ref, toRefs } from 'vue'
   import PostCard from '@/entities/post/ui/PostCard.vue'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
@@ -218,7 +218,33 @@
     successMessage?: string
     emptyInfoText?: string
     emptyPostsText?: string
+    showContactInfo?: boolean
   }
+
+  const props = withDefaults(defineProps<ProfileViewProps>(), {
+    links: () => [],
+    contactInfo: () => [],
+    posts: () => [],
+    loading: false,
+    errorMessage: '',
+    successMessage: '',
+    emptyInfoText: 'User did not provide information',
+    emptyPostsText: 'User did not provide posts',
+    showContactInfo: true,
+  })
+
+  const {
+    contactInfo,
+    emptyInfoText,
+    emptyPostsText,
+    errorMessage,
+    loading,
+    links,
+    posts,
+    showContactInfo,
+    successMessage,
+    user,
+  } = toRefs(props)
 
   defineSlots<{
     'header-actions'?: () => unknown
@@ -229,14 +255,24 @@
     'post-actions'?: (props: { post: ProfilePostView }) => unknown
   }>()
 
-  const sections = [
-    { id: 'about', label: 'About' },
-    { id: 'contacts', label: 'Contacts' },
-    { id: 'links', label: 'Links' },
-    { id: 'posts', label: 'Posts' },
-  ] as const
+  const sections = computed(() => {
+    const items = [
+      { id: 'about', label: 'About' },
+    ]
 
-  const activeSection = ref<(typeof sections)[number]['id']>('about')
+    if (showContactInfo.value) {
+      items.push({ id: 'contacts', label: 'Contacts' })
+    }
+
+    items.push(
+      { id: 'links', label: 'Links' },
+      { id: 'posts', label: 'Posts' }
+    )
+
+    return items
+  })
+
+  const activeSection = ref<'about' | 'contacts' | 'links' | 'posts'>('about')
   let sectionObserver: IntersectionObserver | null = null
 
   function scrollToSection (sectionId: string) {
@@ -251,7 +287,7 @@
   }
 
   onMounted(() => {
-    const observedSections = sections
+    const observedSections = sections.value
       .map(section => document.getElementById(section.id))
       .filter((element): element is HTMLElement => Boolean(element))
 
@@ -278,17 +314,6 @@
 
   onBeforeUnmount(() => {
     sectionObserver?.disconnect()
-  })
-
-  withDefaults(defineProps<ProfileViewProps>(), {
-    links: () => [],
-    contactInfo: () => [],
-    posts: () => [],
-    loading: false,
-    errorMessage: '',
-    successMessage: '',
-    emptyInfoText: 'User did not provide information',
-    emptyPostsText: 'User did not provide posts',
   })
 </script>
 
@@ -430,6 +455,7 @@
 .profile-nav__tab--active {
   background: linear-gradient(90deg, #d3ffad, #97e5ee);
   color: #020617;
+  box-shadow: 0 10px 24px rgba(20, 184, 166, 0.14);
 }
 
 .profile-nav__tab:hover {
