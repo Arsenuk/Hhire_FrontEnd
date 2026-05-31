@@ -1,7 +1,7 @@
 <template>
   <v-card class="post-card mb-4">
     <v-card-title class="card-title">
-      Unreplied Signals
+      Inbox
     </v-card-title>
 
     <v-card-text class="card-body">
@@ -129,8 +129,8 @@
 }
 
 .card-title {
-  font-weight: 800;
-  font-size: 18px;
+  font-weight: 700;
+  font-size: 16px;
   color: #111827;
   letter-spacing: 0.3px;
 }

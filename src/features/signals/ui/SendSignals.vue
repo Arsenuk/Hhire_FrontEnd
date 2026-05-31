@@ -1,6 +1,8 @@
 <template>
   <v-card class="post-card mb-4">
-    <v-card-title>Sent Signals</v-card-title>
+    <v-card-title class="card-title">
+      Sent Signals
+    </v-card-title>
 
     <v-card-text>
       <v-list>
@@ -111,6 +113,13 @@
   background: #ffffff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
   padding: 16px;
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #111827;
+  letter-spacing: 0.3px;
 }
 
 .signal-item {
