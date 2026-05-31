@@ -42,7 +42,6 @@ export function useProfileMe () {
   const profileContacts = useProfileContacts({
     errorMessage,
     loading,
-    showToast,
     successMessage,
   })
 
