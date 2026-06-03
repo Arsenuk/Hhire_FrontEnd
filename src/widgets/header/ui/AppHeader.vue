@@ -457,7 +457,7 @@
   }
 
   .mobile-nav__link--filters {
-    background: linear-gradient(90deg, #7dd3fc 0%, #fde68a 100%);
+    background: linear-gradient(90deg, #7dd3fc 0%, #faf49fc2 100%);
     color: #0f172a;
     font-weight: 700;
   }
