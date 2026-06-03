@@ -86,19 +86,23 @@
 
     <nav v-if="navLinks.length > 1" class="mobile-nav" aria-label="Primary navigation">
       <RouterLink
-        v-for="link in navLinks"
-        :key="`mobile-${link.to}`"
-        :to="link.to"
+        v-for="item in mobileNavItems"
+        :key="`mobile-${item.to}`"
+        :to="item.to"
         custom
         v-slot="{ href, navigate, isExactActive }"
       >
         <a
           :href="href"
           class="mobile-nav__link"
-          :class="{ 'mobile-nav__link--active': isExactActive }"
+          :class="[
+            { 'mobile-nav__link--active': isExactActive },
+            item.variant === 'primary' ? 'mobile-nav__link--primary' : '',
+          ]"
           @click="navigate"
         >
-          <span class="mobile-nav__label">{{ link.label }}</span>
+          <v-icon v-if="item.icon" :icon="item.icon" size="18" />
+          <span class="mobile-nav__label">{{ item.label }}</span>
         </a>
       </RouterLink>
     </nav>
@@ -118,6 +122,11 @@
   type NavLink = {
     label: string
     to: string
+  }
+
+  type MobileNavItem = NavLink & {
+    icon?: string
+    variant?: 'primary'
   }
 
   type InboxConversation = {
@@ -152,6 +161,38 @@
       { label: 'Get Started', to: '/' },
       { label: 'Feed', to: '/feed' },
     ]
+  })
+
+  const mobileNavItems = computed<MobileNavItem[]>(() => {
+    const items: MobileNavItem[] = [
+      { label: 'Feed', to: '/feed', icon: 'mdi-home-variant-outline' },
+      { label: 'Contacts', to: '/contacts', icon: 'mdi-account-group-outline' },
+    ]
+
+    if (isLoggedIn.value) {
+      items.push({
+        label: 'Create Post',
+        to: '/createpost',
+        icon: 'mdi-plus-circle-outline',
+        variant: 'primary',
+      })
+
+      if (hasAdminPanelAccess.value) {
+        items.push({
+          label: 'Admin Panel',
+          to: '/AdminPanel',
+          icon: 'mdi-shield-crown-outline',
+        })
+      }
+    } else {
+      items.unshift({
+        label: 'Get Started',
+        to: '/',
+        icon: 'mdi-rocket-launch-outline',
+      })
+    }
+
+    return items
   })
 
   const isActive = (path: string) => route.path.toLowerCase() === path.toLowerCase()
@@ -290,13 +331,13 @@
 }
 
 .signup-btn,
-.create-post-btn {
-  background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
-  color: #000;
-  font-weight: 500;
-  text-transform: none;
-  min-width: 120px;
-}
+  .create-post-btn {
+    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+    color: #000;
+    font-weight: 500;
+    text-transform: none;
+    min-width: 120px;
+  }
 
 .position-relative {
   margin-top: 12px;
@@ -341,6 +382,10 @@
   }
 
   .create-post-btn {
+    display: none;
+  }
+
+  .create-post-btn {
     min-width: 0;
     padding-inline: 12px;
   }
@@ -367,6 +412,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 6px;
     min-height: 46px;
     border-radius: 14px;
     padding: 10px 12px;
@@ -376,6 +422,12 @@
     border: 1px solid transparent;
     opacity: 1;
     transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .mobile-nav__link--primary {
+    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+    color: #0f172a;
+    font-weight: 700;
   }
 
   /* .mobile-nav__link:hover {
