@@ -88,11 +88,18 @@
       <RouterLink
         v-for="link in navLinks"
         :key="`mobile-${link.to}`"
-        class="mobile-nav__link"
-        :class="{ 'mobile-nav__link--active': isActive(link.to) }"
         :to="link.to"
+        custom
+        v-slot="{ href, navigate, isExactActive }"
       >
-        <span class="mobile-nav__label">{{ link.label }}</span>
+        <a
+          :href="href"
+          class="mobile-nav__link"
+          :class="{ 'mobile-nav__link--active': isExactActive }"
+          @click="navigate"
+        >
+          <span class="mobile-nav__label">{{ link.label }}</span>
+        </a>
       </RouterLink>
     </nav>
   </div>
@@ -351,10 +358,9 @@
     grid-auto-columns: 1fr;
     gap: 8px;
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, 0.96);
+    background: #ffffff;
     border-top: 1px solid rgba(207, 207, 207, 0.9);
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
-    backdrop-filter: blur(10px);
   }
 
   .mobile-nav__link {
@@ -368,12 +374,18 @@
     color: #111827;
     background: #f7fafc;
     border: 1px solid transparent;
+    opacity: 1;
     transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
 
-  .mobile-nav__link:hover {
+  /* .mobile-nav__link:hover {
     transform: translateY(-1px);
     background: #eefcf0;
+  } */
+
+  .mobile-nav__link:focus-visible {
+    outline: 2px solid #111827;
+    outline-offset: 2px;
   }
 
   .mobile-nav__link--active {
