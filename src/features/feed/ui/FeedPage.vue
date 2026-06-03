@@ -104,27 +104,6 @@
       </v-col>
 
       <v-col cols="12" md="6" class="feed-main-col">
-        <v-card class="feed-mobile-toolbar">
-          <div>
-            <p class="feed-panel-eyebrow">Quick access</p>
-            <h2 class="feed-panel-title">Feed controls</h2>
-          </div>
-
-          <v-btn
-            class="feed-mobile-toolbar__btn"
-            color="primary"
-            rounded="pill"
-            variant="flat"
-            @click="mobileControlsOpen = true"
-          >
-            <v-icon start icon="mdi-menu" />
-            Menu
-            <v-chip size="x-small" class="feed-mobile-toolbar__chip" variant="tonal">
-              {{ activeFiltersCount }}
-            </v-chip>
-          </v-btn>
-        </v-card>
-
         <!-- <v-card class="feed-toolbar">
           <div class="feed-toolbar__head">
             <div>
@@ -353,8 +332,9 @@
 </template>
 
 <script setup>
-  import { computed, ref } from 'vue'
+  import { computed } from 'vue'
   import PostCard from '@/entities/post/ui/PostCard.vue'
+  import { useFeedControlsStore } from '@/features/feed/model/feedControls.store'
   import { useFeed } from '@/features/feed/model/useFeed'
 
   const {
@@ -381,7 +361,14 @@
     userTypeOptions,
   } = useFeed()
 
-  const mobileControlsOpen = ref(false)
+  const feedControlsStore = useFeedControlsStore()
+
+  const mobileControlsOpen = computed({
+    get: () => feedControlsStore.mobileControlsOpen,
+    set: value => {
+      feedControlsStore.mobileControlsOpen = value
+    },
+  })
 
   const activeFiltersCount = computed(() => (
     selectedIntents.value.length +
@@ -498,7 +485,6 @@
   gap: 18px;
 }
 
-.feed-mobile-toolbar,
 .feed-mobile-drawer {
   display: none;
 }
@@ -803,33 +789,6 @@
   .feed-hero__meta {
     width: 100%;
     min-width: 0;
-  }
-
-  .feed-mobile-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 18px 18px 16px;
-    border: 1px solid rgba(148, 163, 184, 0.22);
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.88);
-    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
-    backdrop-filter: blur(14px);
-    position: sticky;
-    top: calc(var(--app-header-height, 88px) + 12px);
-    z-index: 4;
-  }
-
-  .feed-mobile-toolbar__btn {
-    min-width: 0;
-    padding-inline: 16px;
-    text-transform: none;
-    letter-spacing: 0;
-  }
-
-  .feed-mobile-toolbar__chip {
-    margin-left: 10px;
   }
 
   .feed-sticky-card {

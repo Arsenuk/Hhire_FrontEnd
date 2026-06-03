@@ -87,17 +87,29 @@
     <nav v-if="navLinks.length > 1" class="mobile-nav" aria-label="Primary navigation">
       <RouterLink
         v-for="item in mobileNavItems"
-        :key="`mobile-${item.to}`"
+        :key="`mobile-${item.to}-${item.label}`"
         :to="item.to"
         custom
         v-slot="{ href, navigate, isExactActive }"
       >
+        <button
+          v-if="item.action"
+          type="button"
+          class="mobile-nav__link"
+          :class="item.label === 'Filters' ? 'mobile-nav__link--filters' : ''"
+          @click="item.action()"
+        >
+          <v-icon v-if="item.icon" :icon="item.icon" size="18" />
+          <span class="mobile-nav__label">{{ item.label }}</span>
+        </button>
+
         <a
+          v-else
           :href="href"
           class="mobile-nav__link"
           :class="[
             { 'mobile-nav__link--active': isExactActive },
-            item.variant === 'primary' ? 'mobile-nav__link--primary' : '',
+            item.label === 'Create Post' ? 'mobile-nav__link--create-post' : '',
           ]"
           @click="navigate"
         >
@@ -115,6 +127,7 @@
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store'
+  import { useFeedControlsStore } from '@/features/feed/model/feedControls.store'
   import { api } from '@/shared/api/api'
   import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess'
   import type { EntityId } from '@/shared/types'
@@ -127,6 +140,7 @@
   type MobileNavItem = NavLink & {
     icon?: string
     variant?: 'primary'
+    action?: () => void
   }
 
   type InboxConversation = {
@@ -136,6 +150,7 @@
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
+  const feedControlsStore = useFeedControlsStore()
   const headerContentRef = ref<HTMLElement | null>(null)
   const headerHeight = ref(88)
 
@@ -176,6 +191,16 @@
         icon: 'mdi-plus-circle-outline',
         variant: 'primary',
       })
+
+      if (route.path.toLowerCase() === '/feed') {
+        items.push({
+          label: 'Filters',
+          to: '/feed',
+          icon: 'mdi-tune-variant',
+          variant: 'primary',
+          action: () => feedControlsStore.openMobileControls(),
+        })
+      }
 
       if (hasAdminPanelAccess.value) {
         items.push({
@@ -424,8 +449,15 @@
     transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
 
-  .mobile-nav__link--primary {
-    background: linear-gradient(90deg, #d3ffad 11%, #97e5ee 100%);
+  .mobile-nav__link--create-post {
+    background: transparent;
+    border-color: rgba(148, 163, 184, 0.28);
+    color: #334155;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+  }
+
+  .mobile-nav__link--filters {
+    background: linear-gradient(90deg, #7dd3fc 0%, #fde68a 100%);
     color: #0f172a;
     font-weight: 700;
   }
