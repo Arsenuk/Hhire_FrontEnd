@@ -104,6 +104,27 @@
       </v-col>
 
       <v-col cols="12" md="6" class="feed-main-col">
+        <v-card class="feed-mobile-toolbar">
+          <div>
+            <p class="feed-panel-eyebrow">Quick access</p>
+            <h2 class="feed-panel-title">Feed controls</h2>
+          </div>
+
+          <v-btn
+            class="feed-mobile-toolbar__btn"
+            color="primary"
+            rounded="pill"
+            variant="flat"
+            @click="mobileControlsOpen = true"
+          >
+            <v-icon start icon="mdi-menu" />
+            Menu
+            <v-chip size="x-small" class="feed-mobile-toolbar__chip" variant="tonal">
+              {{ activeFiltersCount }}
+            </v-chip>
+          </v-btn>
+        </v-card>
+
         <!-- <v-card class="feed-toolbar">
           <div class="feed-toolbar__head">
             <div>
@@ -205,11 +226,134 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-navigation-drawer
+      v-model="mobileControlsOpen"
+      class="feed-mobile-drawer"
+      location="right"
+      temporary
+      width="340"
+    >
+      <div class="feed-mobile-drawer__head">
+        <div>
+          <p class="feed-panel-eyebrow">Feed controls</p>
+          <h2 class="feed-panel-title">Filters and tags</h2>
+        </div>
+
+        <v-btn icon variant="text" @click="mobileControlsOpen = false">
+          <v-icon icon="mdi-close" />
+        </v-btn>
+      </div>
+
+      <v-card class="filter-card feed-mobile-drawer__card" flat>
+        <div class="feed-panel-header">
+          <div>
+            <p class="feed-panel-eyebrow">Refine feed</p>
+            <h2 class="feed-panel-title">Filters</h2>
+          </div>
+
+          <v-chip size="small" variant="tonal" color="primary">
+            {{ activeFiltersCount }}
+          </v-chip>
+        </div>
+
+        <section class="filter-section">
+          <h3 class="filter-title">Intent</h3>
+
+          <button
+            v-for="intent in intentOptions"
+            :key="intent.value"
+            class="filter-option"
+            :class="{ 'filter-option--active': selectedIntents.includes(intent.value) }"
+            type="button"
+            @click="toggleIntent(intent.value)"
+          >
+            <span
+              class="filter-box"
+              :class="{ 'filter-box--active': selectedIntents.includes(intent.value) }"
+            />
+            <span class="filter-label">{{ intent.label }}</span>
+            <span class="filter-count">{{ intentCounts[intent.value] || 0 }}</span>
+          </button>
+
+          <button
+            v-if="selectedIntents.length"
+            class="clear-section-btn"
+            type="button"
+            @click="clearIntentFilters"
+          >
+            Reset intent filters
+          </button>
+        </section>
+
+        <section class="filter-section filter-section--separated">
+          <h3 class="filter-title">User types</h3>
+
+          <button
+            v-for="type in userTypeOptions"
+            :key="type.value"
+            class="filter-option"
+            :class="{ 'filter-option--active': selectedUserType === type.value }"
+            type="button"
+            @click="selectUserType(type.value)"
+          >
+            <span
+              class="filter-radio"
+              :class="{ 'filter-radio--active': selectedUserType === type.value }"
+            />
+            <span class="filter-label">{{ type.label }}</span>
+            <span class="filter-count">{{ userTypeCounts[type.value] || 0 }}</span>
+          </button>
+        </section>
+
+        <button
+          v-if="selectedIntents.length || selectedTags.length || selectedUserType !== 'all'"
+          class="clear-btn"
+          type="button"
+          @click="clearFilters"
+        >
+          Clear all filters
+        </button>
+      </v-card>
+
+      <v-card class="suggested-card feed-mobile-drawer__card" flat>
+        <div class="feed-panel-header">
+          <div>
+            <p class="feed-panel-eyebrow">Trending</p>
+            <h2 class="feed-panel-title">Popular tags</h2>
+          </div>
+
+          <v-chip size="small" variant="tonal">
+            {{ topTags.length }}
+          </v-chip>
+        </div>
+
+        <v-card-text class="suggested-card__body">
+          <div v-if="topTags.length" class="tag-cloud">
+            <v-chip
+              v-for="tag in topTags"
+              :key="tag"
+              class="tag-chip"
+              :class="{ 'tag-chip--selected': selectedTags.includes(tag) }"
+              size="small"
+              variant="outlined"
+              @click="toggleTag(tag)"
+            >
+              #{{ tag }}
+            </v-chip>
+          </div>
+
+          <div v-else class="suggested-card__empty">
+            <p>Tags will appear here once the feed has enough activity.</p>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-navigation-drawer>
   </v-container>
 </template>
 
 <script setup>
-  import { computed } from 'vue'
+  import { computed, ref } from 'vue'
   import PostCard from '@/entities/post/ui/PostCard.vue'
   import { useFeed } from '@/features/feed/model/useFeed'
 
@@ -236,6 +380,8 @@
     userTypeCounts,
     userTypeOptions,
   } = useFeed()
+
+  const mobileControlsOpen = ref(false)
 
   const activeFiltersCount = computed(() => (
     selectedIntents.value.length +
@@ -350,6 +496,11 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.feed-mobile-toolbar,
+.feed-mobile-drawer {
+  display: none;
 }
 
 .feed-sticky-card {
@@ -654,6 +805,33 @@
     min-width: 0;
   }
 
+  .feed-mobile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 18px 16px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(14px);
+    position: sticky;
+    top: calc(var(--app-header-height, 88px) + 12px);
+    z-index: 4;
+  }
+
+  .feed-mobile-toolbar__btn {
+    min-width: 0;
+    padding-inline: 16px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .feed-mobile-toolbar__chip {
+    margin-left: 10px;
+  }
+
   .feed-sticky-card {
     position: static;
   }
@@ -662,6 +840,32 @@
   .filter-card,
   .suggested-card {
     padding: 20px 18px 18px;
+  }
+
+  .feed-sidebar-col {
+    display: none;
+  }
+
+  .feed-mobile-drawer {
+    display: flex;
+    flex-direction: column;
+    padding: 18px 16px 20px;
+    overflow-y: auto;
+    background:
+      radial-gradient(circle at top left, rgba(151, 229, 238, 0.14), transparent 34%),
+      linear-gradient(180deg, #f8fbff 0%, #f4f7fb 52%, #eef3f8 100%);
+  }
+
+  .feed-mobile-drawer__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .feed-mobile-drawer__card {
+    margin-bottom: 16px;
   }
 
   .post-card__feed-header {
