@@ -84,7 +84,7 @@
       </div>
     </v-app-bar>
 
-    <nav v-if="navLinks.length > 1" class="mobile-nav" aria-label="Primary navigation">
+    <nav ref="mobileNavRef" v-if="navLinks.length > 1" class="mobile-nav" aria-label="Primary navigation">
       <RouterLink
         v-for="item in mobileNavItems"
         :key="`mobile-${item.to}-${item.label}`"
@@ -152,7 +152,9 @@
   const authStore = useAuthStore()
   const feedControlsStore = useFeedControlsStore()
   const headerContentRef = ref<HTMLElement | null>(null)
+  const mobileNavRef = ref<HTMLElement | null>(null)
   const headerHeight = ref(88)
+  const mobileNavHeight = ref(92)
 
   const isLoggedIn = computed(() => authStore.isLoggedIn)
   const user = computed(() => authStore.user)
@@ -230,6 +232,7 @@
   const unansweredSignals = ref(0)
 
   let resizeObserver: ResizeObserver | null = null
+  let mobileNavResizeObserver: ResizeObserver | null = null
 
   function syncHeaderHeight () {
     const height = headerContentRef.value?.getBoundingClientRect().height
@@ -238,6 +241,15 @@
 
     headerHeight.value = Math.ceil(height)
     document.documentElement.style.setProperty('--app-header-height', `${headerHeight.value}px`)
+  }
+
+  function syncMobileNavHeight () {
+    const height = mobileNavRef.value?.getBoundingClientRect().height
+
+    if (!height) return
+
+    mobileNavHeight.value = Math.ceil(height)
+    document.documentElement.style.setProperty('--app-mobile-nav-height', `${mobileNavHeight.value}px`)
   }
 
   async function fetchUnansweredSignals () {
@@ -257,6 +269,7 @@
   onMounted(() => {
     nextTick(() => {
       syncHeaderHeight()
+      syncMobileNavHeight()
 
       if (headerContentRef.value) {
         resizeObserver = new ResizeObserver(() => {
@@ -264,6 +277,14 @@
         })
 
         resizeObserver.observe(headerContentRef.value)
+      }
+
+      if (mobileNavRef.value) {
+        mobileNavResizeObserver = new ResizeObserver(() => {
+          syncMobileNavHeight()
+        })
+
+        mobileNavResizeObserver.observe(mobileNavRef.value)
       }
     })
 
@@ -274,7 +295,9 @@
   onUnmounted(() => {
     if (intervalId) clearInterval(intervalId)
     resizeObserver?.disconnect()
+    mobileNavResizeObserver?.disconnect()
     document.documentElement.style.removeProperty('--app-header-height')
+    document.documentElement.style.removeProperty('--app-mobile-nav-height')
   })
 </script>
 

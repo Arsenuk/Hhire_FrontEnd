@@ -14,7 +14,7 @@
 <style>
 @media (max-width: 768px) {
   .app-main {
-    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+    padding-bottom: calc(var(--app-mobile-nav-height, 92px) + env(safe-area-inset-bottom));
   }
 }
 </style>
