@@ -72,10 +72,10 @@
   </ProfileView>
 
   <v-dialog v-model="profileEditorOpen" max-width="600">
-    <v-card>
+    <v-card class="profile-dialog-card">
       <v-card-title>Edit Profile</v-card-title>
 
-      <v-card-text>
+      <v-card-text class="profile-dialog__body">
         <v-form ref="formRef">
           <v-text-field v-model="editForm.name" label="Name" :rules="nameRules" />
           <v-textarea v-model="editForm.description" label="Description" />
@@ -83,7 +83,7 @@
         </v-form>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="cancelEdit">Cancel</v-btn>
         <v-btn color="primary" :loading="loading" @click="saveProfile">Save</v-btn>
@@ -92,17 +92,17 @@
   </v-dialog>
 
   <v-dialog v-model="showContactDialog" max-width="500">
-    <v-card>
+    <v-card class="profile-dialog-card">
       <v-card-title>{{ editingContact ? 'Edit Contact' : 'Add Contact' }}</v-card-title>
 
-      <v-card-text>
+      <v-card-text class="profile-dialog__body">
         <v-form ref="contactFormRef">
           <v-text-field v-model="contactForm.url" label="Contact" :rules="contactRules" />
           <v-text-field v-model="contactForm.description" label="Label" />
         </v-form>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="showContactDialog = false">Cancel</v-btn>
         <v-btn color="primary" :loading="loading" @click="saveContact">Save</v-btn>
@@ -111,17 +111,17 @@
   </v-dialog>
 
   <v-dialog v-model="showLinkDialog" max-width="500">
-    <v-card>
+    <v-card class="profile-dialog-card">
       <v-card-title>{{ editingLink ? 'Edit Link' : 'Add Link' }}</v-card-title>
 
-      <v-card-text>
+      <v-card-text class="profile-dialog__body">
         <v-form ref="linkFormRef">
           <v-text-field v-model="linkForm.url" label="URL" :rules="urlRules" />
           <v-text-field v-model="linkForm.description" label="Label" />
         </v-form>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="showLinkDialog = false">Cancel</v-btn>
         <v-btn color="primary" :loading="loading" @click="saveLink">Save</v-btn>
@@ -130,10 +130,10 @@
   </v-dialog>
 
   <v-dialog v-model="editingPostDialog" max-width="600">
-    <v-card>
+    <v-card class="profile-dialog-card">
       <v-card-title>Edit Post</v-card-title>
 
-      <v-card-text>
+      <v-card-text class="profile-dialog__body">
         <v-form ref="postFormRef">
           <v-text-field v-model="editPostForm.title" label="Title" :rules="postRules.title" />
           <v-textarea v-model="editPostForm.content" label="Content" :rules="postRules.content" />
@@ -169,7 +169,7 @@
         </v-form>
       </v-card-text>
 
-      <v-card-actions>
+      <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="cancelEditPost">Cancel</v-btn>
         <v-btn color="primary" :loading="loading" @click="savePost">Save</v-btn>
@@ -410,5 +410,23 @@
 .confirm-save:hover {
   background: #0f766e;
   color: #fff;
+}
+
+.profile-dialog-card {
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 780px);
+  overflow: hidden;
+  border-radius: 18px;
+}
+
+.profile-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.profile-dialog__actions {
+  flex-shrink: 0;
 }
 </style>

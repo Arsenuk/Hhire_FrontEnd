@@ -504,7 +504,8 @@
 
 .conversation-dialog__body {
   flex: 1 1 auto;
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
   padding: 22px;
 }
 

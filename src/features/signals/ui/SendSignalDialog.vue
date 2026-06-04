@@ -162,6 +162,9 @@
 
 <style scoped>
 .send-signal-dialog {
+  display: flex;
+  flex-direction: column;
+  max-height: min(90vh, 920px);
   border-radius: 24px !important;
   overflow: hidden;
   background: radial-gradient(circle at top left, rgba(155, 255, 67, 0.12), transparent 40%), #ffffff;
@@ -213,9 +216,17 @@
 }
 
 .send-signal-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
   display: grid;
   gap: 16px;
   padding: 20px 22px 10px;
+}
+
+.recipient-card,
+.message-panel {
+  min-width: 0;
 }
 
 .recipient-card {
@@ -265,6 +276,7 @@
 }
 
 .send-signal-dialog__actions {
+  flex-shrink: 0;
   display: flex;
   gap: 10px;
   justify-content: flex-end;
