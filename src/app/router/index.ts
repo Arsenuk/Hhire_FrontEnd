@@ -41,11 +41,11 @@ router.beforeEach(async to => {
   const authStore = useAuthStore()
 
   if (!authStore.isLoggedIn) {
-    return '/login'
+    return '/LogIn'
   }
 
   if (!canAccessAdminPanel(authStore.user)) {
-    return '/feed'
+    return '/Feed'
   }
 
   return true

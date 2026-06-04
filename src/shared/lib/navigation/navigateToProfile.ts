@@ -14,5 +14,5 @@ export function navigateToProfile (
     return router.push('/ProfileMe')
   }
 
-  return router.push(`/profile/${userId}`)
+  return router.push(`/Profile/${userId}`)
 }

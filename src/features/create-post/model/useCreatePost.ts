@@ -89,7 +89,7 @@ export function useCreatePost () {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
 
-      await router.push('/feed')
+      await router.push('/Feed')
     } catch (error) {
       const apiError = error as ApiError
 
@@ -105,7 +105,7 @@ export function useCreatePost () {
   }
 
   function cancel () {
-    return router.push('/feed')
+    return router.push('/Feed')
   }
 
   return {

@@ -178,6 +178,10 @@
     if ('IntersectionObserver' in window && menuTriggerRef.value) {
       menuObserver = new IntersectionObserver(entries => {
         const [entry] = entries
+        if (!entry) {
+          return
+        }
+
         if (window.innerWidth > 768) {
           showBackToTop.value = false
           return

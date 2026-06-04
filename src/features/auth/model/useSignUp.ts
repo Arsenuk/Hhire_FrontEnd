@@ -251,7 +251,7 @@ export function useSignUp () {
         })
       }
 
-      await router.push('/feed')
+      await router.push('/Feed')
     } catch (error) {
       const apiError = error as ApiError
 

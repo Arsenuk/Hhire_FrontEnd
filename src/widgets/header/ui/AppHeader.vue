@@ -49,7 +49,7 @@
               </v-card>
             </v-menu>
 
-            <RouterLink to="/createpost">
+            <RouterLink to="/CreatePost">
               <v-btn class="create-post-btn" rounded>
                 Create Post
               </v-btn>
@@ -75,8 +75,8 @@
           </template>
 
           <template v-else>
-            <RouterLink class="login-link" to="/login">Log In</RouterLink>
-            <RouterLink to="/signup">
+            <RouterLink class="login-link" to="/LogIn">Log In</RouterLink>
+            <RouterLink to="/SignUp">
               <v-btn class="signup-btn" elevation="0" rounded>Sign Up</v-btn>
             </RouterLink>
           </template>
@@ -163,8 +163,8 @@
   const navLinks = computed<NavLink[]>(() => {
     if (isLoggedIn.value) {
       const links = [
-        { label: 'Feed', to: '/feed' },
-        { label: 'Contacts', to: '/contacts' },
+        { label: 'Feed', to: '/Feed' },
+        { label: 'Contacts', to: '/Contacts' },
       ]
 
       if (hasAdminPanelAccess.value) {
@@ -176,20 +176,20 @@
 
     return [
       { label: 'Get Started', to: '/' },
-      { label: 'Feed', to: '/feed' },
+      { label: 'Feed', to: '/Feed' },
     ]
   })
 
   const mobileNavItems = computed<MobileNavItem[]>(() => {
     const items: MobileNavItem[] = [
-      { label: 'Feed', to: '/feed', icon: 'mdi-home-variant-outline' },
-      { label: 'Contacts', to: '/contacts', icon: 'mdi-account-group-outline' },
+      { label: 'Feed', to: '/Feed', icon: 'mdi-home-variant-outline' },
+      { label: 'Contacts', to: '/Contacts', icon: 'mdi-account-group-outline' },
     ]
 
     if (isLoggedIn.value) {
       items.push({
         label: 'Create Post',
-        to: '/createpost',
+        to: '/CreatePost',
         icon: 'mdi-plus-circle-outline',
         variant: 'primary',
       })
@@ -197,7 +197,7 @@
       if (route.path.toLowerCase() === '/feed') {
         items.push({
           label: 'Filters',
-          to: '/feed',
+          to: '/Feed',
           icon: 'mdi-tune-variant',
           variant: 'primary',
           action: () => feedControlsStore.openMobileControls(),
