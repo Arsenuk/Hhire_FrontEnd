@@ -136,10 +136,10 @@
 
         <div v-else-if="!sortedPosts.length" class="feed-empty-state">
           <v-icon icon="mdi-text-box-search-outline" size="40" color="primary" />
-          <h3>No posts match these filters</h3>
-          <p>Try clearing one or two filters to bring the feed back into view.</p>
-          <v-btn color="primary" variant="flat" rounded="pill" @click="clearFilters">
-            Reset filters
+          <h3>{{ emptyStateTitle }}</h3>
+          <p>{{ emptyStateDescription }}</p>
+          <v-btn color="primary" variant="flat" rounded="pill" @click="resetFeedView">
+            {{ emptyStateActionLabel }}
           </v-btn>
         </div>
 
@@ -335,6 +335,7 @@
   import { computed } from 'vue'
   import PostCard from '@/entities/post/ui/PostCard.vue'
   import { useFeedControlsStore } from '@/features/feed/model/feedControls.store'
+  import { useFeedSearchStore } from '@/features/feed/model/feedSearch.store'
   import { useFeed } from '@/features/feed/model/useFeed'
 
   const {
@@ -352,6 +353,7 @@
     selectedIntents,
     selectedTags,
     selectedUserType,
+    isSearchActive,
     sortType,
     sortedPosts,
     toggleIntent,
@@ -362,6 +364,7 @@
   } = useFeed()
 
   const feedControlsStore = useFeedControlsStore()
+  const feedSearchStore = useFeedSearchStore()
 
   const mobileControlsOpen = computed({
     get: () => feedControlsStore.mobileControlsOpen,
@@ -375,6 +378,31 @@
     selectedTags.value.length +
     (selectedUserType.value !== 'all' ? 1 : 0)
   ))
+
+  const emptyStateTitle = computed(() => (
+    isSearchActive.value
+      ? 'No posts match your search'
+      : 'No posts match these filters'
+  ))
+
+  const emptyStateDescription = computed(() => (
+    isSearchActive.value
+      ? 'Try a different keyword or clear the search to bring more posts back into view.'
+      : 'Try clearing one or two filters to bring the feed back into view.'
+  ))
+
+  const emptyStateActionLabel = computed(() => (
+    isSearchActive.value || activeFiltersCount.value > 0
+      ? 'Reset search and filters'
+      : 'Refresh feed'
+  ))
+
+  function resetFeedView() {
+    clearFilters()
+    if (isSearchActive.value) {
+      feedSearchStore.clearQuery()
+    }
+  }
 </script>
 
 <style scoped>

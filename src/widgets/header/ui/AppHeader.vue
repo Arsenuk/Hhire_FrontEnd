@@ -23,6 +23,21 @@
           </RouterLink>
         </div>
 
+        <div v-if="showFeedSearch" class="header-search">
+          <v-text-field
+            v-model="feedSearchQuery"
+            class="header-search__input"
+            clearable
+            density="comfortable"
+            hide-details
+            prepend-inner-icon="mdi-magnify"
+            placeholder="Search posts"
+            label="Search posts"
+            variant="outlined"
+            @click:clear="clearFeedSearch"
+          />
+        </div>
+
         <div class="header-right">
           <template v-if="isLoggedIn">
             <v-menu offset-y>
@@ -128,6 +143,7 @@
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store'
   import { useFeedControlsStore } from '@/features/feed/model/feedControls.store'
+  import { useFeedSearchStore } from '@/features/feed/model/feedSearch.store'
   import { api } from '@/shared/api/api'
   import { canAccessAdminPanel } from '@/shared/lib/auth/adminPanelAccess'
   import type { EntityId } from '@/shared/types'
@@ -151,6 +167,7 @@
   const router = useRouter()
   const authStore = useAuthStore()
   const feedControlsStore = useFeedControlsStore()
+  const feedSearchStore = useFeedSearchStore()
   const headerContentRef = ref<HTMLElement | null>(null)
   const mobileNavRef = ref<HTMLElement | null>(null)
   const headerHeight = ref(88)
@@ -159,6 +176,12 @@
   const isLoggedIn = computed(() => authStore.isLoggedIn)
   const user = computed(() => authStore.user)
   const hasAdminPanelAccess = computed(() => canAccessAdminPanel(user.value))
+  const isFeedRoute = computed(() => route.path.toLowerCase() === '/feed')
+  const showFeedSearch = computed(() => isFeedRoute.value)
+  const feedSearchQuery = computed({
+    get: () => feedSearchStore.query,
+    set: value => feedSearchStore.setQuery(value),
+  })
 
   const navLinks = computed<NavLink[]>(() => {
     if (isLoggedIn.value) {
@@ -227,6 +250,10 @@
   async function logout () {
     await authStore.logout()
     await router.push('/')
+  }
+
+  function clearFeedSearch () {
+    feedSearchStore.clearQuery()
   }
 
   const unansweredSignals = ref(0)
@@ -348,6 +375,17 @@
   min-width: 150px;
 }
 
+.header-search {
+  display: flex;
+  align-items: center;
+  flex: 0 1 360px;
+  min-width: 240px;
+}
+
+.header-search__input {
+  width: 100%;
+}
+
 .nav-link {
   text-decoration: none;
   font-size: clamp(14px, 1.5vw, 16px);
@@ -411,9 +449,12 @@
   .header-content {
     padding: 12px 16px;
     flex-wrap: nowrap;
+    gap: 8px;
   }
 
   .header-left {
+    order: 0;
+    flex: 0 0 auto;
     min-width: 0;
     flex-shrink: 0;
   }
@@ -422,11 +463,25 @@
     display: none;
   }
 
-  .header-right {
+  .header-search {
+    order: 1;
+    flex: 1 1 auto;
     min-width: 0;
-    flex: 1;
+    max-width: 240px;
+    margin-top: 0;
+  }
+
+  .header-right {
+    order: 2;
+    flex: 0 0 auto;
+    min-width: 0;
     justify-content: flex-end;
     gap: 6px;
+  }
+
+  .header-search__input {
+    width: 100%;
+    min-width: 0;
   }
 
   .create-post-btn {
@@ -439,7 +494,7 @@
   }
 
   .brand-name {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .mobile-nav {
@@ -510,14 +565,8 @@
     white-space: nowrap;
   }
 
-  .header-center {
-    order: 3;
-    margin-top: 5px;
-  }
-
-  .header-right {
-    order: 2;
-    margin-top: 5px;
+  .header-left {
+    order: 0;
   }
 }
 

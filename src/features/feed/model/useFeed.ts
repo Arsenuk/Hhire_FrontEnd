@@ -4,6 +4,7 @@ import { normalizePosts } from '@/entities/post/lib/normalizePost'
 import { api } from '@/shared/api/api'
 import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 import { useAuthStore } from '@/features/auth/model/auth.store'
+import { useFeedSearchStore } from '@/features/feed/model/feedSearch.store'
 import type { EntityId, Post } from '@/shared/types'
 
 type FeedSortType = 'latest'
@@ -38,6 +39,7 @@ type FeedParams = {
 export function useFeed () {
   const router = useRouter()
   const authStore = useAuthStore()
+  const feedSearchStore = useFeedSearchStore()
 
   const allPosts = ref<FeedPost[]>([])
   const posts = ref<FeedPost[]>([])
@@ -49,6 +51,9 @@ export function useFeed () {
   const isLoadingMore = ref(false)
   const loadMoreTrigger = ref<HTMLElement | null>(null)
   let observer: IntersectionObserver | null = null
+  let reloadTimer: ReturnType<typeof setTimeout> | null = null
+  let feedGeneration = 0
+  let loadPostsToken = 0
 
   const sortType = ref<FeedSortType>('latest')
 
@@ -56,6 +61,7 @@ export function useFeed () {
   const selectedTags = ref<string[]>([])
   const selectedUserType = ref<FeedUserType>('all')
   const currentUser = computed(() => authStore.user)
+  const searchQuery = computed(() => feedSearchStore.query.trim())
 
   const intentOptions: FilterOption<FeedIntent>[] = [
     { label: 'General', value: 'general' },
@@ -90,6 +96,7 @@ export function useFeed () {
     return {
       limit: pageSize,
       sort: 'new',
+      ...(searchQuery.value ? { q: searchQuery.value } : {}),
       ...(selectedIntents.value.length ? { intents: selectedIntents.value.join(',') } : {}),
       ...(selectedTags.value.length ? { tags: selectedTags.value.join(',') } : {}),
       ...(selectedUserType.value !== 'all' ? { type: selectedUserType.value } : {}),
@@ -98,6 +105,8 @@ export function useFeed () {
   }
 
   async function loadPosts () {
+    const generation = ++feedGeneration
+    const token = ++loadPostsToken
     isLoading.value = true
     hasMorePosts.value = true
     nextCursor.value = null
@@ -109,6 +118,8 @@ export function useFeed () {
       const responseData = res.data
       const rawPosts = Array.isArray(responseData) ? responseData : responseData.posts || []
 
+      if (generation !== feedGeneration) return
+
       allPosts.value = normalizePosts(rawPosts)
       posts.value = allPosts.value
       nextCursor.value = Array.isArray(responseData) ? null : responseData.nextCursor || null
@@ -116,13 +127,16 @@ export function useFeed () {
     } catch (error) {
       console.error('Failed to load feed', error)
     } finally {
-      isLoading.value = false
+      if (token === loadPostsToken) {
+        isLoading.value = false
+      }
     }
   }
 
   async function loadMorePosts () {
     if (isLoading.value || isLoadingMore.value || !hasMorePosts.value || !nextCursor.value) return
 
+    const generation = feedGeneration
     isLoadingMore.value = true
     let loadedSuccessfully = false
 
@@ -136,6 +150,8 @@ export function useFeed () {
       const nextPosts = normalizePosts(rawPosts)
       const existingIds = new Set(allPosts.value.map(post => post.id))
       const uniquePosts = nextPosts.filter(post => !existingIds.has(post.id))
+
+      if (generation !== feedGeneration) return
 
       allPosts.value = [...allPosts.value, ...uniquePosts]
       posts.value = allPosts.value
@@ -217,6 +233,8 @@ export function useFeed () {
     })
   })
 
+  const isSearchActive = computed(() => Boolean(searchQuery.value))
+
   const intentCounts = computed<Record<string, number>>(() => {
     const counts: Record<string, number> = {
       all: allPosts.value.length,
@@ -280,18 +298,33 @@ export function useFeed () {
   onBeforeUnmount(() => {
     observer?.disconnect()
     observer = null
+    if (reloadTimer) {
+      clearTimeout(reloadTimer)
+      reloadTimer = null
+    }
     window.removeEventListener('scroll', handleScroll)
   })
 
   watch(
-    [() => selectedIntents.value.join('|'), () => selectedTags.value.join('|'), selectedUserType],
-    async () => {
-      await loadPosts()
-      await nextTick()
-
-      if (isNearPageBottom()) {
-        void loadMorePosts()
+    [
+      () => selectedIntents.value.join('|'),
+      () => selectedTags.value.join('|'),
+      selectedUserType,
+      searchQuery,
+    ],
+    () => {
+      if (reloadTimer) {
+        clearTimeout(reloadTimer)
       }
+
+      reloadTimer = setTimeout(async () => {
+        await loadPosts()
+        await nextTick()
+
+        if (isNearPageBottom()) {
+          void loadMorePosts()
+        }
+      }, 250)
     },
   )
 
@@ -314,6 +347,7 @@ export function useFeed () {
     selectUserType,
     sortType,
     sortedPosts,
+    isSearchActive,
     toggleIntent,
     toggleTag,
     topTags,
