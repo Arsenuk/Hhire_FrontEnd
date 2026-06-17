@@ -234,6 +234,17 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <v-snackbar
+    v-model="snackbar.show"
+    :color="snackbar.color"
+    location="bottom"
+    multi-line
+    rounded="pill"
+    timeout="2500"
+  >
+    {{ snackbar.text }}
+  </v-snackbar>
 </template>
 
 <script setup lang="ts">
@@ -298,7 +309,7 @@ const reportReasons: Array<{ label: string, value: ReportReason }> = [
   { label: 'Impersonation', value: 'impersonation' },
   { label: 'Other', value: 'other' },
 ]
-const { showToast } = useSnackbar()
+const { showToast, snackbar } = useSnackbar()
 
 const owner = computed(() => props.post.owner ?? null)
 const ownerName = computed(() => owner.value?.name || 'Unknown user')
@@ -359,6 +370,7 @@ async function submitReport() {
     return
   }
 
+  showToast('Sending report to moderation...', 'info')
   reportLoading.value = true
 
   try {

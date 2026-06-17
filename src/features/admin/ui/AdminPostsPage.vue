@@ -6,7 +6,7 @@
           <p class="admin-posts__eyebrow">Administration</p>
           <h1>Posts</h1>
           <p class="admin-posts__subtitle">
-            Review published content, hide problematic posts, and remove items that should no longer stay in the feed.
+            Review reported posts and anything that is not currently active before it returns to the public feed.
           </p>
         </div>
 
@@ -58,7 +58,7 @@
 
         <div v-else-if="filteredPosts.length === 0" class="admin-posts__state">
           <v-icon icon="mdi-file-search-outline" size="36" />
-          <p>No posts found for the current filters.</p>
+          <p>No flagged or non-active posts found for the current filters.</p>
         </div>
 
         <div v-else class="admin-posts__table-wrap">
@@ -67,6 +67,7 @@
               <tr>
                 <th>Post</th>
                 <th>Intent</th>
+                <th>Report tags</th>
                 <th>Status</th>
                 <th>Conversations</th>
                 <th>Created</th>
@@ -94,13 +95,33 @@
                 </td>
 
                 <td>
-                  <v-chip
-                    :color="getStatusColor(post.status)"
-                    size="small"
-                    variant="tonal"
-                  >
-                    {{ post.status || 'unknown' }}
-                  </v-chip>
+                  <div v-if="post.report_tags?.length" class="admin-posts__tags">
+                    <v-chip
+                      v-for="tag in post.report_tags"
+                      :key="`${post.id}:${tag}`"
+                      size="x-small"
+                      variant="outlined"
+                    >
+                      {{ tag }}
+                    </v-chip>
+                  </div>
+                  <span v-else class="admin-posts__empty-value">-</span>
+                </td>
+
+                <td>
+                  <div class="admin-posts__status-cell">
+                    <v-chip
+                      :color="getStatusColor(post.status)"
+                      size="small"
+                      variant="tonal"
+                    >
+                      {{ post.status || 'unknown' }}
+                    </v-chip>
+
+                    <span class="admin-posts__status-count">
+                      {{ formatCount(post.report_count) }} reports
+                    </span>
+                  </div>
                 </td>
 
                 <td>
@@ -190,6 +211,8 @@
     content?: string | null
     intent?: string | null
     conversation_count?: number | string | null
+    report_count?: number | string | null
+    report_tags?: string[] | null
     status?: PostStatus
     created_at?: string | null
   }
@@ -524,12 +547,35 @@
   line-height: 1.35;
 }
 
-.admin-posts__post-preview {
-  color: #60716e;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-top: 4px;
-}
+  .admin-posts__post-preview {
+    color: #60716e;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 4px;
+  }
+
+  .admin-posts__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .admin-posts__empty-value {
+    color: #94a3b8;
+    font-size: 13px;
+  }
+
+  .admin-posts__status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .admin-posts__status-count {
+    color: #60716e;
+    font-size: 12px;
+    font-weight: 600;
+  }
 
 .admin-posts__metric {
   color: #172522;
