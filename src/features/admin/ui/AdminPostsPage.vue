@@ -194,7 +194,7 @@
     created_at?: string | null
   }
 
-  type PostActionType = 'hide' | 'delete'
+  type PostActionType = 'hide' | 'restore' | 'delete'
 
   type PostActionButton = {
     key: string
@@ -256,6 +256,15 @@
     ],
     hidden: [
       {
+        key: 'restore',
+        label: 'Restore',
+        color: 'success',
+        variant: 'tonal',
+        type: 'restore',
+        confirmLabel: 'Confirm restore',
+        description: 'The post will be returned to the active feed and become visible again.',
+      },
+      {
         key: 'delete',
         label: 'Delete',
         color: 'error',
@@ -284,6 +293,19 @@
     const numericValue = typeof value === 'string' ? Number(value) : value
 
     return Number.isFinite(numericValue) ? String(numericValue) : String(value)
+  }
+
+  function getNextStatus(action: PostActionType) {
+    switch (action) {
+      case 'hide':
+        return 'hidden'
+      case 'restore':
+        return 'active'
+      case 'delete':
+        return 'deleted'
+      default:
+        return 'active'
+    }
   }
 
   function formatDate(value: string | null | undefined) {
@@ -373,7 +395,7 @@
     try {
       await api.post(`/admin/posts/${postId}/${action.type}`)
 
-      const nextStatus = action.type === 'hide' ? 'hidden' : 'deleted'
+      const nextStatus = getNextStatus(action.type)
       posts.value = posts.value.map(post => (
         post.id === postId
           ? { ...post, status: nextStatus }
@@ -381,14 +403,22 @@
       ))
 
       showToast(
-        action.type === 'hide' ? 'Post has been hidden' : 'Post has been deleted',
+        action.type === 'hide'
+          ? 'Post has been hidden'
+          : action.type === 'restore'
+            ? 'Post has been restored'
+            : 'Post has been deleted',
         'success',
       )
       closeConfirmation({ force: true })
     } catch (error) {
       console.error(`Failed to ${action.type} post`, error)
       showToast(
-        action.type === 'hide' ? 'Failed to hide post' : 'Failed to delete post',
+        action.type === 'hide'
+          ? 'Failed to hide post'
+          : action.type === 'restore'
+            ? 'Failed to restore post'
+            : 'Failed to delete post',
         'error',
       )
     } finally {
