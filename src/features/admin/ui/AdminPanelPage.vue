@@ -77,6 +77,7 @@
       title: 'Posts',
       description: 'Moderate reported posts and visibility decisions.',
       icon: 'mdi-file-document-outline',
+      to: '/AdminPanelPosts',
     },
     {
       title: 'Signals',

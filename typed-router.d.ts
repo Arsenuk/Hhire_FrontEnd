@@ -21,6 +21,7 @@ declare module 'vue-router/auto-routes' {
     '/': RouteRecordInfo<'/', '/', Record<never, never>, Record<never, never>>,
     '/AdminPanel': RouteRecordInfo<'/AdminPanel', '/AdminPanel', Record<never, never>, Record<never, never>>,
     '/AdminPanelLogs': RouteRecordInfo<'/AdminPanelLogs', '/AdminPanelLogs', Record<never, never>, Record<never, never>>,
+    '/AdminPanelPosts': RouteRecordInfo<'/AdminPanelPosts', '/AdminPanelPosts', Record<never, never>, Record<never, never>>,
     '/AdminPanelSignalReports': RouteRecordInfo<'/AdminPanelSignalReports', '/AdminPanelSignalReports', Record<never, never>, Record<never, never>>,
     '/AdminPanelUsers': RouteRecordInfo<'/AdminPanelUsers', '/AdminPanelUsers', Record<never, never>, Record<never, never>>,
     '/Contacts': RouteRecordInfo<'/Contacts', '/Contacts', Record<never, never>, Record<never, never>>,
@@ -53,6 +54,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/AdminPanelLogs.vue': {
       routes: '/AdminPanelLogs'
+      views: never
+    }
+    'src/pages/AdminPanelPosts.vue': {
+      routes: '/AdminPanelPosts'
       views: never
     }
     'src/pages/AdminPanelSignalReports.vue': {
