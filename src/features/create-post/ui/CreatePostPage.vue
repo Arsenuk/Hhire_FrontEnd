@@ -257,6 +257,22 @@
   text-transform: none;
 }
 
+@media (min-width: 769px) {
+  .create-post-page {
+    padding: 16px 16px 24px;
+  }
+
+  .form-card {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .post-form__scroll {
+    overflow: visible;
+    padding-right: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .create-post-page {
     min-height: calc(100dvh - var(--app-header-height, 88px) - var(--app-mobile-nav-height, 92px));
@@ -284,6 +300,12 @@
 
   .post-form {
     padding: 18px 20px 20px;
+  }
+
+  .post-form__scroll {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+    padding-right: 4px;
   }
 
   .actions {
