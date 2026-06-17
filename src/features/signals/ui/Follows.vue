@@ -7,7 +7,7 @@
     <v-card-text class="card-body">
       <v-list class="follow-list">
         <v-list-item
-          v-for="(user, index) in users"
+          v-for="(user, index) in filteredUsers"
           :key="user.id ?? `follow-${index}`"
           class="follow-item"
           :ripple="false"
@@ -20,8 +20,8 @@
           />
         </v-list-item>
 
-        <div v-if="users.length === 0" class="empty-state">
-          No follows yet
+        <div v-if="filteredUsers.length === 0" class="empty-state">
+          {{ emptyStateText }}
         </div>
       </v-list>
     </v-card-text>
@@ -29,15 +29,47 @@
 </template>
 
 <script setup lang="ts">
+  import { computed } from 'vue'
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useFollows } from '@/features/signals/model/useFollows'
   import type { User } from '@/shared/types'
+
+  const props = defineProps<{
+    searchQuery?: string
+  }>()
 
   const {
     formatDate,
     goToProfile,
     users,
   } = useFollows()
+
+  const filteredUsers = computed(() => {
+    const query = props.searchQuery?.trim().toLowerCase()
+
+    if (!query) {
+      return users.value
+    }
+
+    return users.value.filter(user => {
+      const haystack = [
+        user.name,
+        user.email,
+        user.description,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(query)
+    })
+  })
+
+  const emptyStateText = computed(() => (
+    props.searchQuery?.trim()
+      ? 'No follows match this search'
+      : 'No follows yet'
+  ))
 
   function getLastPostSubtitle(user: User) {
     const lastPostDate = typeof user.lastPost === 'string' || typeof user.lastPost === 'number' || user.lastPost instanceof Date

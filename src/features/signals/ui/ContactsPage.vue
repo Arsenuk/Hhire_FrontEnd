@@ -18,6 +18,35 @@
       </div>
     </div>
 
+    <v-card class="contacts-search-card">
+      <div class="contacts-search-card__head">
+        <div>
+          <p class="contacts-kicker">Search</p>
+          <h2 class="contacts-search-title">{{ searchTitle }}</h2>
+        </div>
+
+        <v-chip size="small" variant="tonal">
+          {{ searchScopeLabel }}
+        </v-chip>
+      </div>
+
+      <v-text-field
+        v-model="activeSearchQuery"
+        class="contacts-search-card__input"
+        clearable
+        density="comfortable"
+        hide-details
+        prepend-inner-icon="mdi-magnify"
+        :label="searchLabel"
+        :placeholder="searchPlaceholder"
+        variant="outlined"
+      />
+
+      <p class="contacts-search-card__hint">
+        {{ searchHint }}
+      </p>
+    </v-card>
+
     <v-row dense>
       <v-col cols="12" md="3" class="contacts-sidebar-col">
         <div class="sticky-sidebar">
@@ -49,7 +78,10 @@
 
       <v-col cols="12" md="9" class="contacts-content-col">
         <v-card class="content-card">
-          <component :is="currentComponent" />
+          <component
+            :is="currentComponent"
+            :search-query="activeSearchQuery"
+          />
         </v-card>
       </v-col>
     </v-row>
@@ -127,6 +159,8 @@
   const mobileMenuOpen = ref(false)
   const menuTriggerRef = ref<HTMLElement | null>(null)
   const showBackToTop = ref(false)
+  const profileSearchQuery = ref('')
+  const conversationSearchQuery = ref('')
 
   const tabs: TabItem[] = [
     { key: 'follows', label: 'Follows', component: Follows },
@@ -139,6 +173,44 @@
     const tab = tabs.find(item => item.key === currentTab.value)
     return tab ? tab.component : null
   })
+
+  const isConversationTab = computed(() => currentTab.value === 'unreplied' || currentTab.value === 'send')
+
+  const activeSearchQuery = computed<string>({
+    get: () => (isConversationTab.value ? conversationSearchQuery.value : profileSearchQuery.value),
+    set: value => {
+      if (isConversationTab.value) {
+        conversationSearchQuery.value = value
+        return
+      }
+
+      profileSearchQuery.value = value
+    },
+  })
+
+  const searchScopeLabel = computed(() => (
+    isConversationTab.value ? 'Inbox / Sent' : 'Profiles'
+  ))
+
+  const searchTitle = computed(() => (
+    isConversationTab.value ? 'Search conversations' : 'Search users'
+  ))
+
+  const searchLabel = computed(() => (
+    isConversationTab.value ? 'Search conversations' : 'Search profiles'
+  ))
+
+  const searchPlaceholder = computed(() => (
+    isConversationTab.value
+      ? 'Search by subject or message'
+      : 'Search by name or description'
+  ))
+
+  const searchHint = computed(() => (
+    isConversationTab.value
+      ? 'Matches inbox and sent dialogs by subject or message.'
+      : 'Search your follows and suggested users by profile details.'
+  ))
 
   function selectTab (tabKey: TabKey) {
     currentTab.value = tabKey
@@ -226,6 +298,40 @@
 
 .contacts-mobile-header {
   display: none;
+}
+
+.contacts-search-card {
+  border-radius: 18px;
+  padding: 16px 18px 14px;
+  margin-bottom: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.contacts-search-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.contacts-search-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.contacts-search-card__input {
+  width: 100%;
+}
+
+.contacts-search-card__hint {
+  margin: 10px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .contacts-mobile-header__copy {
@@ -373,6 +479,15 @@
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 16px;
+  }
+
+  .contacts-search-card {
+    padding: 14px 14px 12px;
+    margin-bottom: 14px;
+  }
+
+  .contacts-search-title {
+    font-size: 16px;
   }
 
   .contacts-sidebar-col {

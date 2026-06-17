@@ -29,7 +29,7 @@
 
         <v-list-item v-if="signals.length === 0">
           <v-list-item-title class="no-signal">
-            No sent signals
+            {{ emptyStateText }}
           </v-list-item-title>
         </v-list-item>
       </v-list>
@@ -75,9 +75,21 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, toRef } from 'vue'
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSendSignals } from '@/features/signals/model/useSendSignals'
   import ConversationDialog from '@/features/signals/ui/ConversationDialog.vue'
+
+  const props = defineProps<{
+    searchQuery?: string
+  }>()
+
+  const searchQuery = toRef(props, 'searchQuery')
+  const emptyStateText = computed(() => (
+    props.searchQuery?.trim()
+      ? 'No conversations match this search'
+      : 'No sent signals'
+  ))
 
   const {
     activeSignal,
@@ -104,7 +116,7 @@
     sharedContactsLoading,
     signals,
     snackbar,
-  } = useSendSignals()
+  } = useSendSignals(searchQuery)
 </script>
 
 <style scoped>

@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
 import { api } from '@/shared/api/api'
 import { useSignalsConversation } from '@/features/signals/model/useSignalsConversation'
 
@@ -10,19 +10,34 @@ type RespondPayload = {
   message: string
 }
 
-export function useUnrepliedSignals (updateNotify?: UpdateNotify) {
+export function useUnrepliedSignals (
+  updateNotify?: UpdateNotify,
+  searchQuery?: Ref<string | undefined>,
+) {
   const base = useSignalsConversation({
     listEndpoint: '/conversations/inbox',
     view: 'inbox',
-    onSignalsUpdated: conversations => {
-      updateNotify?.(conversations.filter(item => item.status === 'open').length)
-    },
+    ...(searchQuery ? { searchQuery } : {}),
   })
 
   const replyLoading = ref(false)
   let intervalId: ReturnType<typeof setInterval> | null = null
+  let notifyIntervalId: ReturnType<typeof setInterval> | null = null
 
   const canReply = computed(() => base.activeSignal.value?.status === 'open')
+
+  async function refreshOpenCount () {
+    if (!updateNotify) {
+      return
+    }
+
+    try {
+      const res = await api.get<{ conversations?: Array<{ conversation_status?: string }> }>('/conversations/inbox')
+      updateNotify((res.data.conversations || []).filter(item => item.conversation_status === 'open').length)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   async function respond ({ action, message }: RespondPayload) {
     if (!message?.trim()) {
@@ -65,14 +80,23 @@ export function useUnrepliedSignals (updateNotify?: UpdateNotify) {
 
   onMounted(() => {
     void base.fetchSignals()
+    void refreshOpenCount()
     intervalId = setInterval(() => {
       void base.fetchSignals()
     }, 7000)
+
+    notifyIntervalId = setInterval(() => {
+      void refreshOpenCount()
+    }, 15000)
   })
 
   onUnmounted(() => {
     if (intervalId) {
       clearInterval(intervalId)
+    }
+
+    if (notifyIntervalId) {
+      clearInterval(notifyIntervalId)
     }
   })
 

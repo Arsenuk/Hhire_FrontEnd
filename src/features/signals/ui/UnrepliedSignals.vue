@@ -28,7 +28,7 @@
         </v-list-item>
 
         <div v-if="signals.length === 0" class="empty-state">
-          No new signals
+          {{ emptyStateText }}
         </div>
       </v-list>
     </v-card-text>
@@ -76,13 +76,22 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, toRef } from 'vue'
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useUnrepliedSignals } from '@/features/signals/model/useUnrepliedSignals'
   import ConversationDialog from '@/features/signals/ui/ConversationDialog.vue'
 
   const props = defineProps<{
     updateNotify?: (count: number) => void
+    searchQuery?: string
   }>()
+
+  const searchQuery = toRef(props, 'searchQuery')
+  const emptyStateText = computed(() => (
+    props.searchQuery?.trim()
+      ? 'No conversations match this search'
+      : 'No new signals'
+  ))
 
   const {
     activeSignal,
@@ -112,7 +121,7 @@
     sharedContactsLoading,
     signals,
     snackbar,
-  } = useUnrepliedSignals(props.updateNotify)
+  } = useUnrepliedSignals(props.updateNotify, searchQuery)
 </script>
 
 <style scoped>

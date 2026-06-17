@@ -1,4 +1,4 @@
-import { onMounted, ref, type Ref } from 'vue'
+import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
@@ -11,6 +11,7 @@ type UseSuggestedUsersReturn = {
   closeDialog: () => void
   dialog: Ref<boolean>
   goToProfile: (userId: EntityId | null | undefined) => void
+  isLoading: Ref<boolean>
   openConnectDialog: (user: User) => void
   selectedUser: Ref<User | null>
   sendSignal: (message: string) => Promise<void>
@@ -19,7 +20,7 @@ type UseSuggestedUsersReturn = {
   suggestedUsers: Ref<User[]>
 }
 
-export function useSuggestedUsers (): UseSuggestedUsersReturn {
+export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseSuggestedUsersReturn {
   const auth = useAuthStore()
   const router = useRouter()
 
@@ -27,15 +28,39 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
   const dialog = ref(false)
   const selectedUser = ref<User | null>(null)
   const sendLoading = ref(false)
+  const isLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
+  let refreshToken = 0
+  let searchTimer: ReturnType<typeof setTimeout> | null = null
 
   async function fetchSuggestedUsers (): Promise<void> {
+    const token = ++refreshToken
+    const query = searchQuery?.value?.trim() || ''
+
+    isLoading.value = true
+
     try {
-      const res = await api.get<Record<string, unknown>[]>('/users')
+      const res = await api.get<Record<string, unknown>[]>(
+        query
+          ? '/users/search'
+          : '/users',
+        query
+          ? { params: { q: query, limit: 20 } }
+          : undefined,
+      )
+
+      if (token !== refreshToken) {
+        return
+      }
+
       suggestedUsers.value = normalizeUsers(res.data).filter(user => user.id !== auth.user?.id)
     } catch (error) {
       console.error(error)
       showToast('Failed to load users', 'error')
+    } finally {
+      if (token === refreshToken) {
+        isLoading.value = false
+      }
     }
   }
 
@@ -86,13 +111,31 @@ export function useSuggestedUsers (): UseSuggestedUsersReturn {
     navigateToProfile(router, userId, auth.user?.id)
   }
 
-  onMounted(() => {
-    void fetchSuggestedUsers()
+  watch(
+    () => searchQuery?.value ?? '',
+    () => {
+      if (searchTimer) {
+        clearTimeout(searchTimer)
+      }
+
+      searchTimer = setTimeout(() => {
+        void fetchSuggestedUsers()
+      }, 250)
+    },
+    { immediate: true },
+  )
+
+  onBeforeUnmount(() => {
+    if (searchTimer) {
+      clearTimeout(searchTimer)
+      searchTimer = null
+    }
   })
 
   return {
     closeDialog,
     dialog,
+    isLoading,
     goToProfile,
     openConnectDialog,
     selectedUser,

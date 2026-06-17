@@ -3,6 +3,11 @@
     <v-card-title class="title">Suggested Users</v-card-title>
 
     <v-card-text class="card-body">
+      <div v-if="isLoading" class="state">
+        <v-progress-circular color="primary" indeterminate size="28" />
+        <span>Searching users...</span>
+      </div>
+
       <v-list class="list">
         <v-list-item
           v-for="(user, index) in suggestedUsers"
@@ -25,6 +30,10 @@
             </v-btn>
           </div>
         </v-list-item>
+
+        <div v-if="!isLoading && suggestedUsers.length === 0" class="empty-state">
+          {{ emptyStateText }}
+        </div>
       </v-list>
     </v-card-text>
 
@@ -54,13 +63,21 @@
 </template>
 
 <script setup lang="ts">
+  import { computed, toRef } from 'vue'
   import UserPreview from '@/entities/user/ui/UserPreview.vue'
   import { useSuggestedUsers } from '@/features/signals/model/useSuggestedUsers'
   import SendSignalDialog from '@/features/signals/ui/SendSignalDialog.vue'
 
+  const props = defineProps<{
+    searchQuery?: string
+  }>()
+
+  const searchQuery = toRef(props, 'searchQuery')
+
   const {
     closeDialog,
     dialog,
+    isLoading,
     goToProfile,
     openConnectDialog,
     selectedUser,
@@ -68,7 +85,13 @@
     sendLoading,
     snackbar,
     suggestedUsers,
-  } = useSuggestedUsers()
+  } = useSuggestedUsers(searchQuery)
+
+  const emptyStateText = computed(() => (
+    props.searchQuery?.trim()
+      ? 'No users match this search'
+      : 'No suggested users yet'
+  ))
 </script>
 
 <style scoped>
@@ -91,6 +114,16 @@
   letter-spacing: 0.3px;
 }
 
+.state {
+  align-items: center;
+  color: #64748b;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 12px;
+  padding: 16px 0 20px;
+}
+
 .list {
   padding: 0;
 }
@@ -109,6 +142,13 @@
 .user-item:hover {
   background: rgba(99, 102, 241, 0.06);
   transform: translateY(-1px);
+}
+
+.empty-state {
+  color: #9ca3af;
+  font-style: italic;
+  padding: 16px 10px 8px;
+  text-align: center;
 }
 
 .left {

@@ -1,4 +1,4 @@
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
@@ -42,12 +42,14 @@ type ReportPayload = {
 
 type UseSignalsConversationOptions = {
   listEndpoint: string
+  searchQuery?: Ref<string | undefined>
   view: ConversationView
   onSignalsUpdated?: (signals: ConversationSummaryVm[]) => void
 }
 
 export function useSignalsConversation ({
   listEndpoint,
+  searchQuery,
   view,
   onSignalsUpdated,
 }: UseSignalsConversationOptions) {
@@ -66,8 +68,10 @@ export function useSignalsConversation ({
   const reportLoading = ref(false)
   const sharedContacts = ref<ContactLinkView[]>([])
   const sharedContactsLoading = ref(false)
+  let refreshTimer: ReturnType<typeof setTimeout> | null = null
 
   const currentUserId = computed(() => authStore.user?.id || null)
+  const normalizedSearchQuery = computed(() => searchQuery?.value?.trim() || '')
   const canHide = computed(() => activeSignal.value?.status === 'closed')
   const canCloseConversation = computed(() => activeSignal.value?.status === 'open')
   const isAwaitingMyCloseConfirmation = computed(() => Boolean(
@@ -77,7 +81,10 @@ export function useSignalsConversation ({
 
   async function fetchSignals (): Promise<void> {
     try {
-      const res = await api.get<ConversationsResponse>(listEndpoint)
+      const params = normalizedSearchQuery.value
+        ? { q: normalizedSearchQuery.value }
+        : undefined
+      const res = await api.get<ConversationsResponse>(listEndpoint, params ? { params } : undefined)
       const conversations = (res.data.conversations ?? []).map(item => normalizeConversationSummary(item, view))
 
       signals.value = conversations
@@ -269,6 +276,23 @@ export function useSignalsConversation ({
   function goToProfile (id: EntityId | null | undefined): ReturnType<typeof navigateToProfile> {
     return navigateToProfile(router, id)
   }
+
+  watch(normalizedSearchQuery, () => {
+    if (refreshTimer) {
+      clearTimeout(refreshTimer)
+    }
+
+    refreshTimer = setTimeout(() => {
+      void fetchSignals()
+    }, 250)
+  })
+
+  onBeforeUnmount(() => {
+    if (refreshTimer) {
+      clearTimeout(refreshTimer)
+      refreshTimer = null
+    }
+  })
 
   return {
     activeSignal,
