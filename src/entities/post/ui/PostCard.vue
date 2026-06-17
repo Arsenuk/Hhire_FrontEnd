@@ -1,5 +1,5 @@
 <template>
-  <v-card v-if="variant === 'feed'" :class="cardClasses">
+  <v-card v-if="variant === 'feed'" v-bind="$attrs" :class="cardClasses">
     <v-card-title class="post-card__feed-header">
       <div class="post-card__feed-owner">
         <v-avatar
@@ -41,6 +41,20 @@
         </v-chip>
 
         <slot name="header-actions" />
+
+        <v-btn
+          v-if="canReport"
+          class="post-card__report-btn"
+          type="button"
+          icon
+          size="small"
+          :ripple="false"
+          title="Report post"
+          variant="text"
+          @click.stop="openReportDialog"
+        >
+          <v-icon>mdi-flag-outline</v-icon>
+        </v-btn>
       </div>
     </v-card-title>
 
@@ -89,7 +103,7 @@
     </v-dialog>
   </v-card>
 
-  <v-card v-else :class="cardClasses">
+  <v-card v-else v-bind="$attrs" :class="cardClasses">
     <v-card-title class="post-card__header">
       <div class="post-card__owner">
         <v-avatar
@@ -122,7 +136,7 @@
         </div>
       </div>
 
-      <div v-if="showOwnerRole || $slots['header-actions']" class="post-card__header-actions">
+      <div v-if="showOwnerRole || $slots['header-actions'] || canReport" class="post-card__header-actions">
         <span
           v-if="showOwnerRole && ownerRole"
           class="post-card__role"
@@ -131,6 +145,20 @@
           {{ ownerRole }}
         </span>
         <slot name="header-actions" />
+
+        <v-btn
+          v-if="canReport"
+          class="post-card__report-btn"
+          type="button"
+          icon
+          size="small"
+          :ripple="false"
+          title="Report post"
+          variant="text"
+          @click.stop="openReportDialog"
+        >
+          <v-icon>mdi-flag-outline</v-icon>
+        </v-btn>
       </div>
     </v-card-title>
 
@@ -163,18 +191,63 @@
     </v-card-actions>
 
     <slot name="details" />
+
   </v-card>
+
+  <v-dialog v-model="reportDialog" max-width="520px">
+    <v-card class="post-card__report-dialog">
+      <v-card-title class="post-card__report-dialog-title">
+        Report post
+      </v-card-title>
+
+      <v-card-text class="post-card__report-dialog-body">
+        <p class="post-card__report-dialog-copy">
+          Tell us what is wrong with this post. The report will be sent to moderation.
+        </p>
+
+        <v-select
+          v-model="reportTags"
+          :items="reportReasons"
+          chips
+          item-title="label"
+          item-value="value"
+          label="Reason"
+          multiple
+          variant="outlined"
+        />
+      </v-card-text>
+
+      <v-card-actions class="post-card__report-dialog-actions">
+        <v-btn class="post-card__report-cancel" :disabled="reportLoading" @click="closeReportDialog">
+          Cancel
+        </v-btn>
+
+        <v-btn
+          class="post-card__report-submit"
+          :disabled="!reportTags.length || !canReport"
+          :loading="reportLoading"
+          prepend-icon="mdi-flag-outline"
+          @click="submitReport"
+        >
+          Send report
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { formatPostDate } from '@/shared/lib/date/formatPostDate'
 import { API_ORIGIN } from '@/shared/config/api'
+import { api } from '@/shared/api/api'
+import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl'
 import type { EntityId, Nullable, Post, PostOwner } from '@/shared/types'
 
 type PostCardVariant = 'feed' | 'profile'
 type PostCardTitlePlacement = 'header' | 'body'
+type ReportReason = 'spam' | 'harassment' | 'scam' | 'privacy_violation' | 'impersonation' | 'other'
 
 interface PostCardImage {
   url?: Nullable<string>
@@ -214,6 +287,18 @@ const emit = defineEmits<{
   (event: 'owner-click', ownerId: EntityId): void
 }>()
 const isImageDialogOpen = ref(false)
+const reportDialog = ref(false)
+const reportLoading = ref(false)
+const reportTags = ref<ReportReason[]>(['other'])
+const reportReasons: Array<{ label: string, value: ReportReason }> = [
+  { label: 'Spam', value: 'spam' },
+  { label: 'Harassment', value: 'harassment' },
+  { label: 'Scam or fraud', value: 'scam' },
+  { label: 'Privacy violation', value: 'privacy_violation' },
+  { label: 'Impersonation', value: 'impersonation' },
+  { label: 'Other', value: 'other' },
+]
+const { showToast } = useSnackbar()
 
 const owner = computed(() => props.post.owner ?? null)
 const ownerName = computed(() => owner.value?.name || 'Unknown user')
@@ -221,6 +306,7 @@ const ownerRole = computed(() => owner.value?.role || '')
 const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value?.avatar ?? null))
 const formattedDate = computed(() => formatPostDate(props.post.created_at))
 const postTags = computed<string[]>(() => (Array.isArray(props.post.tags) ? props.post.tags : []))
+const canReport = computed(() => props.post.id != null)
 const firstImageUrl = computed(() => {
   const [image] = Array.isArray(props.post.images) ? props.post.images : []
   const imageUrl = typeof image === 'string' ? image : image?.url
@@ -241,6 +327,55 @@ function handleOwnerClick() {
 
 function tagLabel(tag: string) {
   return props.tagPrefix ? `${props.tagPrefix}${tag}` : tag
+}
+
+function openReportDialog() {
+  if (!canReport.value) {
+    return
+  }
+
+  reportDialog.value = true
+}
+
+function closeReportDialog() {
+  if (reportLoading.value) {
+    return
+  }
+
+  reportDialog.value = false
+  reportTags.value = ['other']
+}
+
+async function submitReport() {
+  if (!props.post.id) {
+    showToast('Unable to report this post', 'error')
+    return
+  }
+
+  const selectedTags = reportTags.value.filter(Boolean)
+
+  if (!selectedTags.length) {
+    showToast('Please choose at least one reason', 'warning')
+    return
+  }
+
+  reportLoading.value = true
+
+  try {
+    await api.post('/reports', {
+      targetType: 'post',
+      targetId: props.post.id,
+      tags: selectedTags,
+    })
+
+    showToast('Report sent to moderation', 'success')
+    closeReportDialog()
+  } catch (error) {
+    console.error('Failed to send post report', error)
+    showToast('Failed to send report', 'error')
+  } finally {
+    reportLoading.value = false
+  }
 }
 </script>
 
@@ -389,6 +524,13 @@ function tagLabel(tag: string) {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.post-card__report-btn {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  color: #dc2626;
 }
 
 .post-card__role {
@@ -562,6 +704,47 @@ function tagLabel(tag: string) {
 
 .post-card__actions {
   padding-top: 0;
+}
+
+.post-card__report-dialog {
+  border-radius: 20px !important;
+}
+
+.post-card__report-dialog-title {
+  font-weight: 800;
+}
+
+.post-card__report-dialog-body {
+  display: grid;
+  gap: 14px;
+}
+
+.post-card__report-dialog-copy {
+  color: #64748b;
+  margin: 0;
+}
+
+.post-card__report-dialog-actions {
+  justify-content: flex-end;
+  padding: 0 16px 16px;
+}
+
+.post-card__report-cancel,
+.post-card__report-submit {
+  border-radius: 14px;
+  font-weight: 700;
+  text-transform: none;
+}
+
+.post-card__report-cancel {
+  color: #0f172a;
+  background: #f8fafc;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.35);
+}
+
+.post-card__report-submit {
+  color: #ffffff;
+  background: linear-gradient(135deg, #dc2626, #f97316);
 }
 
 @media (max-width: 960px) {
