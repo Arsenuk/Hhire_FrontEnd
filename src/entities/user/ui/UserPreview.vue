@@ -10,9 +10,7 @@
         {{ displayName }}
       </div>
 
-      <div v-if="ratingText" class="entity-user-preview__rating">
-        {{ ratingText }}
-      </div>
+      <UserRating v-if="rating" class="entity-user-preview__rating" :rating="rating" />
 
       <div v-if="subtitle" class="entity-user-preview__subtitle">
         {{ subtitle }}
@@ -25,6 +23,7 @@
   import { computed } from 'vue'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
+  import UserRating from '@/entities/user/ui/UserRating.vue'
   import type { Nullable, User } from '@/shared/types'
 
   type RatingSummary = {
@@ -57,15 +56,7 @@
   })
 
   const displayName = computed(() => getUserDisplayName(props.user))
-  const ratingText = computed(() => {
-    const rating = props.rating ?? props.user?.rating ?? null
-
-    if (!rating || rating.total <= 0) {
-      return ''
-    }
-
-    return `${(rating.value * 5).toFixed(1)}/5`
-  })
+  const rating = computed(() => props.rating ?? props.user?.rating ?? null)
 
   function handleClick() {
     if (props.clickable) {
@@ -104,19 +95,7 @@
 }
 
 .entity-user-preview__rating {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  min-height: 20px;
   margin-top: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(15, 118, 110, 0.08);
-  color: #0f766e;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
 }
 
 .entity-user-preview__subtitle {

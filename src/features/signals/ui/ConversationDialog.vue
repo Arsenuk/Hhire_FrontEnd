@@ -74,9 +74,12 @@
                 {{ counterpartName }}
               </div>
 
-              <div v-if="counterpartRatingText" class="counterpart-rating">
-                {{ counterpartRatingText }}
-              </div>
+              <UserRating
+                v-if="counterpartRating"
+                class="counterpart-rating"
+                :rating="counterpartRating"
+                variant="panel"
+              />
 
               <div class="counterpart-subtitle">
                 {{ contactInfoSharedWithMe ? 'Shared contacts available' : 'Contacts are hidden for now' }}
@@ -262,6 +265,7 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
+  import UserRating from '@/entities/user/ui/UserRating.vue'
   import type {
     ContactLink,
     EntityId,
@@ -361,15 +365,7 @@
   const sharedContacts = computed<ConversationContact[]>(() => props.sharedContacts)
   const counterpart = computed(() => conversation.value?.counterpart ?? null)
   const counterpartName = computed(() => counterpart.value?.name || 'Unknown user')
-  const counterpartRatingText = computed(() => {
-    const rating = counterpart.value?.rating
-
-    if (!rating || rating.total <= 0) {
-      return ''
-    }
-
-    return `${(rating.value * 5).toFixed(1)}/5`
-  })
+  const counterpartRating = computed(() => counterpart.value?.rating ?? null)
 
   function formatDateTime (value: string | null | undefined) {
     if (!value) {
@@ -554,17 +550,8 @@
 }
 
 .counterpart-rating {
-  display: inline-flex;
-  align-items: center;
   align-self: flex-start;
   margin-top: 6px;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: rgba(15, 118, 110, 0.08);
-  color: #0f766e;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.2;
 }
 
 .counterpart-subtitle {

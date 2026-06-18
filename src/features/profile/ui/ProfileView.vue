@@ -45,9 +45,7 @@
               <span class="profile-stat__label">Posts</span>
             </div>
             <div class="profile-stat profile-stat--rating">
-              <span class="profile-stat__value" :class="{ 'profile-stat__value--muted': !ratingDisplay }">
-                {{ ratingDisplay || 'No rating yet' }}
-              </span>
+              <UserRating :rating="rating" show-empty variant="panel" />
               <span class="profile-stat__label">Rating</span>
 
               <div
@@ -301,6 +299,7 @@
   import PostCard from '@/entities/post/ui/PostCard.vue'
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
+  import UserRating from '@/entities/user/ui/UserRating.vue'
   import type {
     ProfileContactView,
     ProfileLinkView,
@@ -352,16 +351,6 @@
     successMessage,
     user,
   } = toRefs(props)
-
-  const ratingDisplay = computed(() => {
-    const ratingValue = rating.value
-
-    if (!ratingValue || ratingValue.total === 0) {
-      return ''
-    }
-
-    return `${(ratingValue.value * 5).toFixed(1)}/5`
-  })
 
   defineSlots<{
     'header-actions'?: () => unknown
@@ -526,6 +515,9 @@
 
 .profile-stat--rating {
   min-width: 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .profile-stat__breakdown {

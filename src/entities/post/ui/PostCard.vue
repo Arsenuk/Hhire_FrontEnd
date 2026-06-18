@@ -15,8 +15,8 @@
             {{ ownerName }}
           </div>
 
-          <div v-if="ownerRatingText" class="post-card__owner-rating">
-            {{ ownerRatingText }}
+          <div v-if="ownerRating" class="post-card__owner-rating">
+            <UserRating :rating="ownerRating" />
           </div>
 
           <div class="post-card__feed-date">
@@ -128,8 +128,8 @@
                 <span class="post-card__owner-name">
                   {{ ownerName }}
                 </span>
-                <div v-if="ownerRatingText" class="post-card__owner-rating">
-                  {{ ownerRatingText }}
+                <div v-if="ownerRating" class="post-card__owner-rating">
+                  <UserRating :rating="ownerRating" />
                 </div>
               </div>
               <span>{{ formattedDate }}</span>
@@ -140,8 +140,8 @@
             <div class="post-card__owner-name">
               {{ ownerName }}
             </div>
-            <div v-if="ownerRatingText" class="post-card__owner-rating">
-              {{ ownerRatingText }}
+            <div v-if="ownerRating" class="post-card__owner-rating">
+              <UserRating :rating="ownerRating" />
             </div>
             <div class="post-card__meta">
               {{ formattedDate }}
@@ -269,6 +269,7 @@ import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
 import { getAvatarUrl } from '@/shared/lib/media/getAvatarUrl'
 import type { EntityId, Nullable, Post, PostOwner } from '@/shared/types'
+import UserRating from '@/entities/user/ui/UserRating.vue'
 
 type PostCardVariant = 'feed' | 'profile'
 type PostCardTitlePlacement = 'header' | 'body'
@@ -337,13 +338,6 @@ const owner = computed(() => props.post.owner ?? null)
 const ownerName = computed(() => owner.value?.name || 'Unknown user')
 const ownerRole = computed(() => owner.value?.role || '')
 const ownerRating = computed(() => props.rating ?? owner.value?.rating ?? null)
-const ownerRatingText = computed(() => {
-  if (!ownerRating.value || ownerRating.value.total <= 0) {
-    return ''
-  }
-
-  return `${(ownerRating.value.value * 5).toFixed(1)}/5`
-})
 const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value?.avatar ?? null))
 const formattedDate = computed(() => formatPostDate(props.post.created_at))
 const postTags = computed<string[]>(() => (Array.isArray(props.post.tags) ? props.post.tags : []))
@@ -490,19 +484,7 @@ async function submitReport() {
 }
 
 .post-card__owner-rating {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  min-height: 22px;
   margin-top: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(15, 118, 110, 0.08);
-  color: #0f766e;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: 0.02em;
 }
 
 .post-card__meta-copy {
