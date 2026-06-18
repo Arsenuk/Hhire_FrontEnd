@@ -60,9 +60,9 @@
               />
 
               <div class="floating-card floating-card-top">
-                <span class="floating-label">New reviews today</span>
-                <strong>128</strong>
-                <small>Fresh opinions from verified users</small>
+                <span class="floating-label">Posts created today</span>
+                <strong>{{ todayPostsDisplay }}</strong>
+                <small>Fresh activity from the community</small>
               </div>
 
               <div class="floating-card floating-card-bottom">
@@ -200,6 +200,30 @@
 </template>
 
 <script setup lang="ts">
+  import { onMounted, ref, computed } from 'vue'
+  import { api } from '@/shared/api/api'
+
+  type TodayPostsResponse = {
+    todayPosts?: number
+  }
+
+  const todayPosts = ref(0)
+  const todayPostsDisplay = computed(() => todayPosts.value.toLocaleString())
+
+  async function loadTodayPosts () {
+    try {
+      const { data } = await api.get<TodayPostsResponse>('/posts/stats/today')
+
+      todayPosts.value = Number(data.todayPosts || 0)
+    } catch (error) {
+      console.error('Failed to load today posts count', error)
+    }
+  }
+
+  onMounted(() => {
+    void loadTodayPosts()
+  })
+
   const trustStats = [
     { value: 'Verified', label: 'business profiles' },
     { value: 'Real', label: 'community reviews' },
