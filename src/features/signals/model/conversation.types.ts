@@ -2,6 +2,20 @@ import type { ContactLink, EntityId, Nullable, UnknownRecord, User } from '@/sha
 
 export type ConversationView = 'inbox' | 'sent'
 
+export type ConversationRating = {
+  value: number
+  total: number
+  breakdown?: {
+    success: number
+    rejected: number
+    ignored: number
+  }
+}
+
+export type ConversationUser = User & {
+  rating?: ConversationRating | null
+}
+
 export interface ConversationSummaryDto extends UnknownRecord {
   id?: Nullable<EntityId>
   conversation_id?: Nullable<EntityId>
@@ -22,10 +36,12 @@ export interface ConversationSummaryDto extends UnknownRecord {
   sender_name?: Nullable<string>
   sender_avatar?: Nullable<string>
   sender_type?: Nullable<string>
+  sender_rating?: ConversationRating | null
   receiver_id?: Nullable<EntityId>
   receiver_name?: Nullable<string>
   receiver_avatar?: Nullable<string>
   receiver_type?: Nullable<string>
+  receiver_rating?: ConversationRating | null
 }
 
 export interface ConversationMessageDto extends UnknownRecord {
@@ -62,9 +78,9 @@ export interface ConversationSummaryVm extends UnknownRecord {
   closeRequestedByCounterparty: boolean
   ownContactsShared: boolean
   contactInfoSharedWithMe: boolean
-  counterpart: User
-  sender: User
-  receiver: User
+  counterpart: ConversationUser
+  sender: ConversationUser
+  receiver: ConversationUser
 }
 
 export interface ConversationMessageVm extends UnknownRecord {
@@ -75,6 +91,6 @@ export interface ConversationMessageVm extends UnknownRecord {
   senderId: Nullable<EntityId>
   receiverType: Nullable<string>
   receiverId: Nullable<EntityId>
-  sender: User
-  receiver: User
+  sender: ConversationUser
+  receiver: ConversationUser
 }

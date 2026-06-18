@@ -19,6 +19,7 @@ type UserSource = Record<string, unknown> & {
   sender_avatar?: string | null
   receiver_avatar?: string | null
   last_post?: unknown
+  rating?: User['rating']
 }
 
 type UserOverrides = Partial<User>
@@ -38,6 +39,7 @@ export function normalizeUser (user: UserSource | null = {}, overrides: UserOver
         : null,
     email: typeof source.email === 'string' && source.email.trim() ? source.email.trim() : null,
     lastPost: source.lastPost ?? source.last_post ?? null,
+    ...(source.rating !== undefined ? { rating: source.rating ?? null } : {}),
     ...(Array.isArray(source.contacts) ? { contacts: source.contacts } : {}),
     ...(Array.isArray(source.usefulLinks) ? { usefulLinks: source.usefulLinks } : {}),
   }

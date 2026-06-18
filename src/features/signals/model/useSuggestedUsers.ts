@@ -1,5 +1,4 @@
 import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
-import { normalizeUsers } from '@/entities/user/lib/normalizeUser'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
@@ -7,26 +6,40 @@ import { navigateToProfile } from '@/shared/lib/navigation/navigateToProfile'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 import type { EntityId, User } from '@/shared/types'
 
+type RatingSummary = {
+  value: number
+  total: number
+  breakdown?: {
+    success: number
+    rejected: number
+    ignored: number
+  }
+}
+
+type UserWithRating = User & {
+  rating?: RatingSummary | null
+}
+
 type UseSuggestedUsersReturn = {
   closeDialog: () => void
   dialog: Ref<boolean>
   goToProfile: (userId: EntityId | null | undefined) => void
   isLoading: Ref<boolean>
-  openConnectDialog: (user: User) => void
-  selectedUser: Ref<User | null>
+  openConnectDialog: (user: UserWithRating) => void
+  selectedUser: Ref<UserWithRating | null>
   sendSignal: (message: string) => Promise<void>
   sendLoading: Ref<boolean>
   snackbar: ReturnType<typeof useSnackbar>['snackbar']
-  suggestedUsers: Ref<User[]>
+  suggestedUsers: Ref<UserWithRating[]>
 }
 
 export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseSuggestedUsersReturn {
   const auth = useAuthStore()
   const router = useRouter()
 
-  const suggestedUsers = ref<User[]>([])
+  const suggestedUsers = ref<UserWithRating[]>([])
   const dialog = ref(false)
-  const selectedUser = ref<User | null>(null)
+  const selectedUser = ref<UserWithRating | null>(null)
   const sendLoading = ref(false)
   const isLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
@@ -53,7 +66,7 @@ export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseS
         return
       }
 
-      suggestedUsers.value = normalizeUsers(res.data).filter(user => user.id !== auth.user?.id)
+      suggestedUsers.value = (res.data as UserWithRating[]).filter(user => user.id !== auth.user?.id)
     } catch (error) {
       console.error(error)
       showToast('Failed to load users', 'error')
@@ -64,7 +77,7 @@ export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseS
     }
   }
 
-  function openConnectDialog (user: User): void {
+  function openConnectDialog (user: UserWithRating): void {
     selectedUser.value = user
     dialog.value = true
   }

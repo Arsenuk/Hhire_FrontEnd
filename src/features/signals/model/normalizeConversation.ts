@@ -15,11 +15,13 @@ export function normalizeConversationSummary (
     ...(conversation.sender_id !== undefined ? { id: conversation.sender_id } : {}),
     ...(conversation.sender_name !== undefined ? { name: conversation.sender_name } : {}),
     ...(conversation.sender_avatar !== undefined ? { avatar: conversation.sender_avatar } : {}),
+    ...(conversation.sender_rating !== undefined ? { rating: conversation.sender_rating } : {}),
   })
   const receiverUser = normalizeUser({
     ...(conversation.receiver_id !== undefined ? { id: conversation.receiver_id } : {}),
     ...(conversation.receiver_name !== undefined ? { name: conversation.receiver_name } : {}),
     ...(conversation.receiver_avatar !== undefined ? { avatar: conversation.receiver_avatar } : {}),
+    ...(conversation.receiver_rating !== undefined ? { rating: conversation.receiver_rating } : {}),
   })
   const counterpart = view === 'inbox'
     ? senderUser

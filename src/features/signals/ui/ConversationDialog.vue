@@ -67,16 +67,17 @@
       <v-card-text class="conversation-dialog__body">
         <div class="counterpart-row">
           <button class="counterpart-button" type="button" @click="$emit('go-profile', conversation?.counterpart?.id)">
-            <UserAvatar
-              class="counterpart-avatar"
-              :size="62"
-              :user="conversation?.counterpart ?? null"
-            />
+            <UserAvatar class="counterpart-avatar" :size="62" :user="conversation?.counterpart ?? null" />
 
-            <div class="counterpart-info">
+            <div class="counterpart-copy">
               <div class="counterpart-name">
-                {{ conversation?.counterpart?.name || 'User' }}
+                {{ counterpartName }}
               </div>
+
+              <div v-if="counterpartRatingText" class="counterpart-rating">
+                {{ counterpartRatingText }}
+              </div>
+
               <div class="counterpart-subtitle">
                 {{ contactInfoSharedWithMe ? 'Shared contacts available' : 'Contacts are hidden for now' }}
               </div>
@@ -358,6 +359,17 @@
   const conversation = computed(() => props.conversation)
   const messages = computed<ConversationMessageVm[]>(() => props.messages)
   const sharedContacts = computed<ConversationContact[]>(() => props.sharedContacts)
+  const counterpart = computed(() => conversation.value?.counterpart ?? null)
+  const counterpartName = computed(() => counterpart.value?.name || 'Unknown user')
+  const counterpartRatingText = computed(() => {
+    const rating = counterpart.value?.rating
+
+    if (!rating || rating.total <= 0) {
+      return ''
+    }
+
+    return `${(rating.value * 5).toFixed(1)}/5`
+  })
 
   function formatDateTime (value: string | null | undefined) {
     if (!value) {
@@ -528,10 +540,31 @@
   flex: 0 0 auto;
 }
 
+.counterpart-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .counterpart-name {
   font-size: 20px;
   font-weight: 800;
   color: #0f172a;
+  line-height: 1.2;
+}
+
+.counterpart-rating {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f766e;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .counterpart-subtitle {

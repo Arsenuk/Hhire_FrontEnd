@@ -17,6 +17,16 @@ export interface UsefulLink extends UnknownRecord {
   url?: Nullable<string>
 }
 
+export interface UserRatingSummary extends UnknownRecord {
+  value: number
+  total: number
+  breakdown?: {
+    success: number
+    rejected: number
+    ignored: number
+  }
+}
+
 export interface User extends UnknownRecord {
   id: Nullable<EntityId>
   name: string
@@ -26,6 +36,7 @@ export interface User extends UnknownRecord {
   username: Nullable<string>
   email: Nullable<string>
   lastPost: unknown
+  rating?: UserRatingSummary | null
   contacts?: ContactLink[]
   usefulLinks?: UsefulLink[]
 }
