@@ -271,6 +271,7 @@
                   :avatar-size="40"
                   hoverable
                   :post="post"
+                  :rating="rating"
                   :show-owner-role="true"
                   variant="feed"
                 >

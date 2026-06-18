@@ -2,6 +2,10 @@ import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import type { EntityId, Post, PostOwner } from '@/shared/types'
 
 type TagLike = string | { name?: string | null } | null | undefined
+type RatingSummary = {
+  value: number
+  total: number
+}
 
 type PostSource = Record<string, unknown> & {
   id?: EntityId | null
@@ -10,6 +14,7 @@ type PostSource = Record<string, unknown> & {
   owner?: Record<string, unknown> & {
     id?: EntityId | null
     role?: string | null
+    rating?: RatingSummary | null
   }
   tags?: TagLike[]
 }
@@ -20,6 +25,7 @@ export function normalizePost (post: PostSource = {}): Post {
   const owner: PostOwner = normalizeUser(post.owner, {
     id: post.owner?.id ?? post.user_id ?? post.company_id ?? null,
     role: post.owner?.role ?? (post.company_id ? 'company' : 'user'),
+    ...(post.owner?.rating ? { rating: post.owner.rating } : {}),
   })
 
   return {

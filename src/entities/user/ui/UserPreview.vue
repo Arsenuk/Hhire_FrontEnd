@@ -10,6 +10,10 @@
         {{ displayName }}
       </div>
 
+      <div v-if="ratingText" class="entity-user-preview__rating">
+        {{ ratingText }}
+      </div>
+
       <div v-if="subtitle" class="entity-user-preview__subtitle">
         {{ subtitle }}
       </div>
@@ -23,11 +27,21 @@
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import type { Nullable, User } from '@/shared/types'
 
+  type RatingSummary = {
+    value: number
+    total: number
+  }
+
+  type UserPreviewUser = User & {
+    rating?: RatingSummary | null
+  }
+
   interface UserPreviewProps {
-    user?: User | null
+    user?: UserPreviewUser | null
     subtitle?: Nullable<string>
     avatarSize?: number | string
     clickable?: boolean
+    rating?: RatingSummary | null
   }
 
   const emit = defineEmits<{
@@ -39,9 +53,19 @@
     subtitle: '',
     avatarSize: 42,
     clickable: false,
+    rating: null,
   })
 
   const displayName = computed(() => getUserDisplayName(props.user))
+  const ratingText = computed(() => {
+    const rating = props.rating ?? props.user?.rating ?? null
+
+    if (!rating || rating.total <= 0) {
+      return ''
+    }
+
+    return `${(rating.value * 5).toFixed(1)}/5`
+  })
 
   function handleClick() {
     if (props.clickable) {
@@ -77,6 +101,22 @@
   color: #111827;
   font-size: 14px;
   font-weight: 700;
+}
+
+.entity-user-preview__rating {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 20px;
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f766e;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
 }
 
 .entity-user-preview__subtitle {

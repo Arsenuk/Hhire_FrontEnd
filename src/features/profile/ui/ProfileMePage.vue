@@ -9,7 +9,7 @@
     :posts="posts"
     :rating="rating"
     :success-message="successMessage"
-    :show-rating-breakdown="true"
+    :show-rating-breakdown="showRatingBreakdown"
     :user="user"
   >
     <template #header-actions>
@@ -307,6 +307,7 @@
     posts,
     profileEditorOpen,
     rating,
+    showRatingBreakdown,
     saveLink,
     savePost,
     saveContact,

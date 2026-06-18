@@ -1,6 +1,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import { useAuthStore } from '@/features/auth/model/auth.store'
+import { canViewProfileRatingBreakdown } from '@/features/profile/lib/canViewProfileRatingBreakdown'
 import type {
   ProfileForm,
   ProfileMeResponse,
@@ -18,6 +19,7 @@ import type { ContactLink, UsefulLink } from '@/shared/types'
 export function useProfileMe () {
   const authStore = useAuthStore()
   const user = computed(() => authStore.user)
+  const showRatingBreakdown = computed(() => canViewProfileRatingBreakdown(authStore.user, user.value))
 
   const loading = ref(false)
   const errorMessage = ref('')
@@ -159,6 +161,7 @@ export function useProfileMe () {
     openProfileEditor,
     profileEditorOpen,
     rating,
+    showRatingBreakdown,
     saveProfile,
     snackbar,
     successMessage,

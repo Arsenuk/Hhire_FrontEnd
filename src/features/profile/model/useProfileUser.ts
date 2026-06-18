@@ -4,6 +4,7 @@ import { normalizePosts } from '@/entities/post/lib/normalizePost'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 import { normalizeContactsToLinks } from '@/features/profile/lib/contactLinks'
+import { canViewProfileRatingBreakdown } from '@/features/profile/lib/canViewProfileRatingBreakdown'
 import { normalizeUsefulLinks } from '@/features/profile/lib/usefulLinks'
 import type {
   ProfileContactView,
@@ -48,14 +49,7 @@ export function useProfileUser () {
 
   const userId = ref<EntityId | null>(getRouteUserId())
   const canManageFollow = computed(() => Boolean(authUser.value && user.value && authUser.value.id !== user.value.id))
-  const canViewRatingBreakdown = computed(() => Boolean(
-    user.value && authUser.value && (
-      authUser.value.id === user.value.id ||
-      authUser.value.role === 'admin' ||
-      authUser.value.role === 'super_admin' ||
-      authUser.value.role === 'moderator'
-    )
-  ))
+  const showRatingBreakdown = computed(() => canViewProfileRatingBreakdown(authUser.value, user.value))
   const canViewContactInfo = computed(() => Boolean(
     user.value && authUser.value && (
       authUser.value.role === 'admin' ||
@@ -202,7 +196,6 @@ export function useProfileUser () {
   return {
     canManageFollow,
     canViewContactInfo,
-    canViewRatingBreakdown,
     closeContactDialog,
     contactDialog,
     contactLoading,
@@ -215,6 +208,7 @@ export function useProfileUser () {
     openContactDialog,
     posts,
     rating,
+    showRatingBreakdown,
     sendSignal,
     snackbar,
     toggleFollow,
