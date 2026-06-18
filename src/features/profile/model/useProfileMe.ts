@@ -1,7 +1,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { normalizeUser } from '@/entities/user/lib/normalizeUser'
 import { useAuthStore } from '@/features/auth/model/auth.store'
-import type { ProfileForm, ProfileMeResponse, ProfilePostView, ValidatableForm } from '@/features/profile/model/contracts'
+import type {
+  ProfileForm,
+  ProfileMeResponse,
+  ProfilePostView,
+  ProfileRating,
+  ValidatableForm,
+} from '@/features/profile/model/contracts'
 import { useProfileContacts } from '@/features/profile/model/useProfileContacts'
 import { useProfileLinks } from '@/features/profile/model/useProfileLinks'
 import { useProfilePosts } from '@/features/profile/model/useProfilePosts'
@@ -17,6 +23,7 @@ export function useProfileMe () {
   const errorMessage = ref('')
   const successMessage = ref('')
   const { showToast, snackbar } = useSnackbar()
+  const rating = ref<ProfileRating | null>(null)
 
   const editMode = ref(false)
   const profileEditorOpen = ref(false)
@@ -55,6 +62,7 @@ export function useProfileMe () {
   async function loadProfile () {
     loading.value = true
     errorMessage.value = ''
+    rating.value = null
 
     try {
       const [{ data }, contactsResponse, linksResponse, postsResponse] = await Promise.all([
@@ -67,6 +75,7 @@ export function useProfileMe () {
       const normalizedUser = normalizeUser(data)
 
       authStore.setUser(normalizedUser)
+      rating.value = data.rating ?? null
       profileContacts.setContacts(contactsResponse.data || [])
       profileContacts.setContactInfoVisible(Boolean(data.contactInfoVisible))
       profileLinks.setLinks(linksResponse.data || [])
@@ -149,6 +158,7 @@ export function useProfileMe () {
     openEditMode,
     openProfileEditor,
     profileEditorOpen,
+    rating,
     saveProfile,
     snackbar,
     successMessage,

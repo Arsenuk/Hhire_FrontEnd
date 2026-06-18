@@ -9,6 +9,7 @@ import type {
   ProfileContactView,
   ProfileLinkView,
   ProfilePostView,
+  ProfileRating,
   ProfileUserResponse,
   ProfileUserView,
 } from '@/features/profile/model/contracts'
@@ -26,6 +27,7 @@ export function useProfileUser () {
   const authUser = computed(() => authStore.user)
 
   const user = ref<ProfileUserView | null>(null)
+  const rating = ref<ProfileRating | null>(null)
   const posts = ref<ProfilePostView[]>([])
   const contacts = ref<ProfileContactView[]>([])
   const links = ref<ProfileLinkView[]>([])
@@ -46,6 +48,14 @@ export function useProfileUser () {
 
   const userId = ref<EntityId | null>(getRouteUserId())
   const canManageFollow = computed(() => Boolean(authUser.value && user.value && authUser.value.id !== user.value.id))
+  const canViewRatingBreakdown = computed(() => Boolean(
+    user.value && authUser.value && (
+      authUser.value.id === user.value.id ||
+      authUser.value.role === 'admin' ||
+      authUser.value.role === 'super_admin' ||
+      authUser.value.role === 'moderator'
+    )
+  ))
   const canViewContactInfo = computed(() => Boolean(
     user.value && authUser.value && (
       authUser.value.role === 'admin' ||
@@ -56,6 +66,7 @@ export function useProfileUser () {
   async function loadUserProfile () {
     if (!userId.value) {
       user.value = null
+      rating.value = null
       posts.value = []
       contacts.value = []
       links.value = []
@@ -68,6 +79,7 @@ export function useProfileUser () {
     loading.value = true
     errorMessage.value = ''
     user.value = null
+    rating.value = null
     posts.value = []
     contacts.value = []
     links.value = []
@@ -80,6 +92,7 @@ export function useProfileUser () {
         ...normalizeUser(data),
         ...(data.contactInfoVisible !== undefined ? { contactInfoVisible: data.contactInfoVisible } : {}),
       }
+      rating.value = data.rating ?? null
       posts.value = normalizePosts(data.posts || [])
       contacts.value = normalizeContactsToLinks(data.contacts || [])
       links.value = normalizeUsefulLinks(data.links || [])
@@ -189,6 +202,7 @@ export function useProfileUser () {
   return {
     canManageFollow,
     canViewContactInfo,
+    canViewRatingBreakdown,
     closeContactDialog,
     contactDialog,
     contactLoading,
@@ -200,6 +214,7 @@ export function useProfileUser () {
     loading,
     openContactDialog,
     posts,
+    rating,
     sendSignal,
     snackbar,
     toggleFollow,

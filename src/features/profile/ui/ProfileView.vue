@@ -44,6 +44,23 @@
               <span class="profile-stat__value">{{ posts.length }}</span>
               <span class="profile-stat__label">Posts</span>
             </div>
+            <div class="profile-stat profile-stat--rating">
+              <span class="profile-stat__value" :class="{ 'profile-stat__value--muted': !ratingDisplay }">
+                {{ ratingDisplay || 'No rating yet' }}
+              </span>
+              <span class="profile-stat__label">Rating</span>
+
+              <div
+                v-if="showRatingBreakdown && rating && rating.total > 0"
+                class="profile-stat__breakdown"
+              >
+                Success {{ rating.breakdown.success }}
+                <span aria-hidden="true">·</span>
+                Rejected {{ rating.breakdown.rejected }}
+                <span aria-hidden="true">·</span>
+                Ignored {{ rating.breakdown.ignored }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -287,6 +304,7 @@
     ProfileContactView,
     ProfileLinkView,
     ProfilePostView,
+    ProfileRating,
     ProfileUserView,
   } from '@/features/profile/model/contracts'
 
@@ -301,6 +319,8 @@
     emptyInfoText?: string
     emptyPostsText?: string
     showContactInfo?: boolean
+    rating?: ProfileRating | null
+    showRatingBreakdown?: boolean
   }
 
   const props = withDefaults(defineProps<ProfileViewProps>(), {
@@ -313,6 +333,8 @@
     emptyInfoText: 'User did not provide information',
     emptyPostsText: 'User did not provide posts',
     showContactInfo: true,
+    rating: null,
+    showRatingBreakdown: false,
   })
 
   const {
@@ -323,10 +345,22 @@
     loading,
     links,
     posts,
+    rating,
     showContactInfo,
+    showRatingBreakdown,
     successMessage,
     user,
   } = toRefs(props)
+
+  const ratingDisplay = computed(() => {
+    const ratingValue = rating.value
+
+    if (!ratingValue || ratingValue.total === 0) {
+      return ''
+    }
+
+    return `${(ratingValue.value * 5).toFixed(1)}/5`
+  })
 
   defineSlots<{
     'header-actions'?: () => unknown
@@ -477,11 +511,27 @@
   line-height: 1.1;
 }
 
+.profile-stat__value--muted {
+  font-size: 16px;
+  line-height: 1.25;
+}
+
 .profile-stat__label {
   color: #64748b;
   display: block;
   font-size: 12px;
   margin-top: 4px;
+}
+
+.profile-stat--rating {
+  min-width: 132px;
+}
+
+.profile-stat__breakdown {
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 8px;
 }
 
 .profile-hero__actions {

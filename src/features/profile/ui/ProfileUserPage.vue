@@ -7,6 +7,8 @@
     :links="links"
     :loading="loading"
     :posts="posts"
+    :rating="rating"
+    :show-rating-breakdown="canViewRatingBreakdown"
     :show-contact-info="canViewContactInfo"
     :user="user"
   >
@@ -60,6 +62,7 @@
   const {
     canManageFollow,
     canViewContactInfo,
+    canViewRatingBreakdown,
     closeContactDialog,
     contactDialog,
     contactLoading,
@@ -71,6 +74,7 @@
     loading,
     openContactDialog,
     posts,
+    rating,
     sendSignal,
     snackbar,
     toggleFollow,

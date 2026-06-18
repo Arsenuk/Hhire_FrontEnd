@@ -7,7 +7,9 @@
     :links="links"
     :loading="loading"
     :posts="posts"
+    :rating="rating"
     :success-message="successMessage"
+    :show-rating-breakdown="true"
     :user="user"
   >
     <template #header-actions>
@@ -304,6 +306,7 @@
     postRules,
     posts,
     profileEditorOpen,
+    rating,
     saveLink,
     savePost,
     saveContact,

@@ -1,5 +1,15 @@
 import type { ContactLink, EntityId, Post, UsefulLink, User } from '@/shared/types'
 
+export type ProfileRating = {
+  value: number
+  total: number
+  breakdown: {
+    success: number
+    rejected: number
+    ignored: number
+  }
+}
+
 export type ProfileContactView = ContactLink & {
   id?: EntityId | null
   description: string
@@ -59,10 +69,12 @@ export type ProfileUserView = User & {
 
 export type ProfileMeResponse = User & {
   contactInfoVisible?: boolean
+  rating?: ProfileRating
 }
 
 export type ProfileUserResponse = ProfileUserView & {
   posts?: ProfilePostView[]
   contacts?: ContactLink[]
   links?: UsefulLink[]
+  rating?: ProfileRating
 }
