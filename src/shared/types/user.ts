@@ -1,6 +1,6 @@
 import type { EntityId, Nullable, UnknownRecord } from '@/shared/types/common'
 
-export type UserRole = 'user' | 'company' | 'admin' | string
+export type UserRole = 'user' | 'company' | 'moderator' | 'admin' | 'super_admin' | string
 
 export interface ContactLink extends UnknownRecord {
   id?: Nullable<EntityId>
