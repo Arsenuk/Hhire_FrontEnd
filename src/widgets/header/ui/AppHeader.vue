@@ -23,18 +23,18 @@
           </RouterLink>
         </div>
 
-        <div v-if="showFeedSearch" class="header-search">
+        <div v-if="showHeaderSearch" class="header-search">
           <v-text-field
-            v-model="feedSearchQuery"
+            v-model="headerSearchQuery"
             class="header-search__input"
             clearable
             density="comfortable"
             hide-details
             prepend-inner-icon="mdi-magnify"
-            placeholder="Search posts"
-            label="Search posts"
+            :placeholder="headerSearchPlaceholder"
+            :label="headerSearchLabel"
             variant="outlined"
-            @click:clear="clearFeedSearch"
+            @click:clear="clearHeaderSearch"
           />
         </div>
 
@@ -142,6 +142,7 @@
   import { getUserDisplayName } from '@/entities/user/lib/getUserDisplayName'
   import UserAvatar from '@/entities/user/ui/UserAvatar.vue'
   import { useAuthStore } from '@/features/auth/model/auth.store'
+  import { useContactsUiStore } from '@/features/signals/model/contactsUi.store'
   import { useFeedControlsStore } from '@/features/feed/model/feedControls.store'
   import { useFeedSearchStore } from '@/features/feed/model/feedSearch.store'
   import { api } from '@/shared/api/api'
@@ -166,6 +167,7 @@
   const route = useRoute()
   const router = useRouter()
   const authStore = useAuthStore()
+  const contactsUiStore = useContactsUiStore()
   const feedControlsStore = useFeedControlsStore()
   const feedSearchStore = useFeedSearchStore()
   const headerContentRef = ref<HTMLElement | null>(null)
@@ -177,12 +179,62 @@
   const user = computed(() => authStore.user)
   const hasAdminPanelAccess = computed(() => canAccessAdminPanel(user.value))
   const isFeedRoute = computed(() => route.path.toLowerCase() === '/feed')
-  const showFeedSearch = computed(() => isFeedRoute.value)
-  const feedSearchQuery = computed({
-    get: () => feedSearchStore.query,
-    set: value => feedSearchStore.setQuery(value),
+  const isContactsRoute = computed(() => route.path.toLowerCase() === '/contacts')
+  const showHeaderSearch = computed(() => isFeedRoute.value || isContactsRoute.value)
+  const isContactsConversationTab = computed(() => {
+    return isContactsRoute.value && (contactsUiStore.currentTab === 'unreplied' || contactsUiStore.currentTab === 'send')
   })
+  const headerSearchQuery = computed({
+    get: () => {
+      if (isFeedRoute.value) {
+        return feedSearchStore.query
+      }
 
+      if (isContactsRoute.value) {
+        return isContactsConversationTab.value
+          ? contactsUiStore.conversationSearchQuery
+          : contactsUiStore.profileSearchQuery
+      }
+
+      return ''
+    },
+    set: value => {
+      if (isFeedRoute.value) {
+        feedSearchStore.setQuery(value)
+        return
+      }
+
+      if (isContactsRoute.value) {
+        if (isContactsConversationTab.value) {
+          contactsUiStore.setConversationSearchQuery(value)
+        } else {
+          contactsUiStore.setProfileSearchQuery(value)
+        }
+      }
+    },
+  })
+  const headerSearchLabel = computed(() => {
+    if (isFeedRoute.value) {
+      return 'Search posts'
+    }
+
+    if (isContactsConversationTab.value) {
+      return 'Search conversations'
+    }
+
+    return 'Search profiles'
+  })
+  const headerSearchPlaceholder = computed(() => {
+    if (isFeedRoute.value) {
+      return 'Search posts'
+    }
+
+    if (isContactsConversationTab.value) {
+      return 'Search by subject or message'
+    }
+
+    return 'Search by name or description'
+  })
   const navLinks = computed<NavLink[]>(() => {
     if (isLoggedIn.value) {
       const links = [
@@ -252,8 +304,19 @@
     await router.push('/')
   }
 
-  function clearFeedSearch () {
-    feedSearchStore.clearQuery()
+  function clearHeaderSearch () {
+    if (isFeedRoute.value) {
+      feedSearchStore.clearQuery()
+      return
+    }
+
+    if (isContactsRoute.value) {
+      if (isContactsConversationTab.value) {
+        contactsUiStore.clearConversationSearchQuery()
+      } else {
+        contactsUiStore.clearProfileSearchQuery()
+      }
+    }
   }
 
   const unansweredSignals = ref(0)

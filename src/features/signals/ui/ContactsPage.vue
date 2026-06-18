@@ -4,6 +4,9 @@
       <div class="contacts-mobile-header__copy">
         <p class="contacts-kicker">Contacts</p>
         <h1 class="contacts-title">Manage your connections</h1>
+        <p class="contacts-mobile-header__description">
+          Use the header search to find profiles or conversations while you browse the tabs below.
+        </p>
       </div>
 
       <div ref="menuTriggerRef" class="contacts-mobile-header__trigger">
@@ -18,35 +21,6 @@
       </div>
     </div>
 
-    <v-card class="contacts-search-card">
-      <div class="contacts-search-card__head">
-        <div>
-          <p class="contacts-kicker">Search</p>
-          <h2 class="contacts-search-title">{{ searchTitle }}</h2>
-        </div>
-
-        <v-chip size="small" variant="tonal">
-          {{ searchScopeLabel }}
-        </v-chip>
-      </div>
-
-      <v-text-field
-        v-model="activeSearchQuery"
-        class="contacts-search-card__input"
-        clearable
-        density="comfortable"
-        hide-details
-        prepend-inner-icon="mdi-magnify"
-        :label="searchLabel"
-        :placeholder="searchPlaceholder"
-        variant="outlined"
-      />
-
-      <p class="contacts-search-card__hint">
-        {{ searchHint }}
-      </p>
-    </v-card>
-
     <v-row dense>
       <v-col cols="12" md="3" class="contacts-sidebar-col">
         <div class="sticky-sidebar">
@@ -60,7 +34,7 @@
                 v-for="tab in tabs"
                 :key="tab.key"
                 class="nav-item"
-                :active="currentTab === tab.key"
+                :active="contactsUiStore.currentTab === tab.key"
                 @click="selectTab(tab.key)"
               >
                 <v-list-item-title class="nav-title">
@@ -68,7 +42,7 @@
                 </v-list-item-title>
 
                 <template #append>
-                  <div v-if="currentTab === tab.key" class="active-dot" />
+                  <div v-if="contactsUiStore.currentTab === tab.key" class="active-dot" />
                 </template>
               </v-list-item>
             </v-list>
@@ -109,7 +83,7 @@
           v-for="tab in tabs"
           :key="`mobile-${tab.key}`"
           class="nav-item"
-          :active="currentTab === tab.key"
+          :active="contactsUiStore.currentTab === tab.key"
           @click="selectTab(tab.key)"
         >
           <v-list-item-title class="nav-title">
@@ -117,7 +91,7 @@
           </v-list-item-title>
 
           <template #append>
-            <div v-if="currentTab === tab.key" class="active-dot" />
+            <div v-if="contactsUiStore.currentTab === tab.key" class="active-dot" />
           </template>
         </v-list-item>
       </v-list>
@@ -146,21 +120,18 @@
   import SendSignals from '@/features/signals/ui/SendSignals.vue'
   import SuggestedUsers from '@/features/signals/ui/SuggestedUsers.vue'
   import UnrepliedSignals from '@/features/signals/ui/UnrepliedSignals.vue'
-
-  type TabKey = 'follows' | 'suggested' | 'unreplied' | 'send'
+  import { useContactsUiStore, type ContactsTabKey } from '@/features/signals/model/contactsUi.store'
 
   type TabItem = {
-    key: TabKey
+    key: ContactsTabKey
     label: string
     component: Component
   }
 
-  const currentTab = ref<TabKey>('follows')
+  const contactsUiStore = useContactsUiStore()
   const mobileMenuOpen = ref(false)
   const menuTriggerRef = ref<HTMLElement | null>(null)
   const showBackToTop = ref(false)
-  const profileSearchQuery = ref('')
-  const conversationSearchQuery = ref('')
 
   const tabs: TabItem[] = [
     { key: 'follows', label: 'Follows', component: Follows },
@@ -170,50 +141,26 @@
   ]
 
   const currentComponent = computed<Component | null>(() => {
-    const tab = tabs.find(item => item.key === currentTab.value)
+    const tab = tabs.find(item => item.key === contactsUiStore.currentTab)
     return tab ? tab.component : null
   })
 
-  const isConversationTab = computed(() => currentTab.value === 'unreplied' || currentTab.value === 'send')
+  const isConversationTab = computed(() => contactsUiStore.currentTab === 'unreplied' || contactsUiStore.currentTab === 'send')
 
   const activeSearchQuery = computed<string>({
-    get: () => (isConversationTab.value ? conversationSearchQuery.value : profileSearchQuery.value),
+    get: () => (isConversationTab.value ? contactsUiStore.conversationSearchQuery : contactsUiStore.profileSearchQuery),
     set: value => {
       if (isConversationTab.value) {
-        conversationSearchQuery.value = value
+        contactsUiStore.setConversationSearchQuery(value)
         return
       }
 
-      profileSearchQuery.value = value
+      contactsUiStore.setProfileSearchQuery(value)
     },
   })
 
-  const searchScopeLabel = computed(() => (
-    isConversationTab.value ? 'Inbox / Sent' : 'Profiles'
-  ))
-
-  const searchTitle = computed(() => (
-    isConversationTab.value ? 'Search conversations' : 'Search users'
-  ))
-
-  const searchLabel = computed(() => (
-    isConversationTab.value ? 'Search conversations' : 'Search profiles'
-  ))
-
-  const searchPlaceholder = computed(() => (
-    isConversationTab.value
-      ? 'Search by subject or message'
-      : 'Search by name or description'
-  ))
-
-  const searchHint = computed(() => (
-    isConversationTab.value
-      ? 'Matches inbox and sent dialogs by subject or message.'
-      : 'Search your follows and suggested users by profile details.'
-  ))
-
-  function selectTab (tabKey: TabKey) {
-    currentTab.value = tabKey
+  function selectTab (tabKey: ContactsTabKey) {
+    contactsUiStore.setCurrentTab(tabKey)
     mobileMenuOpen.value = false
   }
 
@@ -288,55 +235,21 @@
 </script>
 
 <style scoped>
-.contacts-page {
-  margin-top: 60px;
-  background: #f4f6fb;
-  min-height: 100vh;
-  padding-top: 40px;
-  font-family: system-ui, -apple-system, sans-serif;
-}
+  .contacts-page {
+    margin-top: 60px;
+    background: #f4f6fb;
+    min-height: 100vh;
+    padding-top: 40px;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
 
-.contacts-mobile-header {
-  display: none;
-}
+  .contacts-mobile-header {
+    display: none;
+  }
 
-.contacts-search-card {
-  border-radius: 18px;
-  padding: 16px 18px 14px;
-  margin-bottom: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-}
-
-.contacts-search-card__head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.contacts-search-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-}
-
-.contacts-search-card__input {
-  width: 100%;
-}
-
-.contacts-search-card__hint {
-  margin: 10px 0 0;
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.contacts-mobile-header__copy {
-  min-width: 0;
-}
+  .contacts-mobile-header__copy {
+    min-width: 0;
+  }
 
 .contacts-mobile-header__trigger {
   flex-shrink: 0;
@@ -351,12 +264,20 @@
   margin-bottom: 6px;
 }
 
-.contacts-title {
-  font-size: clamp(22px, 3vw, 30px);
-  line-height: 1.1;
-  color: #0f172a;
-  margin: 0;
-}
+  .contacts-title {
+    font-size: clamp(22px, 3vw, 30px);
+    line-height: 1.1;
+    color: #0f172a;
+    margin: 0;
+  }
+
+  .contacts-mobile-header__description {
+    margin: 8px 0 0;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 48ch;
+  }
 
 .sticky-sidebar {
   position: sticky;
@@ -479,15 +400,6 @@
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 16px;
-  }
-
-  .contacts-search-card {
-    padding: 14px 14px 12px;
-    margin-bottom: 14px;
-  }
-
-  .contacts-search-title {
-    font-size: 16px;
   }
 
   .contacts-sidebar-col {
