@@ -12,11 +12,16 @@
   >
     <template v-if="canManageFollow" #header-actions>
       <div class="profile-actions">
-        <v-btn class="contact-btn" color="primary" variant="flat" @click="openContactDialog">
+        <v-btn class="contact-btn gradient-primary-btn" variant="flat" @click="openContactDialog">
           Contact
         </v-btn>
 
-        <v-btn :color="isFollowing ? 'grey' : 'primary'" :loading="followLoading" @click="toggleFollow">
+        <v-btn
+          :color="isFollowing ? 'grey' : undefined"
+          :class="{ 'gradient-primary-btn': !isFollowing }"
+          :loading="followLoading"
+          @click="toggleFollow"
+        >
           {{ isFollowing ? 'Unfollow' : 'Follow' }}
         </v-btn>
       </div>
@@ -91,6 +96,17 @@
 .profile-actions :deep(.v-btn) {
   border-radius: 999px;
   text-transform: none;
+}
+
+.gradient-primary-btn {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
+  font-weight: 600;
+}
+
+.gradient-primary-btn:hover {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
 }
 
 </style>

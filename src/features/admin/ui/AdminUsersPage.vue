@@ -15,7 +15,7 @@
             Back to panel
           </v-btn>
 
-          <v-btn color="primary" prepend-icon="mdi-refresh" :loading="loading" @click="fetchUsers">
+          <v-btn class="gradient-primary-btn" prepend-icon="mdi-refresh" :loading="loading" @click="fetchUsers">
             Refresh
           </v-btn>
         </div>
@@ -44,7 +44,7 @@
             variant="outlined"
           />
 
-          <v-btn color="primary" :loading="loading" @click="fetchUsers">
+          <v-btn class="gradient-primary-btn" :loading="loading" @click="fetchUsers">
             Search
           </v-btn>
         </div>
@@ -482,6 +482,18 @@
 .admin-users__dialog-actions {
   justify-content: flex-end;
   padding: 12px 20px 20px;
+}
+
+.gradient-primary-btn {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.gradient-primary-btn:hover {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
 }
 
 @media (max-width: 860px) {

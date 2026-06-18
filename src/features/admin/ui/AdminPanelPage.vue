@@ -32,7 +32,7 @@
             <div class="admin-panel__card-actions">
               <v-btn
                 v-if="item.to"
-                color="primary"
+                class="gradient-primary-btn"
                 variant="flat"
                 @click="router.push(item.to)"
               >
@@ -187,6 +187,18 @@
   font-size: 14px;
   line-height: 1.5;
   margin: 0 0 18px;
+}
+
+.gradient-primary-btn {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.gradient-primary-btn:hover {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
 }
 
 @media (max-width: 960px) {

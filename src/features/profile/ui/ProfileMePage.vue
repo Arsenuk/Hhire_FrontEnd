@@ -13,7 +13,7 @@
     <template #header-actions>
       <div class="profile-edit-actions">
         <template v-if="editMode">
-          <v-btn class="edit-btn" variant="tonal" @click="openProfileEditor">
+          <v-btn class="edit-btn gradient-primary-btn" variant="tonal" @click="openProfileEditor">
             Edit Info
           </v-btn>
           <v-btn class="done-btn" variant="text" @click="closeEditMode">
@@ -21,7 +21,7 @@
           </v-btn>
         </template>
 
-        <v-btn v-else class="edit-btn" @click="openEditMode">
+        <v-btn v-else class="edit-btn gradient-primary-btn" @click="openEditMode">
           Edit Profile
         </v-btn>
       </div>
@@ -86,7 +86,7 @@
       <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="cancelEdit">Cancel</v-btn>
-        <v-btn color="primary" :loading="loading" @click="saveProfile">Save</v-btn>
+        <v-btn class="gradient-primary-btn" :loading="loading" @click="saveProfile">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -105,7 +105,7 @@
       <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="showContactDialog = false">Cancel</v-btn>
-        <v-btn color="primary" :loading="loading" @click="saveContact">Save</v-btn>
+        <v-btn class="gradient-primary-btn" :loading="loading" @click="saveContact">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -124,7 +124,7 @@
       <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="showLinkDialog = false">Cancel</v-btn>
-        <v-btn color="primary" :loading="loading" @click="saveLink">Save</v-btn>
+        <v-btn class="gradient-primary-btn" :loading="loading" @click="saveLink">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -172,7 +172,7 @@
       <v-card-actions class="profile-dialog__actions">
         <v-spacer />
         <v-btn variant="text" @click="cancelEditPost">Cancel</v-btn>
-        <v-btn color="primary" :loading="loading" @click="savePost">Save</v-btn>
+        <v-btn class="gradient-primary-btn" :loading="loading" @click="savePost">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -323,12 +323,9 @@
 
 <style scoped>
 .edit-btn {
-  background: linear-gradient(90deg, #D3FFAD, #97E5EE);
-  color: #020617;
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
   font-weight: 600;
-  border-radius: 999px;
-  border-color: black;
-  border-width: 1pt;
   text-transform: none;
   padding-inline: 18px;
 }
@@ -428,5 +425,17 @@
 
 .profile-dialog__actions {
   flex-shrink: 0;
+}
+
+.gradient-primary-btn {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.gradient-primary-btn:hover {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
 }
 </style>

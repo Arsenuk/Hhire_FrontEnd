@@ -15,7 +15,7 @@
             Back to panel
           </v-btn>
 
-          <v-btn color="primary" prepend-icon="mdi-refresh" :loading="loading" @click="fetchReports">
+          <v-btn class="gradient-primary-btn" prepend-icon="mdi-refresh" :loading="loading" @click="fetchReports">
             Refresh
           </v-btn>
         </div>
@@ -41,7 +41,7 @@
             variant="outlined"
           />
 
-          <v-btn color="primary" :loading="loading" @click="fetchReports">
+          <v-btn class="gradient-primary-btn" :loading="loading" @click="fetchReports">
             Load reports
           </v-btn>
         </div>
@@ -694,6 +694,18 @@
 .admin-signals__json-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: 0;
+}
+
+.gradient-primary-btn {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.gradient-primary-btn:hover {
+  background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
+  color: #020617 !important;
 }
 
 @media (max-width: 960px) {
