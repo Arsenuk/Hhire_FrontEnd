@@ -32,31 +32,55 @@
           </p>
 
           <div class="profile-stats">
-            <div v-if="showContactInfo" class="profile-stat">
-              <span class="profile-stat__value">{{ contactInfo.length }}</span>
-              <span class="profile-stat__label">Contacts</span>
+            <div v-if="showContactInfo" class="profile-stat profile-stat--contacts">
+              <div class="profile-stat__badge profile-stat__badge--contacts">
+                <v-icon size="16">mdi-card-account-phone-outline</v-icon>
+              </div>
+
+              <div class="profile-stat__content">
+                <span class="profile-stat__value">{{ contactInfo.length }}</span>
+                <span class="profile-stat__label">Contacts</span>
+              </div>
             </div>
-            <div class="profile-stat">
-              <span class="profile-stat__value">{{ links.length }}</span>
-              <span class="profile-stat__label">Links</span>
+            <div class="profile-stat profile-stat--links">
+              <div class="profile-stat__badge profile-stat__badge--links">
+                <v-icon size="16">mdi-earth</v-icon>
+              </div>
+
+              <div class="profile-stat__content">
+                <span class="profile-stat__value">{{ links.length }}</span>
+                <span class="profile-stat__label">Links</span>
+              </div>
             </div>
-            <div class="profile-stat">
-              <span class="profile-stat__value">{{ posts.length }}</span>
-              <span class="profile-stat__label">Posts</span>
+            <div class="profile-stat profile-stat--posts">
+              <div class="profile-stat__badge profile-stat__badge--posts">
+                <v-icon size="16">mdi-post-outline</v-icon>
+              </div>
+
+              <div class="profile-stat__content">
+                <span class="profile-stat__value">{{ posts.length }}</span>
+                <span class="profile-stat__label">Posts</span>
+              </div>
             </div>
             <div class="profile-stat profile-stat--rating">
-              <UserRating :rating="rating" show-empty variant="panel" />
-              <span class="profile-stat__label">Rating</span>
+              <div class="profile-stat__badge profile-stat__badge--rating">
+                <v-icon size="16">mdi-star</v-icon>
+              </div>
 
-              <div
-                v-if="showRatingBreakdown && rating && rating.total > 0"
-                class="profile-stat__breakdown"
-              >
-                Success {{ rating.breakdown.success }}
-                <span aria-hidden="true">·</span>
-                Rejected {{ rating.breakdown.rejected }}
-                <span aria-hidden="true">·</span>
-                Ignored {{ rating.breakdown.ignored }}
+              <div class="profile-stat__content profile-stat__content--rating">
+                <UserRating :rating="rating" show-empty variant="panel" />
+                <span class="profile-stat__label">Rating</span>
+
+                <div
+                  v-if="showRatingBreakdown && rating && rating.total > 0"
+                  class="profile-stat__breakdown"
+                >
+                  Success {{ rating.breakdown.success }}
+                  <span aria-hidden="true">·</span>
+                  Rejected {{ rating.breakdown.rejected }}
+                  <span aria-hidden="true">·</span>
+                  Ignored {{ rating.breakdown.ignored }}
+                </div>
               </div>
             </div>
           </div>
@@ -486,11 +510,70 @@
 }
 
 .profile-stat {
+  --stat-border: rgba(148, 163, 184, 0.16);
+  --stat-accent: rgba(148, 163, 184, 0.18);
+  --stat-badge-bg: rgba(148, 163, 184, 0.12);
+  --stat-badge-color: #475569;
   background: rgba(15, 23, 42, 0.04);
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  border: 1px solid var(--stat-border);
   border-radius: 18px;
+  box-shadow:
+    0 8px 20px rgba(15, 23, 42, 0.04),
+    inset 0 0 0 1px var(--stat-accent);
   min-width: 100px;
-  padding: 12px 14px;
+  overflow: visible;
+  padding: 24px 14px 14px;
+  position: relative;
+}
+
+.profile-stat--contacts {
+  --stat-border: rgba(139, 92, 246, 0.34);
+  --stat-accent: rgba(139, 92, 246, 0.16);
+  --stat-badge-bg: rgba(139, 92, 246, 0.12);
+  --stat-badge-color: #7c3aed;
+}
+
+.profile-stat--links {
+  --stat-border: rgba(14, 165, 233, 0.42);
+  --stat-accent: rgba(14, 165, 233, 0.18);
+  --stat-badge-bg: rgba(14, 165, 233, 0.12);
+  --stat-badge-color: #0284c7;
+}
+
+.profile-stat--posts {
+  --stat-border: rgba(59, 130, 246, 0.46);
+  --stat-accent: rgba(59, 130, 246, 0.18);
+  --stat-badge-bg: rgba(59, 130, 246, 0.12);
+  --stat-badge-color: #2563eb;
+}
+
+.profile-stat--rating {
+  --stat-border: rgba(245, 158, 11, 0.5);
+  --stat-accent: rgba(245, 158, 11, 0.2);
+  --stat-badge-bg: rgba(245, 158, 11, 0.12);
+  --stat-badge-color: #d97706;
+  min-width: 132px;
+}
+
+.profile-stat__badge {
+  align-items: center;
+  background: var(--stat-badge-bg);
+  /* border: 2px solid rgba(255, 255, 255, 0.9); */
+  border-radius: 999px;
+  /* box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08); */
+  color: var(--stat-badge-color);
+  display: inline-flex;
+  height: 28px;
+  justify-content: center;
+  left: -9px;
+  position: absolute;
+  top: -8px;
+  width: 28px;
+  z-index: 1;
+}
+
+.profile-stat__content {
+  min-width: 0;
 }
 
 .profile-stat__value {
@@ -513,8 +596,7 @@
   margin-top: 4px;
 }
 
-.profile-stat--rating {
-  min-width: 132px;
+.profile-stat__content--rating {
   display: flex;
   flex-direction: column;
   gap: 6px;
