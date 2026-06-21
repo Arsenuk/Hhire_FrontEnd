@@ -116,16 +116,39 @@
                     Unban
                   </v-btn>
 
-                  <v-btn
-                    v-else
-                    color="error"
-                    size="small"
-                    variant="tonal"
-                    :loading="actionLoadingId === user.id && pendingAction === 'ban'"
-                    @click="openConfirmation(user, 'ban')"
-                  >
-                    Ban
-                  </v-btn>
+                  <template v-else>
+                    <v-btn
+                      v-if="user.status === 'frozen'"
+                      color="warning"
+                      size="small"
+                      variant="tonal"
+                      :loading="actionLoadingId === user.id && pendingAction === 'unfreeze'"
+                      @click="openConfirmation(user, 'unfreeze')"
+                    >
+                      Unfreeze
+                    </v-btn>
+
+                    <v-btn
+                      v-else
+                      color="info"
+                      size="small"
+                      variant="tonal"
+                      :loading="actionLoadingId === user.id && pendingAction === 'freeze'"
+                      @click="openConfirmation(user, 'freeze')"
+                    >
+                      Freeze
+                    </v-btn>
+
+                    <v-btn
+                      color="error"
+                      size="small"
+                      variant="tonal"
+                      :loading="actionLoadingId === user.id && pendingAction === 'ban'"
+                      @click="openConfirmation(user, 'ban')"
+                    >
+                      Ban
+                    </v-btn>
+                  </template>
                 </td>
               </tr>
             </tbody>
@@ -138,18 +161,16 @@
   <v-dialog v-model="confirmDialog" max-width="460">
     <v-card class="admin-users__dialog">
       <v-card-title class="admin-users__dialog-title">
-        {{ pendingAction === 'ban' ? 'Block user account' : 'Restore user access' }}
+        {{ getDialogTitle(pendingAction) }}
       </v-card-title>
 
       <v-card-text class="admin-users__dialog-text">
         <p v-if="selectedUser">
-          {{ pendingAction === 'ban' ? 'You are about to block' : 'You are about to unblock' }}
+          {{ getDialogLeadIn(pendingAction) }}
           <strong>{{ selectedUser.name || selectedUser.email || `User #${selectedUser.id}` }}</strong>.
         </p>
         <p>
-          {{ pendingAction === 'ban'
-            ? 'The user will no longer be able to sign in until an admin unblocks the account.'
-            : 'The user status will be set back to active and access will be restored.' }}
+          {{ getDialogDescription(pendingAction) }}
         </p>
       </v-card-text>
 
@@ -159,11 +180,11 @@
         </v-btn>
 
         <v-btn
-          :color="pendingAction === 'ban' ? 'error' : 'success'"
+          :color="getActionColor(pendingAction)"
           :loading="Boolean(actionLoadingId)"
           @click="submitAction"
         >
-          {{ pendingAction === 'ban' ? 'Confirm ban' : 'Confirm unban' }}
+          {{ getActionConfirmLabel(pendingAction) }}
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -194,7 +215,7 @@
     status?: UserStatus
     created_at?: string | null
   }
-  type AdminAction = 'ban' | 'unban'
+  type AdminAction = 'ban' | 'unban' | 'freeze' | 'unfreeze'
 
   const router = useRouter()
   const { showToast, snackbar } = useSnackbar()
@@ -265,6 +286,141 @@
     }
   }
 
+  function getActionColor(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'error'
+      case 'freeze':
+        return 'warning'
+      case 'unban':
+      case 'unfreeze':
+        return 'success'
+      default:
+        return 'primary'
+    }
+  }
+
+  function getDialogTitle(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'Block user account'
+      case 'unban':
+        return 'Restore user access'
+      case 'freeze':
+        return 'Freeze user account'
+      case 'unfreeze':
+        return 'Unfreeze user account'
+      default:
+        return 'Confirm action'
+    }
+  }
+
+  function getDialogLeadIn(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'You are about to block'
+      case 'unban':
+        return 'You are about to unblock'
+      case 'freeze':
+        return 'You are about to freeze'
+      case 'unfreeze':
+        return 'You are about to unfreeze'
+      default:
+        return 'You are about to update'
+    }
+  }
+
+  function getDialogDescription(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'The user will no longer be able to sign in until an admin unblocks the account.'
+      case 'unban':
+        return 'The user status will be set back to active and access will be restored.'
+      case 'freeze':
+        return 'The user will be suspended temporarily and will not be able to use the account until it is unfrozen.'
+      case 'unfreeze':
+        return 'The user status will be set back to active and access will be restored.'
+      default:
+        return 'Please confirm that you want to proceed.'
+    }
+  }
+
+  function getActionConfirmLabel(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'Confirm ban'
+      case 'unban':
+        return 'Confirm unban'
+      case 'freeze':
+        return 'Confirm freeze'
+      case 'unfreeze':
+        return 'Confirm unfreeze'
+      default:
+        return 'Confirm'
+    }
+  }
+
+  function getActionEndpoint(action: AdminAction, userId: EntityId | null | undefined) {
+    if (userId == null) {
+      return ''
+    }
+
+    switch (action) {
+      case 'ban':
+      case 'unban':
+        return `/admin/users/${userId}/${action}`
+      case 'freeze':
+      case 'unfreeze':
+        return `/moderation/users/${userId}/${action}`
+      default:
+        return ''
+    }
+  }
+
+  function getActionNextStatus(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'banned'
+      case 'unban':
+      case 'unfreeze':
+        return 'active'
+      case 'freeze':
+        return 'frozen'
+      default:
+        return undefined
+    }
+  }
+
+  function getActionSuccessToast(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'User has been banned'
+      case 'unban':
+        return 'User has been unbanned'
+      case 'freeze':
+        return 'User has been frozen'
+      case 'unfreeze':
+        return 'User has been unfrozen'
+      default:
+        return 'Action completed'
+    }
+  }
+
+  function getActionErrorToast(action: AdminAction) {
+    switch (action) {
+      case 'ban':
+        return 'Failed to ban user'
+      case 'unban':
+        return 'Failed to unban user'
+      case 'freeze':
+        return 'Failed to freeze user'
+      case 'unfreeze':
+        return 'Failed to unfreeze user'
+      default:
+        return 'Action failed'
+    }
+  }
+
   async function fetchUsers() {
     loading.value = true
 
@@ -316,26 +472,26 @@
 
     try {
       const action = pendingAction.value
-      await api.post(`/admin/users/${selectedUser.value.id}/${action}`)
+      const endpoint = getActionEndpoint(action, selectedUser.value.id)
 
-      const nextStatus = action === 'ban' ? 'banned' : 'active'
+      if (!endpoint) {
+        throw new Error(`Unsupported action: ${action}`)
+      }
+
+      await api.post(endpoint)
+
+      const nextStatus = getActionNextStatus(action)
       users.value = users.value.map(user => (
         user.id === selectedUser.value?.id
-          ? { ...user, status: nextStatus }
+          ? { ...user, ...(nextStatus ? { status: nextStatus } : {}) }
           : user
       ))
 
-      showToast(
-        action === 'ban' ? 'User has been banned' : 'User has been unbanned',
-        'success',
-      )
+      showToast(getActionSuccessToast(action), 'success')
       closeConfirmation({ force: true })
     } catch (error) {
       console.error(`Failed to ${pendingAction.value} user`, error)
-      showToast(
-        pendingAction.value === 'ban' ? 'Failed to ban user' : 'Failed to unban user',
-        'error',
-      )
+      showToast(getActionErrorToast(pendingAction.value), 'error')
     } finally {
       actionLoadingId.value = null
     }
