@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, watch, type Ref } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/shared/api/api'
 import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
@@ -18,6 +18,10 @@ type RatingSummary = {
 
 type UserWithRating = User & {
   rating?: RatingSummary | null
+}
+
+type SuggestedUsersResponse = {
+  users?: UserWithRating[]
 }
 
 type UseSuggestedUsersReturn = {
@@ -44,29 +48,30 @@ export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseS
   const isLoading = ref(false)
   const { showToast, snackbar } = useSnackbar()
   let refreshToken = 0
-  let searchTimer: ReturnType<typeof setTimeout> | null = null
+  const searchTerm = computed(() => searchQuery?.value?.trim().toLowerCase() || '')
 
   async function fetchSuggestedUsers (): Promise<void> {
     const token = ++refreshToken
-    const query = searchQuery?.value?.trim() || ''
+    const userId = auth.user?.id
+
+    if (!userId) {
+      suggestedUsers.value = []
+      isLoading.value = false
+      return
+    }
 
     isLoading.value = true
 
     try {
-      const res = await api.get<Record<string, unknown>[]>(
-        query
-          ? '/users/search'
-          : '/users',
-        query
-          ? { params: { q: query, limit: 20 } }
-          : undefined,
-      )
+      const res = await api.get<SuggestedUsersResponse>('/recommendations/users', {
+        params: { limit: 20 },
+      })
 
       if (token !== refreshToken) {
         return
       }
 
-      suggestedUsers.value = (res.data as UserWithRating[]).filter(user => user.id !== auth.user?.id)
+      suggestedUsers.value = (res.data.users ?? []).filter(user => user.id !== userId)
     } catch (error) {
       console.error(error)
       showToast('Failed to load users', 'error')
@@ -76,6 +81,27 @@ export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseS
       }
     }
   }
+
+  const visibleSuggestedUsers = computed(() => {
+    const query = searchTerm.value
+
+    if (!query) {
+      return suggestedUsers.value
+    }
+
+    return suggestedUsers.value.filter(user => {
+      const haystack = [
+        user.name,
+        user.username,
+        user.description,
+      ]
+        .filter((value): value is string => typeof value === 'string')
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(query)
+    })
+  })
 
   function openConnectDialog (user: UserWithRating): void {
     selectedUser.value = user
@@ -125,25 +151,12 @@ export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseS
   }
 
   watch(
-    () => searchQuery?.value ?? '',
+    () => auth.user?.id,
     () => {
-      if (searchTimer) {
-        clearTimeout(searchTimer)
-      }
-
-      searchTimer = setTimeout(() => {
-        void fetchSuggestedUsers()
-      }, 250)
+      void fetchSuggestedUsers()
     },
     { immediate: true },
   )
-
-  onBeforeUnmount(() => {
-    if (searchTimer) {
-      clearTimeout(searchTimer)
-      searchTimer = null
-    }
-  })
 
   return {
     closeDialog,
@@ -155,6 +168,6 @@ export function useSuggestedUsers (searchQuery?: Ref<string | undefined>) : UseS
     sendSignal,
     sendLoading,
     snackbar,
-    suggestedUsers,
+    suggestedUsers: visibleSuggestedUsers,
   }
 }
