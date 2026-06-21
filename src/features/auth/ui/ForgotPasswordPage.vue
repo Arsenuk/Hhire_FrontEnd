@@ -78,14 +78,23 @@
 
 <style scoped>
 .forgot-password-page {
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--app-header-height, 88px));
   background:
     radial-gradient(circle at top left, rgba(151, 229, 238, 0.45), transparent 28%),
     radial-gradient(circle at bottom right, rgba(211, 255, 173, 0.4), transparent 30%),
     linear-gradient(180deg, #f6f9fc 0%, #eef4f7 100%);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.forgot-password-page :deep(.v-container__content) {
+  width: 100%;
 }
 
 .forgot-card {
+  width: 100%;
+  max-width: 460px;
   border-radius: 20px;
   overflow: hidden;
 }
@@ -182,6 +191,11 @@
 }
 
 @media (max-width: 600px) {
+  .forgot-password-page {
+    min-height: calc(100dvh - var(--app-header-height, 88px) - var(--app-mobile-nav-height, 92px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
   .forgot-card {
     padding: 24px !important;
   }

@@ -136,7 +136,10 @@
 
 <style scoped>
 .create-post-page {
-  background-color: #f7f9fc;
+  background:
+    radial-gradient(circle at top left, rgba(151, 229, 238, 0.45), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(211, 255, 173, 0.4), transparent 30%),
+    linear-gradient(180deg, #f6f9fc 0%, #eef4f7 100%);
   box-sizing: border-box;
   min-height: 100vh;
   padding: 16px 16px 24px;

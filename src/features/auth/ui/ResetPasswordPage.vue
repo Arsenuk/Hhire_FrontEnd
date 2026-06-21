@@ -101,11 +101,18 @@
 
 <style scoped>
 .reset-password-page {
-  min-height: 100vh;
+  min-height: calc(100dvh - var(--app-header-height, 88px));
   background:
     radial-gradient(circle at top right, rgba(151, 229, 238, 0.38), transparent 28%),
     radial-gradient(circle at bottom left, rgba(211, 255, 173, 0.38), transparent 30%),
     linear-gradient(180deg, #f6f9fc 0%, #eef4f7 100%);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.reset-password-page :deep(.v-container__content) {
+  width: 100%;
 }
 
 .reset-card {
@@ -209,6 +216,11 @@
 }
 
 @media (max-width: 600px) {
+  .reset-password-page {
+    min-height: calc(100dvh - var(--app-header-height, 88px) - var(--app-mobile-nav-height, 92px));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
   .reset-card {
     padding: 24px !important;
   }
