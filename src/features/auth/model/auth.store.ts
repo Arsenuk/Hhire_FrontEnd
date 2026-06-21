@@ -44,8 +44,8 @@ export const useAuthStore = defineStore('auth', {
       })
     },
 
-    setAccessToken (token: string | null) {
-      setSessionToken(token)
+    setAccessToken (token: string | null, rememberMe = true) {
+      setSessionToken(token, rememberMe)
     },
 
     setUser (user: User | null) {
@@ -64,12 +64,12 @@ export const useAuthStore = defineStore('auth', {
       clearSessionToken()
     },
 
-    async login (email: string, password: string) {
+    async login (email: string, password: string, rememberMe = true) {
       try {
-        const data = await loginRequest({ email, password })
+        const data = await loginRequest({ email, password, rememberMe })
 
         this.setUser(data.user)
-        this.setAccessToken(data.accessToken)
+        this.setAccessToken(data.accessToken, rememberMe)
 
         await this.fetchMe()
       } catch (error) {

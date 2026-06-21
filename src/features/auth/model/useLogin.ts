@@ -32,7 +32,7 @@ export function useLogin () {
     loginError.value = ''
 
     try {
-      await authStore.login(email.value.trim(), password.value)
+      await authStore.login(email.value.trim(), password.value, rememberMe.value)
       await router.push('/Feed')
     } catch (error) {
       const typedError = error as LoginError

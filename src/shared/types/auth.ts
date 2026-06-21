@@ -4,6 +4,7 @@ import type { ContactLink, User } from '@/shared/types/user'
 export interface LoginPayload {
   email: string
   password: string
+  rememberMe?: boolean
 }
 
 export interface RegisterPayload {
@@ -21,4 +22,5 @@ export interface AuthResponse extends UnknownRecord {
 
 export interface RefreshResponse extends UnknownRecord {
   accessToken: string
+  rememberMe?: boolean
 }

@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { clearAccessToken, getAccessToken, setAccessToken } from '@/shared/api/tokenStorage'
+import { clearAccessToken, getStoredAccessToken, setAccessToken } from '@/shared/api/tokenStorage'
 import { API_BASE_URL } from '@/shared/config/api'
 import type { RefreshResponse } from '@/shared/types'
 
@@ -11,7 +11,10 @@ type SessionListener = (session: SessionState) => void
 
 const listeners = new Set<SessionListener>()
 
-let accessToken = getAccessToken()
+const storedToken = getStoredAccessToken()
+
+let accessToken = storedToken.token
+let rememberMe = storedToken.rememberMe
 let refreshPromise: Promise<string> | null = null
 
 function getSessionState (): SessionState {
@@ -30,16 +33,21 @@ export function getSessionToken (): string | null {
   return accessToken
 }
 
-export function setSessionToken (token: string | null): void {
+export function setSessionToken (token: string | null, nextRememberMe?: boolean): void {
   const nextToken = token || null
 
+  if (typeof nextRememberMe === 'boolean') {
+    rememberMe = nextRememberMe
+  }
+
   accessToken = nextToken
-  setAccessToken(nextToken)
+  setAccessToken(nextToken, rememberMe)
   notifySessionListeners()
 }
 
 export function clearSessionToken (): void {
   accessToken = null
+  rememberMe = true
   clearAccessToken()
   notifySessionListeners()
 }
@@ -60,12 +68,13 @@ export async function refreshSessionToken (): Promise<string> {
     })
       .then(response => {
         const nextToken = response.data?.accessToken
+        const nextRememberMe = response.data?.rememberMe
 
         if (!nextToken) {
           throw new Error('Refresh response does not include access token')
         }
 
-        setSessionToken(nextToken)
+        setSessionToken(nextToken, nextRememberMe)
         return nextToken
       })
       .catch(error => {

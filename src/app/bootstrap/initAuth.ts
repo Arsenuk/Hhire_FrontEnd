@@ -1,6 +1,6 @@
 import type { Pinia } from 'pinia'
 import { useAuthStore } from '@/features/auth/model/auth.store'
-import { clearSessionToken, getSessionToken } from '@/shared/auth/session'
+import { clearSessionToken, getSessionToken, refreshSessionToken } from '@/shared/auth/session'
 
 let initAuthPromise: Promise<void> | null = null
 
@@ -13,8 +13,14 @@ export function initAuth (pinia: Pinia): Promise<void> {
       authStore.hydrateUserFromStorage()
 
       if (!getSessionToken()) {
-        authStore.setUser(null)
-        return
+        try {
+          await refreshSessionToken()
+        } catch (error) {
+          console.error('Failed to restore auth session from refresh token', error)
+          authStore.setUser(null)
+          clearSessionToken()
+          return
+        }
       }
 
       try {

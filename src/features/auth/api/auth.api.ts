@@ -14,10 +14,11 @@ type ResetPasswordPayload = {
   token: string
 }
 
-export async function loginRequest ({ email, password }: LoginPayload): Promise<AuthResponse> {
+export async function loginRequest ({ email, password, rememberMe }: LoginPayload): Promise<AuthResponse> {
   const response = await api.post<AuthResponse>('/auth/login', {
     email,
     password,
+    rememberMe,
   })
 
   return response.data
