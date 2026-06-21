@@ -26,15 +26,11 @@ function resolvePasswordResetError (message: string): string {
   const normalized = message.toLowerCase()
 
   if (normalized.includes('expired')) {
-    return 'Reset link has expired. Please request a new one.'
+    return 'Reset link is invalid or expired. Please request a new one.'
   }
 
-  if (normalized.includes('invalid')) {
-    return 'Reset link is invalid. Please request a new one.'
-  }
-
-  if (normalized.includes('used')) {
-    return 'Reset link was already used. Please request a new one.'
+  if (normalized.includes('invalid') || normalized.includes('used')) {
+    return 'Reset link is invalid or expired. Please request a new one.'
   }
 
   return message || 'Failed to reset password'
@@ -53,7 +49,7 @@ export function useResetPassword () {
   const loading = ref(false)
 
   const token = computed(() => readQueryValue(route.query.token).trim())
-  const tokenError = computed(() => (token.value ? '' : 'Reset token is missing or invalid.'))
+  const tokenError = computed(() => (token.value ? '' : 'Reset link is invalid or expired. Please request a new one.'))
   const canSubmit = computed(() => Boolean(token.value))
 
   function resetValidationErrors () {
