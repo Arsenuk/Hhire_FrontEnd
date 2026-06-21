@@ -1,14 +1,22 @@
 <template>
   <div v-if="hasRating" class="user-rating" :class="[`user-rating--${variant}`]">
-    <div class="user-rating__icon">
-      <v-icon size="14">mdi-star</v-icon>
+    <div class="user-rating__icon" :aria-label="ratingAriaLabel" role="img">
+      <span
+        v-for="index in 5"
+        :key="index"
+        class="user-rating__star"
+        :style="{ '--star-fill': `${getStarFill(index)}%` }"
+      >
+        <v-icon size="13" class="user-rating__star-icon user-rating__star-icon--empty">
+          mdi-star-outline
+        </v-icon>
+        <v-icon size="13" class="user-rating__star-icon user-rating__star-icon--filled">
+          mdi-star
+        </v-icon>
+      </span>
     </div>
 
     <div class="user-rating__content">
-      <div class="user-rating__score">
-        {{ scoreText }}
-      </div>
-
       <div v-if="showCount" class="user-rating__count">
         {{ countText }}
       </div>
@@ -16,8 +24,10 @@
   </div>
 
   <div v-else-if="showEmpty" class="user-rating user-rating--empty" :class="[`user-rating--${variant}`]">
-    <div class="user-rating__icon user-rating__icon--empty">
-      <v-icon size="14">mdi-star-outline</v-icon>
+    <div class="user-rating__icon user-rating__icon--empty" aria-label="No rating yet" role="img">
+      <v-icon v-for="index in 5" :key="index" size="13" class="user-rating__star-icon">
+        mdi-star-outline
+      </v-icon>
     </div>
 
     <div class="user-rating__content">
@@ -57,12 +67,16 @@
   })
 
   const hasRating = computed(() => Boolean(props.rating && props.rating.total > 0))
-  const scoreText = computed(() => {
+  const ratingValue = computed(() => {
     if (!props.rating) {
-      return ''
+      return 0
     }
 
-    return `${(props.rating.value * 5).toFixed(1)}/5`
+    return Math.min(5, Math.max(0, props.rating.value * 5))
+  })
+  const scoreText = computed(() => `${ratingValue.value.toFixed(1)}/5`)
+  const ratingAriaLabel = computed(() => {
+    return `${scoreText.value} stars`
   })
   const countText = computed(() => {
     if (!props.rating) {
@@ -71,6 +85,10 @@
 
     return `${props.rating.total} ${props.rating.total === 1 ? 'rating' : 'ratings'}`
   })
+  const getStarFill = (index: number) => {
+    const fill = ratingValue.value - (index - 1)
+    return Math.max(0, Math.min(1, fill)) * 100
+  }
 </script>
 
 <style scoped>
@@ -94,6 +112,7 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  gap: 2px;
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(250, 204, 21, 0.22), rgba(245, 158, 11, 0.16));
   color: #b45309;
@@ -101,12 +120,14 @@
 }
 
 .user-rating--compact .user-rating__icon {
-  width: 22px;
+  min-height: 22px;
+  padding: 0 6px;
   height: 22px;
 }
 
 .user-rating--panel .user-rating__icon {
-  width: 26px;
+  min-height: 26px;
+  padding: 0 7px;
   height: 26px;
 }
 
@@ -114,6 +135,31 @@
   background: rgba(148, 163, 184, 0.14);
   color: #64748b;
   box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+}
+
+.user-rating__star {
+  position: relative;
+  display: inline-flex;
+  width: 13px;
+  height: 13px;
+  flex: 0 0 13px;
+  color: #d97706;
+}
+
+.user-rating__star-icon {
+  position: absolute;
+  inset: 0;
+  width: 13px;
+  height: 13px;
+  line-height: 13px;
+}
+
+.user-rating__star-icon--empty {
+  color: rgba(148, 163, 184, 0.55);
+}
+
+.user-rating__star-icon--filled {
+  clip-path: inset(0 calc(100% - var(--star-fill, 0%)) 0 0);
 }
 
 .user-rating__content {
