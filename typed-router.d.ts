@@ -27,9 +27,11 @@ declare module 'vue-router/auto-routes' {
     '/Contacts': RouteRecordInfo<'/Contacts', '/Contacts', Record<never, never>, Record<never, never>>,
     '/CreatePost': RouteRecordInfo<'/CreatePost', '/CreatePost', Record<never, never>, Record<never, never>>,
     '/Feed': RouteRecordInfo<'/Feed', '/Feed', Record<never, never>, Record<never, never>>,
+    '/ForgotPassword': RouteRecordInfo<'/ForgotPassword', '/forgot-password', Record<never, never>, Record<never, never>>,
     '/LogIn': RouteRecordInfo<'/LogIn', '/LogIn', Record<never, never>, Record<never, never>>,
     '/Profile/[id]': RouteRecordInfo<'/Profile/[id]', '/Profile/:id', { id: ParamValue<true> }, { id: ParamValue<false> }>,
     '/ProfileMe': RouteRecordInfo<'/ProfileMe', '/ProfileMe', Record<never, never>, Record<never, never>>,
+    '/ResetPassword': RouteRecordInfo<'/ResetPassword', '/reset-password', Record<never, never>, Record<never, never>>,
     '/SignUp': RouteRecordInfo<'/SignUp', '/SignUp', Record<never, never>, Record<never, never>>,
   }
 
@@ -80,6 +82,10 @@ declare module 'vue-router/auto-routes' {
       routes: '/Feed'
       views: never
     }
+    'src/pages/ForgotPassword.vue': {
+      routes: '/ForgotPassword'
+      views: never
+    }
     'src/pages/LogIn.vue': {
       routes: '/LogIn'
       views: never
@@ -90,6 +96,10 @@ declare module 'vue-router/auto-routes' {
     }
     'src/pages/ProfileMe.vue': {
       routes: '/ProfileMe'
+      views: never
+    }
+    'src/pages/ResetPassword.vue': {
+      routes: '/ResetPassword'
       views: never
     }
     'src/pages/SignUp.vue': {

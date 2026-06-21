@@ -8,6 +8,16 @@
             Sign in to continue to your account
           </p>
 
+          <v-alert
+            v-if="resetSuccessMessage"
+            class="mb-5"
+            color="#dff7e8"
+            density="comfortable"
+            variant="tonal"
+          >
+            {{ resetSuccessMessage }}
+          </v-alert>
+
           <p class="login-subtitle mb-2" style="padding-left: 10px;">Email Address</p>
           <div :class="['custom-input mb-4', { 'has-error': loginError }]">
             <v-icon class="input-icon" color="#97e5ee" size="20">mdi-email-outline</v-icon>
@@ -60,6 +70,7 @@
     onLogin,
     password,
     rememberMe,
+    resetSuccessMessage,
     showPassword,
     togglePassword,
   } = useLogin()

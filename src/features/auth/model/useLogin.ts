@@ -1,5 +1,5 @@
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/features/auth/model/auth.store'
 
 type LoginError = {
@@ -8,6 +8,7 @@ type LoginError = {
 
 export function useLogin () {
   const authStore = useAuthStore()
+  const route = useRoute()
   const router = useRouter()
 
   const email = ref('')
@@ -15,6 +16,13 @@ export function useLogin () {
   const showPassword = ref(false)
   const rememberMe = ref(false)
   const loginError = ref('')
+  const resetSuccessMessage = computed(() => {
+    if (route.query.reset !== 'success') {
+      return ''
+    }
+
+    return 'Password updated, please sign in again.'
+  })
 
   function togglePassword () {
     showPassword.value = !showPassword.value
@@ -38,6 +46,7 @@ export function useLogin () {
     onLogin,
     password,
     rememberMe,
+    resetSuccessMessage,
     showPassword,
     togglePassword,
   }
