@@ -300,6 +300,7 @@ interface PostCardProps {
   titlePlacement?: PostCardTitlePlacement
   tagPrefix?: string
   showOwnerRole?: boolean
+  showReportButton?: boolean
   ownerClickable?: boolean
   hoverable?: boolean
   avatarSize?: number
@@ -311,6 +312,7 @@ const props = withDefaults(defineProps<PostCardProps>(), {
   titlePlacement: 'body',
   tagPrefix: '',
   showOwnerRole: false,
+  showReportButton: true,
   ownerClickable: false,
   hoverable: false,
   avatarSize: 36,
@@ -341,7 +343,7 @@ const ownerRating = computed(() => props.rating ?? owner.value?.rating ?? null)
 const ownerAvatarUrl = computed(() => getAvatarUrl(owner.value?.avatar ?? null))
 const formattedDate = computed(() => formatPostDate(props.post.created_at))
 const postTags = computed<string[]>(() => (Array.isArray(props.post.tags) ? props.post.tags : []))
-const canReport = computed(() => props.post.id != null)
+const canReport = computed(() => props.showReportButton && props.post.id != null)
 const firstImageUrl = computed(() => {
   const [image] = Array.isArray(props.post.images) ? props.post.images : []
   const imageUrl = typeof image === 'string' ? image : image?.url

@@ -204,20 +204,20 @@
         <div class="admin-posts__full-post-heading">
           <div>
             <p class="admin-posts__full-post-eyebrow">Reported post</p>
-            <h2>{{ fullPost?.title || 'Untitled post' }}</h2>
+            <h2>{{ fullPostSource?.title || 'Untitled post' }}</h2>
           </div>
 
           <div class="admin-posts__full-post-badges">
             <v-chip
-              :color="getStatusColor(fullPost?.status)"
+              :color="getStatusColor(fullPostSource?.status)"
               size="small"
               variant="tonal"
             >
-              {{ fullPost?.status || 'unknown' }}
+              {{ fullPostSource?.status || 'unknown' }}
             </v-chip>
 
             <v-chip size="small" variant="outlined">
-              {{ formatCount(fullPost?.report_count) }} reports
+              {{ formatCount(fullPostSource?.report_count) }} reports
             </v-chip>
           </div>
         </div>
@@ -227,45 +227,31 @@
         <div class="admin-posts__full-post-meta">
           <div class="admin-posts__full-post-meta-item">
             <span class="admin-posts__full-post-meta-label">Post ID</span>
-            <span class="admin-posts__full-post-meta-value">#{{ fullPost?.id ?? '-' }}</span>
+            <span class="admin-posts__full-post-meta-value">#{{ fullPostSource?.id ?? '-' }}</span>
           </div>
 
           <div class="admin-posts__full-post-meta-item">
             <span class="admin-posts__full-post-meta-label">Author ID</span>
-            <span class="admin-posts__full-post-meta-value">#{{ fullPost?.user_id ?? '-' }}</span>
+            <span class="admin-posts__full-post-meta-value">#{{ fullPostSource?.user_id ?? '-' }}</span>
           </div>
 
           <div class="admin-posts__full-post-meta-item">
             <span class="admin-posts__full-post-meta-label">Created</span>
-            <span class="admin-posts__full-post-meta-value">{{ formatDate(fullPost?.created_at) }}</span>
+            <span class="admin-posts__full-post-meta-value">{{ formatDate(fullPostSource?.created_at) }}</span>
           </div>
 
           <div class="admin-posts__full-post-meta-item">
             <span class="admin-posts__full-post-meta-label">Intent</span>
-            <span class="admin-posts__full-post-meta-value">{{ fullPost?.intent || 'n/a' }}</span>
+            <span class="admin-posts__full-post-meta-value">{{ fullPostSource?.intent || 'n/a' }}</span>
           </div>
         </div>
 
-        <v-card class="admin-posts__full-post-content-card" variant="flat">
-          <div v-if="fullPost?.title" class="admin-posts__full-post-title">
-            {{ fullPost.title }}
-          </div>
-
-          <div v-if="fullPost?.content" class="admin-posts__full-post-content">
-            {{ fullPost.content }}
-          </div>
-
-          <div v-else class="admin-posts__full-post-empty">
-            No content available for this post.
-          </div>
-        </v-card>
-
-        <div v-if="fullPost?.report_tags?.length" class="admin-posts__full-post-tags">
+        <div v-if="fullPostSource?.report_tags?.length" class="admin-posts__full-post-tags">
           <div class="admin-posts__full-post-section-label">Report tags</div>
           <div class="admin-post__tags-list">
             <v-chip
-              v-for="tag in fullPost.report_tags"
-              :key="`full-post-${fullPost.id}:${tag}`"
+              v-for="tag in fullPostSource.report_tags"
+              :key="`full-post-${fullPostSource.id}:${tag}`"
               size="small"
               variant="outlined"
             >
@@ -273,6 +259,19 @@
             </v-chip>
           </div>
         </div>
+
+        <PostCard
+          v-if="fullPostCard"
+          class="admin-posts__feed-card"
+          :avatar-size="40"
+          :hoverable="false"
+          :owner-clickable="false"
+          :post="fullPostCard"
+          :show-owner-role="true"
+          :show-report-button="false"
+          title-placement="header"
+          variant="feed"
+        />
       </v-card-text>
 
       <v-card-actions class="admin-posts__full-post-actions">
@@ -298,9 +297,11 @@
 <script setup lang="ts">
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
+  import PostCard from '@/entities/post/ui/PostCard.vue'
+  import { normalizePost } from '@/entities/post/lib/normalizePost'
   import { api } from '@/shared/api/api'
   import { useSnackbar } from '@/shared/lib/composables/useSnackbar'
-  import type { EntityId } from '@/shared/types'
+  import type { EntityId, Post } from '@/shared/types'
 
   type PostStatus = 'active' | 'hidden' | 'deleted' | string
   type AdminPost = {
@@ -309,6 +310,10 @@
     content?: string | null
     intent?: string | null
     user_id?: EntityId | null
+    company_id?: EntityId | null
+    owner?: Post['owner']
+    tags?: Post['tags'] | Array<{ id?: EntityId | null, name?: string | null } | string | null>
+    images?: Array<string> | null
     conversation_count?: number | string | null
     report_count?: number | string | null
     report_tags?: string[] | null
@@ -338,7 +343,7 @@
   const confirmDialog = ref(false)
   const selectedPost = ref<AdminPost | null>(null)
   const fullPostDialog = ref(false)
-  const fullPost = ref<AdminPost | null>(null)
+  const fullPostSource = ref<AdminPost | null>(null)
   const pendingAction = ref<PostActionButton | null>(null)
   const actionLoadingKey = ref('')
 
@@ -399,6 +404,14 @@
       },
     ],
   }
+
+  const fullPostCard = computed<Post | null>(() => {
+    if (!fullPostSource.value) {
+      return null
+    }
+
+    return normalizePost(fullPostSource.value)
+  })
 
   function postPreview(value: string | null | undefined) {
     if (!value) {
@@ -474,13 +487,13 @@
   }
 
   function openFullPost(post: AdminPost) {
-    fullPost.value = post
+    fullPostSource.value = post
     fullPostDialog.value = true
   }
 
   function closeFullPost() {
     fullPostDialog.value = false
-    fullPost.value = null
+    fullPostSource.value = null
   }
 
   function closeConfirmation({ force = false } = {}) {
@@ -801,6 +814,10 @@
   flex-direction: column;
   gap: 18px;
   padding: 18px 20px 8px;
+}
+
+.admin-posts__feed-card {
+  width: 100%;
 }
 
 .admin-posts__full-post-meta {
