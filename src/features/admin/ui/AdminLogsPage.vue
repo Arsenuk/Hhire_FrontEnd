@@ -88,21 +88,73 @@
                   </td>
                   <td>{{ log.ip || '-' }}</td>
                   <td class="admin-logs__payload-cell">
-                    <v-btn
-                      v-if="hasPayload(log.payload)"
-                      size="small"
-                      variant="text"
-                      @click="toggleExpanded(log.id)"
-                    >
-                      {{ expandedLogId === log.id ? 'Hide payload' : 'View payload' }}
-                    </v-btn>
+                    <div v-if="hasPayload(log.payload)" class="admin-logs__payload-cell-content">
+                      <div class="admin-logs__payload-preview">
+                        {{ getPayloadSummary(log.payload) }}
+                      </div>
+
+                      <div class="admin-logs__payload-actions">
+                        <v-btn
+                          size="small"
+                          variant="text"
+                          @click="toggleExpanded(log.id)"
+                        >
+                          {{ expandedLogId === log.id ? 'Hide details' : 'View details' }}
+                        </v-btn>
+
+                        <v-btn
+                          icon="mdi-content-copy"
+                          size="small"
+                          variant="text"
+                          :aria-label="`Copy payload for log ${log.id}`"
+                          @click="copyPayload(log.payload)"
+                        />
+                      </div>
+                    </div>
                     <span v-else>-</span>
                   </td>
                 </tr>
 
                 <tr v-if="expandedLogId === log.id">
                   <td colspan="7" class="admin-logs__payload-row">
-                    <pre>{{ formatPayload(log.payload) }}</pre>
+                    <div class="admin-logs__payload-panel">
+                      <div class="admin-logs__payload-panel-header">
+                        <div>
+                          <div class="admin-logs__payload-title">Payload details</div>
+                          <div class="admin-logs__payload-subtitle">
+                            {{ getPayloadTypeLabel(log.payload) }}
+                            <span v-if="getPayloadFieldCount(log.payload) >= 0">
+                              | {{ getPayloadFieldCount(log.payload) }} {{ getPayloadCountLabel(log.payload) }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <v-btn
+                          prepend-icon="mdi-content-copy"
+                          size="small"
+                          variant="tonal"
+                          @click="copyPayload(log.payload)"
+                        >
+                          Copy JSON
+                        </v-btn>
+                      </div>
+
+                      <div v-if="getPayloadEntries(log.payload).length" class="admin-logs__payload-grid">
+                        <article
+                          v-for="entry in getPayloadEntries(log.payload)"
+                          :key="entry.key"
+                          class="admin-logs__payload-card"
+                        >
+                          <div class="admin-logs__payload-card-label">{{ entry.key }}</div>
+                          <div class="admin-logs__payload-card-value">{{ entry.value }}</div>
+                        </article>
+                      </div>
+
+                      <div class="admin-logs__payload-raw">
+                        <div class="admin-logs__payload-raw-label">Raw payload</div>
+                        <pre>{{ formatPayload(log.payload) }}</pre>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               </template>
@@ -144,6 +196,11 @@
     severity?: Severity | null
     ip?: string | null
     payload?: unknown
+  }
+
+  type PayloadEntry = {
+    key: string
+    value: string
   }
 
   const router = useRouter()
@@ -210,6 +267,42 @@
     return payload
   }
 
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null && !Array.isArray(value)
+  }
+
+  function truncate(value: string, limit = 96) {
+    if (value.length <= limit) {
+      return value
+    }
+
+    return `${value.slice(0, limit - 3).trimEnd()}...`
+  }
+
+  function formatScalar(value: unknown) {
+    if (value === null || value === undefined) {
+      return 'null'
+    }
+
+    if (typeof value === 'string') {
+      return value.trim() || '""'
+    }
+
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value)
+    }
+
+    if (Array.isArray(value)) {
+      return `Array(${value.length})`
+    }
+
+    if (isRecord(value)) {
+      return 'Object'
+    }
+
+    return String(value)
+  }
+
   function hasPayload(payload: unknown) {
     const parsed = parsePayload(payload)
 
@@ -224,6 +317,113 @@
     return typeof parsed === 'object' && parsed !== null && Object.keys(parsed).length > 0
   }
 
+  function getPayloadFieldCount(payload: unknown) {
+    const parsed = parsePayload(payload)
+
+    if (Array.isArray(parsed)) {
+      return parsed.length
+    }
+
+    if (isRecord(parsed)) {
+      return Object.keys(parsed).length
+    }
+
+    return -1
+  }
+
+  function getPayloadEntries(payload: unknown): PayloadEntry[] {
+    const parsed = parsePayload(payload)
+
+    if (!isRecord(parsed)) {
+      return []
+    }
+
+    const preferredKeys = ['newRole', 'reason', 'flag', 'outcome', 'method', 'path', 'previousIp', 'currentIp', 'affectedCount']
+    const entries = Object.entries(parsed).map(([key, value]) => ({
+      key,
+      value: formatScalar(value),
+    }))
+
+    return entries.sort((left, right) => {
+      const leftIndex = preferredKeys.indexOf(left.key)
+      const rightIndex = preferredKeys.indexOf(right.key)
+
+      if (leftIndex !== -1 || rightIndex !== -1) {
+        if (leftIndex === -1) return 1
+        if (rightIndex === -1) return -1
+        return leftIndex - rightIndex
+      }
+
+      return left.key.localeCompare(right.key)
+    })
+  }
+
+  function getPayloadTypeLabel(payload: unknown) {
+    const parsed = parsePayload(payload)
+
+    if (parsed === null || parsed === undefined) {
+      return 'Empty payload'
+    }
+
+    if (typeof parsed === 'string') {
+      return 'Text payload'
+    }
+
+    if (Array.isArray(parsed)) {
+      return 'Array payload'
+    }
+
+    if (isRecord(parsed)) {
+      return 'JSON payload'
+    }
+
+    return 'Payload'
+  }
+
+  function getPayloadCountLabel(payload: unknown) {
+    const parsed = parsePayload(payload)
+
+    if (Array.isArray(parsed)) {
+      return parsed.length === 1 ? 'item' : 'items'
+    }
+
+    return getPayloadFieldCount(payload) === 1 ? 'field' : 'fields'
+  }
+
+  function getPayloadSummary(payload: unknown) {
+    const parsed = parsePayload(payload)
+
+    if (parsed === null || parsed === undefined) {
+      return '-'
+    }
+
+    if (typeof parsed === 'string') {
+      return truncate(parsed.replace(/\s+/g, ' '), 88)
+    }
+
+    if (Array.isArray(parsed)) {
+      return `Array(${parsed.length})`
+    }
+
+    if (!isRecord(parsed)) {
+      return formatScalar(parsed)
+    }
+
+    const entries = getPayloadEntries(parsed)
+
+    if (!entries.length) {
+      return 'JSON object'
+    }
+
+    const head = entries.slice(0, 2).map(entry => `${entry.key}: ${truncate(entry.value, 36)}`)
+
+    if (entries.length > head.length) {
+      return `${head.join(' | ')} +${entries.length - head.length} more`
+    }
+
+    return head.join(' | ')
+  }
+
   function formatPayload(payload: unknown) {
     const parsed = parsePayload(payload)
 
@@ -236,6 +436,18 @@
     }
 
     return JSON.stringify(parsed, null, 2)
+  }
+
+  async function copyPayload(payload: unknown) {
+    const text = formatPayload(payload)
+
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast('Payload copied to clipboard', 'success')
+    } catch (error) {
+      console.error('Failed to copy payload', error)
+      showToast('Could not copy payload', 'error')
+    }
   }
 
   function toggleExpanded(id: number | string) {
@@ -370,19 +582,114 @@
 }
 
 .admin-logs__payload-cell {
-  min-width: 120px;
+  min-width: 250px;
+}
+
+.admin-logs__payload-cell-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-logs__payload-preview {
+  color: #24403c;
+  font-size: 13px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.admin-logs__payload-actions {
+  align-items: center;
+  display: flex;
+  gap: 4px;
+  margin-left: -8px;
 }
 
 .admin-logs__payload-row {
   background: #f3f8f6;
 }
 
-.admin-logs__payload-row pre {
+.admin-logs__payload-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-logs__payload-panel-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.admin-logs__payload-title {
+  color: #10201d;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.admin-logs__payload-subtitle {
+  color: #60716e;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.admin-logs__payload-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.admin-logs__payload-card {
+  background: #ffffff;
+  border: 1px solid #dce8e5;
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.admin-logs__payload-card-label {
+  color: #55706c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.admin-logs__payload-card-value {
+  color: #17302c;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.admin-logs__payload-raw {
+  background: #ffffff;
+  border: 1px solid #dce8e5;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.admin-logs__payload-raw-label {
+  border-bottom: 1px solid #dce8e5;
+  color: #55706c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 12px 16px 10px;
+  text-transform: uppercase;
+}
+
+.admin-logs__payload-raw pre {
   color: #314542;
   font-family: Consolas, Monaco, monospace;
   font-size: 12px;
+  line-height: 1.55;
   margin: 0;
-  overflow-x: auto;
+  max-height: 320px;
+  overflow: auto;
+  padding: 14px 16px 16px;
   white-space: pre-wrap;
   word-break: break-word;
 }
