@@ -272,7 +272,13 @@ export function useFeed () {
     for (const post of allPosts.value) {
       if (post.tags) {
         for (const tag of post.tags) {
-          tagCounts[tag] = (tagCounts[tag] || 0) + 1
+          const normalizedTag = String(tag || '').trim()
+
+          if (!normalizedTag) {
+            continue
+          }
+
+          tagCounts[normalizedTag] = (tagCounts[normalizedTag] || 0) + 1
         }
       }
     }

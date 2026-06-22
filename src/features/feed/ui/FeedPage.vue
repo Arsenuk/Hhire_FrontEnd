@@ -194,7 +194,7 @@
                 variant="outlined"
                 @click="toggleTag(tag)"
               >
-                #{{ tag }}
+                #{{ formatPopularTag(tag) }}
               </v-chip>
             </div>
 
@@ -302,25 +302,25 @@
             <h2 class="feed-panel-title">Popular tags</h2>
           </div>
 
-          <v-chip size="small" variant="tonal">
-            {{ topTags.length }}
-          </v-chip>
-        </div>
-
-        <v-card-text class="suggested-card__body">
-          <div v-if="topTags.length" class="tag-cloud">
-            <v-chip
-              v-for="tag in topTags"
-              :key="tag"
-              class="tag-chip"
-              :class="{ 'tag-chip--selected': selectedTags.includes(tag) }"
-              size="small"
-              variant="outlined"
-              @click="toggleTag(tag)"
-            >
-              #{{ tag }}
+            <v-chip size="small" variant="tonal">
+              {{ topTags.length }}
             </v-chip>
           </div>
+
+          <v-card-text class="suggested-card__body">
+            <div v-if="topTags.length" class="tag-cloud">
+              <v-chip
+                v-for="tag in topTags"
+                :key="tag"
+                class="tag-chip"
+                :class="{ 'tag-chip--selected': selectedTags.includes(tag) }"
+                size="small"
+                variant="outlined"
+                @click="toggleTag(tag)"
+              >
+                {{ formatPopularTag(tag) }}
+              </v-chip>
+            </div>
 
           <div v-else class="suggested-card__empty">
             <p>Tags will appear here once the feed has enough activity.</p>
@@ -402,6 +402,10 @@
     if (isSearchActive.value) {
       feedSearchStore.clearQuery()
     }
+  }
+
+  function formatPopularTag(tag) {
+    return String(tag ?? '').trim().replace(/^#+/, '') || String(tag ?? '').trim()
   }
 </script>
 
