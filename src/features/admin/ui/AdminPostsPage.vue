@@ -78,13 +78,25 @@
             <tbody>
               <tr v-for="(post, index) in filteredPosts" :key="post.id ?? `admin-post-${index}`">
                 <td>
-                  <div class="admin-posts__post">
-                    <div class="admin-posts__post-title">
-                      {{ post.title || 'Untitled post' }}
+                  <div class="admin-posts__post-cell">
+                    <div class="admin-posts__post">
+                      <div class="admin-posts__post-title">
+                        {{ post.title || 'Untitled post' }}
+                      </div>
+                      <div class="admin-posts__post-preview">
+                        {{ postPreview(post.content) }}
+                      </div>
                     </div>
-                    <div class="admin-posts__post-preview">
-                      {{ postPreview(post.content) }}
-                    </div>
+
+                    <v-btn
+                      class="admin-posts__view-full-btn"
+                      size="small"
+                      variant="text"
+                      prepend-icon="mdi-open-in-new"
+                      @click="openFullPost(post)"
+                    >
+                      View full
+                    </v-btn>
                   </div>
                 </td>
 
@@ -186,6 +198,91 @@
     </v-card>
   </v-dialog>
 
+  <v-dialog v-model="fullPostDialog" max-width="920" scrollable>
+    <v-card class="admin-posts__full-post-dialog">
+      <v-card-title class="admin-posts__full-post-dialog-title">
+        <div class="admin-posts__full-post-heading">
+          <div>
+            <p class="admin-posts__full-post-eyebrow">Reported post</p>
+            <h2>{{ fullPost?.title || 'Untitled post' }}</h2>
+          </div>
+
+          <div class="admin-posts__full-post-badges">
+            <v-chip
+              :color="getStatusColor(fullPost?.status)"
+              size="small"
+              variant="tonal"
+            >
+              {{ fullPost?.status || 'unknown' }}
+            </v-chip>
+
+            <v-chip size="small" variant="outlined">
+              {{ formatCount(fullPost?.report_count) }} reports
+            </v-chip>
+          </div>
+        </div>
+      </v-card-title>
+
+      <v-card-text class="admin-posts__full-post-body">
+        <div class="admin-posts__full-post-meta">
+          <div class="admin-posts__full-post-meta-item">
+            <span class="admin-posts__full-post-meta-label">Post ID</span>
+            <span class="admin-posts__full-post-meta-value">#{{ fullPost?.id ?? '-' }}</span>
+          </div>
+
+          <div class="admin-posts__full-post-meta-item">
+            <span class="admin-posts__full-post-meta-label">Author ID</span>
+            <span class="admin-posts__full-post-meta-value">#{{ fullPost?.user_id ?? '-' }}</span>
+          </div>
+
+          <div class="admin-posts__full-post-meta-item">
+            <span class="admin-posts__full-post-meta-label">Created</span>
+            <span class="admin-posts__full-post-meta-value">{{ formatDate(fullPost?.created_at) }}</span>
+          </div>
+
+          <div class="admin-posts__full-post-meta-item">
+            <span class="admin-posts__full-post-meta-label">Intent</span>
+            <span class="admin-posts__full-post-meta-value">{{ fullPost?.intent || 'n/a' }}</span>
+          </div>
+        </div>
+
+        <v-card class="admin-posts__full-post-content-card" variant="flat">
+          <div v-if="fullPost?.title" class="admin-posts__full-post-title">
+            {{ fullPost.title }}
+          </div>
+
+          <div v-if="fullPost?.content" class="admin-posts__full-post-content">
+            {{ fullPost.content }}
+          </div>
+
+          <div v-else class="admin-posts__full-post-empty">
+            No content available for this post.
+          </div>
+        </v-card>
+
+        <div v-if="fullPost?.report_tags?.length" class="admin-posts__full-post-tags">
+          <div class="admin-posts__full-post-section-label">Report tags</div>
+          <div class="admin-post__tags-list">
+            <v-chip
+              v-for="tag in fullPost.report_tags"
+              :key="`full-post-${fullPost.id}:${tag}`"
+              size="small"
+              variant="outlined"
+            >
+              {{ tag }}
+            </v-chip>
+          </div>
+        </div>
+      </v-card-text>
+
+      <v-card-actions class="admin-posts__full-post-actions">
+        <v-btn variant="text" @click="closeFullPost">
+          Close
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
+
   <v-snackbar
     v-model="snackbar.show"
     :color="snackbar.color"
@@ -211,6 +308,7 @@
     title?: string | null
     content?: string | null
     intent?: string | null
+    user_id?: EntityId | null
     conversation_count?: number | string | null
     report_count?: number | string | null
     report_tags?: string[] | null
@@ -239,6 +337,8 @@
   const statusFilter = ref('all')
   const confirmDialog = ref(false)
   const selectedPost = ref<AdminPost | null>(null)
+  const fullPostDialog = ref(false)
+  const fullPost = ref<AdminPost | null>(null)
   const pendingAction = ref<PostActionButton | null>(null)
   const actionLoadingKey = ref('')
 
@@ -371,6 +471,16 @@
     selectedPost.value = post
     pendingAction.value = action
     confirmDialog.value = true
+  }
+
+  function openFullPost(post: AdminPost) {
+    fullPost.value = post
+    fullPostDialog.value = true
+  }
+
+  function closeFullPost() {
+    fullPostDialog.value = false
+    fullPost.value = null
   }
 
   function closeConfirmation({ force = false } = {}) {
@@ -541,6 +651,17 @@
   vertical-align: middle;
 }
 
+.admin-posts__post-cell {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.admin-posts__post {
+  min-width: 0;
+}
+
 .admin-posts__post-title {
   color: #172522;
   font-size: 15px;
@@ -548,35 +669,40 @@
   line-height: 1.35;
 }
 
-  .admin-posts__post-preview {
-    color: #60716e;
-    font-size: 13px;
-    line-height: 1.5;
-    margin-top: 4px;
-  }
+.admin-posts__post-preview {
+  color: #60716e;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
 
-  .admin-posts__tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+.admin-posts__view-full-btn {
+  flex-shrink: 0;
+  margin-top: -2px;
+}
 
-  .admin-posts__empty-value {
-    color: #94a3b8;
-    font-size: 13px;
-  }
+.admin-posts__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
-  .admin-posts__status-cell {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+.admin-posts__empty-value {
+  color: #94a3b8;
+  font-size: 13px;
+}
 
-  .admin-posts__status-count {
-    color: #60716e;
-    font-size: 12px;
-    font-weight: 600;
-  }
+.admin-posts__status-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-posts__status-count {
+  color: #60716e;
+  font-size: 12px;
+  font-weight: 600;
+}
 
 .admin-posts__metric {
   color: #172522;
@@ -630,6 +756,118 @@
   padding: 12px 20px 20px;
 }
 
+.admin-posts__full-post-dialog {
+  border-radius: 20px;
+}
+
+.admin-posts__full-post-dialog-title {
+  padding: 20px 20px 0;
+}
+
+.admin-posts__full-post-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-posts__full-post-eyebrow,
+.admin-posts__full-post-section-label,
+.admin-posts__full-post-meta-label {
+  color: #5a726d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.admin-posts__full-post-heading h2 {
+  color: #172522;
+  font-family: 'Junge', serif;
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.2;
+  margin: 4px 0 0;
+}
+
+.admin-posts__full-post-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-posts__full-post-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 20px 8px;
+}
+
+.admin-posts__full-post-meta {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-posts__full-post-meta-item {
+  background: #f8fbfa;
+  border: 1px solid #dce8e5;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.admin-posts__full-post-meta-value {
+  color: #172522;
+  display: block;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.admin-posts__full-post-content-card {
+  background: #fbfefd;
+  border: 1px solid #dce8e5;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.admin-posts__full-post-title {
+  color: #172522;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 12px;
+}
+
+.admin-posts__full-post-content {
+  color: #41524e;
+  font-size: 15px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.admin-posts__full-post-empty {
+  color: #7b8e89;
+  font-size: 14px;
+}
+
+.admin-posts__full-post-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-post__tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-posts__full-post-actions {
+  justify-content: flex-end;
+  padding: 0 20px 20px;
+}
+
 .gradient-primary-btn {
   background: linear-gradient(90deg, #c3f894 0%, #4edeee 100%) !important;
   color: #020617 !important;
@@ -655,8 +893,17 @@
     grid-template-columns: 1fr;
   }
 
+  .admin-posts__post-cell {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .admin-posts__actions {
     flex-wrap: wrap;
+  }
+
+  .admin-posts__full-post-meta {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -667,6 +914,14 @@
 
   .admin-posts h1 {
     font-size: 32px;
+  }
+
+  .admin-posts__full-post-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-posts__full-post-heading h2 {
+    font-size: 24px;
   }
 }
 </style>
