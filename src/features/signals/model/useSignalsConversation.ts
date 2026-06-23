@@ -258,7 +258,7 @@ export function useSignalsConversation ({
 
     try {
       await api.post('/reports', {
-        targetType: 'message',
+        targetType: 'signal',
         targetId: activeSignal.value.messageId,
         tags: selectedTags,
       })

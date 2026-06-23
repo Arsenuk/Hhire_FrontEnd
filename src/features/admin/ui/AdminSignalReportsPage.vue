@@ -457,7 +457,7 @@
 
       const response = await api.get<SignalReport[]>('/moderation/queue', { params })
       const data = Array.isArray(response.data) ? response.data : []
-      reports.value = data.filter(report => report?.target_type === 'message')
+      reports.value = data.filter(report => report?.target_type === 'signal')
     } catch (error) {
       console.error('Failed to load signal reports', error)
       showToast('Failed to load signal reports', 'error')
